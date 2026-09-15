@@ -1136,7 +1136,9 @@
           if (parsed.learningProgress) learningProgress = parsed.learningProgress;
           if (parsed.currentUserId) {
             const found = users.find(u => u.id === parsed.currentUserId);
-            if (found) currentUser = found;
+            currentUser = found || null;
+          } else {
+            currentUser = null;
           }
         }
       } catch (e) {
@@ -1151,7 +1153,7 @@
           courses,
           testResults,
           learningProgress,
-          currentUserId: currentUser?.id
+          currentUserId: currentUser ? currentUser.id : null
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       } catch (e) {
