@@ -1,0 +1,54 @@
+function doGet() {
+     return HtmlService.createHtmlOutputFromFile('index')
+       .setTitle('KNT-QC Training System')
+       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+       .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+   }
+function doPost(e) {
+  try {
+    var folderId = "1jSF09whC04zEgURMCSME7VHQwECz4eFP"; 
+    var data = JSON.parse(e.postData.contents);
+
+    // ----------------------------------------------------
+    // 📌 1. ส่งข้อมูลขึ้น Firebase Realtime Database อัตโนมัติ
+    // ----------------------------------------------------
+    var firebaseUrl = "https://training-5a545-default-rtdb.asia-southeast1.firebasedatabase.app/knt_training.json";
+    
+    UrlFetchApp.fetch(firebaseUrl, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify(data),
+      muteHttpExceptions: true
+    });
+
+    // ----------------------------------------------------
+    // 📌 2. สร้าง Google Sheet ผลคะแนนลงโฟลเดอร์ Google Drive (ตามโค้ดเดิมของคุณ)
+    // ----------------------------------------------------
+    var courseTitle = data.courseTitle || "QC_Training";
+    var timeStr = Utilities.formatDate(new Date(), "Asia/Bangkok", "yyyy-MM-dd_HH-mm");
+    var fileName = "ผลคะแนน_" + courseTitle + "_" + timeStr;
+    
+    var ss = SpreadsheetApp.create(fileName);
+    var sheet = ss.getActiveSheet();
+    
+    if (folderId) {
+      try {
+        var folder = DriveApp.getFolderById(folderId);
+        var file = DriveApp.getFileById(ss.getId());
+        folder.addFile(file);
+        DriveApp.getRootFolder().removeFile(file);
+      } catch(eFolder) {
+        console.log("Folder error: " + eFolder);
+      }
+    }
+
+    // เขียนข้อมูลลงตาราง Sheet ... (ตามปกติ)
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", url: ss.getUrl() }))
+                         .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+                         .setMimeType(ContentService.MimeType.JSON);
+  }
+}
