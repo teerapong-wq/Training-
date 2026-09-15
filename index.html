@@ -499,6 +499,14 @@
         </button>
       </form>
 
+      <!-- Master Admin Credentials Notice -->
+      <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center space-y-1">
+        <p class="text-[11px] text-slate-500 font-medium">บัญชีผู้ดูแลระบบสูงสุด (Master Admin):</p>
+        <p class="text-xs font-mono font-bold text-blue-700 bg-blue-50 py-1 px-2 rounded-lg inline-block border border-blue-100">
+          Username: <span class="text-slate-800 font-extrabold">admin</span> &nbsp;|&nbsp; Password: <span class="text-slate-800 font-extrabold">knt1234</span>
+        </p>
+      </div>
+
       <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
         <span class="text-slate-400">ยังไม่มีบัญชีใช้งาน?</span>
         <button onclick="closeLoginModal(); openAddUserModal();" class="font-bold text-blue-600 hover:underline">ลงทะเบียนพนักงานใหม่</button>
@@ -864,8 +872,8 @@
     const defaultUsers = [
       {
         id: 'usr_master',
-        username: 'master',
-        password: '123',
+        username: 'admin',
+        password: 'knt1234',
         firstName: 'ผู้ดูแลระบบ',
         lastName: 'สูงสุด (Master Admin)',
         department: 'Management',
@@ -1131,23 +1139,32 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          users = parsed.users || defaultUsers;
-          courses = parsed.courses || defaultCourses;
+          users = parsed.users && parsed.users.length ? parsed.users : defaultUsers;
+          courses = parsed.courses && parsed.courses.length ? parsed.courses : defaultCourses;
           testResults = parsed.testResults || [];
           learningProgress = parsed.learningProgress || {};
+          
+          // Ensure master admin exists with new credentials
+          const adminExists = users.find(u => u.username === 'admin');
+          if (!adminExists) {
+            users.unshift(defaultUsers[0]);
+          }
+
           if (parsed.currentUserId) {
             currentUser = users.find(u => u.id === parsed.currentUserId) || null;
+          } else {
+            currentUser = null;
           }
         } else {
           users = [...defaultUsers];
           courses = [...defaultCourses];
-          currentUser = users[0]; // Default to master admin on initial clean run
+          currentUser = null; // Do NOT auto-login as Master Admin
           saveState(false);
         }
       } catch (e) {
         users = [...defaultUsers];
         courses = [...defaultCourses];
-        currentUser = users[0];
+        currentUser = null;
       }
     }
 
@@ -2651,6 +2668,11 @@
       loadState();
       updateNavUserDisplay();
       navigateTo('catalog');
+
+      // If user is not logged in on this device/browser, open login prompt immediately
+      if (!currentUser) {
+        openLoginModal();
+      }
 
       // Initialize Pure Real-time SSE Stream directly from Firebase
       initFirebaseRealtimeStream();
