@@ -27,7 +27,6 @@
     .font-mono-num {
       font-family: 'Inter', monospace;
     }
-    /* Custom scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -104,7 +103,7 @@
             </button>
 
             <!-- Dropdown Menu -->
-            <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50">
+            <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50">
               <div class="px-3 py-2 border-b border-slate-100 text-xs">
                 <div class="font-bold text-slate-800" id="dd-user-name">-</div>
                 <div class="text-slate-500 text-[11px]" id="dd-user-dept">-</div>
@@ -134,7 +133,7 @@
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-    <!-- VIEW 1: Course Catalog (คลังหลักสูตร) -->
+    <!-- VIEW 1: Course Catalog (คลังหลักสูตร - จัดกลุ่มตาม ปี > เดือน) -->
     <section id="view-catalog" class="space-y-6">
       <!-- Welcome Hero Banner -->
       <div class="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-800 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
@@ -187,13 +186,13 @@
         </div>
       </div>
 
-      <!-- Course Cards Grid -->
-      <div id="course-grid-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <!-- Dynamic Cards Injected Here -->
+      <!-- Course Cards Hierarchy Container (Grouped by Year > Month) -->
+      <div id="course-grouped-container" class="space-y-8">
+        <!-- Populated dynamically -->
       </div>
     </section>
 
-    <!-- VIEW 2: Learning Progress View (ระบบติดตามความคืบหน้ารายบท) -->
+    <!-- VIEW 2: Learning Progress View (ติดตามความคืบหน้า 0% -> 30% -> 70% -> Post-test %) -->
     <section id="view-progress" class="hidden space-y-6">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200 shadow-2xs">
         <div>
@@ -202,7 +201,7 @@
             ติดตามความคืบหน้าการเรียนรู้ (Learning Progress)
           </h2>
           <p class="text-xs text-slate-500 mt-0.5">
-            เกณฑ์ขั้นตอน: 0% ยังไม่เริ่ม &rarr; 30% ทำ Pre-test แล้ว &rarr; 70% เรียนเนื้อหาเสร็จ &rarr; ระยะสุดท้ายอิงตามผลคะแนน Post-test จริง
+            แสดงขั้นตอน 0% ยังไม่เริ่ม &rarr; 30% Pre-test &rarr; 70% เรียนเสร็จ &rarr; ระยะสุดท้ายตามผล Post-test
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -277,9 +276,7 @@
                 <th class="py-3 px-4 text-center">ดำเนินการ</th>
               </tr>
             </thead>
-            <tbody id="progress-table-body" class="divide-y divide-slate-100">
-              <!-- Dynamically populated -->
-            </tbody>
+            <tbody id="progress-table-body" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </div>
@@ -305,9 +302,7 @@
             </select>
           </div>
         </div>
-        <div id="skill-matrix-content" class="mt-6 overflow-x-auto">
-          <!-- Dynamically populated table -->
-        </div>
+        <div id="skill-matrix-content" class="mt-6 overflow-x-auto"></div>
       </div>
     </section>
 
@@ -331,7 +326,7 @@
         </div>
       </div>
 
-      <!-- Logs Table with Master Admin Score Edit -->
+      <!-- Logs Table -->
       <div class="bg-white rounded-3xl border border-slate-200 shadow-2xs overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
@@ -348,9 +343,7 @@
                 <th class="py-3 px-4 text-center">จัดการ</th>
               </tr>
             </thead>
-            <tbody id="attendance-table-body" class="divide-y divide-slate-100">
-              <!-- Dynamically populated -->
-            </tbody>
+            <tbody id="attendance-table-body" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </div>
@@ -369,15 +362,6 @@
         <button onclick="openAddUserModal()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm">
           <i class="fa-solid fa-user-plus"></i>เพิ่มพนักงานใหม่
         </button>
-      </div>
-
-      <!-- Pending Approvals Alert (if any) -->
-      <div id="pending-approvals-box" class="hidden bg-amber-50 border border-amber-200 rounded-3xl p-5 space-y-3">
-        <div class="flex items-center gap-2 text-amber-800 font-bold text-xs">
-          <i class="fa-solid fa-clock text-sm"></i>
-          <span>มีคำขอสมัครสมาชิกรอการอนุมัติ (<span id="pending-count">0</span> คน)</span>
-        </div>
-        <div id="pending-users-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
       </div>
 
       <!-- Active Users List -->
@@ -419,7 +403,7 @@
         </button>
       </div>
 
-      <!-- Step Navigation Indicators -->
+      <!-- Step Indicators -->
       <div class="px-6 py-3 bg-white border-b border-slate-100 flex items-center justify-between text-xs">
         <div class="flex items-center gap-2">
           <div id="step-indicator-1" class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[11px]">1</div>
@@ -437,12 +421,11 @@
         </div>
       </div>
 
-      <!-- Classroom Content Body -->
+      <!-- Classroom Content -->
       <div class="p-6 overflow-y-auto flex-1 space-y-6 text-xs" id="classroom-body">
 
         <!-- STEP 1: Pre-test -->
         <div id="classroom-step-1" class="space-y-4">
-          <!-- Pretest already completed banner -->
           <div id="pretest-completed-banner" class="hidden p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
               <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
@@ -458,7 +441,7 @@
 
           <div class="p-4 rounded-2xl bg-blue-50/70 border border-blue-200 text-blue-900 leading-relaxed">
             <i class="fa-solid fa-circle-info mr-1.5 text-blue-600"></i>
-            <strong>แบบทดสอบวัดผลก่อนเรียน (Pre-test):</strong> เพื่อประเมินความรู้พื้นฐานก่อนเริ่มศึกษาเนื้อหา (คะแนนในขั้นตอนนี้จะไม่นำไปตัดสินผลผ่าน/ตก แต่จะนับเป็นความคืบหน้า 30%)
+            <strong>แบบทดสอบวัดผลก่อนเรียน (Pre-test):</strong> เพื่อประเมินความรู้พื้นฐานก่อนเริ่มศึกษาเนื้อหา (เมื่อส่งคำตอบจะปรับความคืบหน้าเป็น 30%)
           </div>
           <div id="pretest-questions-container" class="space-y-4"></div>
           <div class="pt-4 flex justify-end">
@@ -478,15 +461,12 @@
             <span class="px-2.5 py-1 rounded-full bg-amber-200/70 text-amber-800 font-bold text-[10px]">ความคืบหน้าปัจจุบัน 30%</span>
           </div>
 
-          <!-- Video Embed / Player -->
           <div id="cr-media-video-container" class="hidden aspect-video rounded-2xl overflow-hidden bg-black border border-slate-200 shadow-md">
-            <iframe id="cr-media-video-frame" class="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <iframe id="cr-media-video-frame" class="w-full h-full" allowfullscreen></iframe>
           </div>
 
-          <!-- Document / Presentation Links -->
           <div id="cr-media-docs-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
 
-          <!-- Text Description & Work Instructions -->
           <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
             <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
               <i class="fa-solid fa-file-lines text-slate-400"></i>คำอธิบายและแนวทางการปฏิบัติงาน
@@ -516,12 +496,11 @@
 
           <div id="posttest-questions-container" class="space-y-4"></div>
 
-          <!-- Evidence Photo Upload (Optional) -->
           <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
             <div class="flex items-center justify-between">
               <div>
                 <h4 class="font-bold text-slate-800 text-xs">ภาพถ่ายหลักฐานการประเมินภาคปฏิบัติ (ถ้ามี)</h4>
-                <p class="text-[11px] text-slate-500">สำหรับหลักสูตรที่มีการสอบเทียบเครื่องมือ หรือตรวจชิ้นงานจริง (ไม่บังคับสำหรับข้อสอบข้อเขียน)</p>
+                <p class="text-[11px] text-slate-500">สำหรับหลักสูตรที่มีการสอบเทียบเครื่องมือ หรือตรวจชิ้นงานจริง</p>
               </div>
               <label class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-blue-600 font-semibold text-xs cursor-pointer shadow-2xs">
                 <i class="fa-solid fa-camera mr-1"></i>แนบรูปภาพ
@@ -558,7 +537,6 @@
       <form onsubmit="handleSaveCourse(event)" class="p-6 overflow-y-auto flex-1 space-y-5 text-xs">
         <input type="hidden" id="ce-course-id">
 
-        <!-- Basic Course Information -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block font-semibold text-slate-700 mb-1">รหัสหลักสูตร *</label>
@@ -593,8 +571,8 @@
         <!-- Optional Learning Materials -->
         <div class="border-t border-slate-100 pt-4 space-y-3">
           <div class="flex items-center justify-between">
-            <h4 class="font-bold text-slate-800 text-xs">สื่อการเรียนรู้และเอกสาร (ไม่บังคับ สามารถปล่อยว่างได้)</h4>
-            <span class="text-[10px] text-slate-400">Optional Materials</span>
+            <h4 class="font-bold text-slate-800 text-xs">สื่อการเรียนรู้และเอกสาร (ไม่บังคับ ปล่อยว่างได้)</h4>
+            <span class="text-[10px] text-slate-400">Optional</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -612,12 +590,12 @@
           </div>
         </div>
 
-        <!-- Question Sets (Pre-test & Post-test) -->
+        <!-- Question Sets -->
         <div class="border-t border-slate-100 pt-4 space-y-4">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <h4 class="font-bold text-slate-800 text-xs">ชุดคำถามแบบทดสอบ (Pre-test & Post-test)</h4>
-              <p class="text-[11px] text-slate-500">สามารถสร้าง Pre-test แล้วกดคัดลอกลง Post-test พร้อมสลับตำแหน่งช้อยส์ได้ทันที</p>
+              <p class="text-[11px] text-slate-500">สร้าง Pre-test แล้วกดคัดลอกลง Post-test พร้อมสลับตำแหน่งช้อยส์ได้ทันที</p>
             </div>
             <div class="flex items-center gap-2">
               <button type="button" onclick="copyPreTestToPostTestShuffled()" class="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-2xs flex items-center gap-1.5 transition-all">
@@ -626,7 +604,6 @@
             </div>
           </div>
 
-          <!-- Question Switcher Tabs -->
           <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
             <button type="button" onclick="switchEditorQuestionTab('pre')" id="tab-btn-eq-pre" class="px-3 py-1.5 rounded-xl bg-blue-600 text-white font-bold text-xs">
               คำถาม Pre-test (<span id="eq-pre-count">0</span> ข้อ)
@@ -639,10 +616,8 @@
             </button>
           </div>
 
-          <!-- Questions List -->
           <div id="editor-questions-list" class="space-y-4 max-h-96 overflow-y-auto pr-1"></div>
 
-          <!-- Auto-copy Checkbox -->
           <div class="p-3 rounded-2xl bg-amber-50/60 border border-amber-200 flex items-center gap-2">
             <input type="checkbox" id="ce-auto-copy-post" checked class="w-4 h-4 rounded text-amber-600 border-slate-300">
             <label for="ce-auto-copy-post" class="text-[11px] font-semibold text-amber-900 cursor-pointer">
@@ -651,7 +626,7 @@
           </div>
         </div>
 
-        <!-- Footer Actions -->
+        <!-- Footer -->
         <div class="border-t border-slate-100 pt-4 flex items-center justify-between">
           <button type="button" id="btn-delete-course" onclick="handleDeleteCourse()" class="hidden px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs transition-all">
             <i class="fa-solid fa-trash mr-1"></i>ลบหลักสูตรนี้
@@ -669,7 +644,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Edit Score (Master Admin Only) -->
+  <!-- MODAL: Edit Score (Master Admin) -->
   <div id="modal-edit-score" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -708,8 +683,19 @@
         </div>
 
         <div>
+          <label class="block font-semibold text-slate-700 mb-1">ขั้นตอนความคืบหน้า (Stage Progress)</label>
+          <select id="es-step" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none bg-white font-bold text-slate-700">
+            <option value="0">0% - ยังไม่ได้เริ่มเรียน</option>
+            <option value="1">30% - ทำ Pre-test แล้ว</option>
+            <option value="2">70% - เรียนเนื้อหาเสร็จแล้ว</option>
+            <option value="3">Final - ประเมินผล Post-test เรียบร้อย</option>
+          </select>
+        </div>
+
+        <div>
           <label class="block font-semibold text-slate-700 mb-1">สถานะการประเมิน</label>
           <select id="es-status" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none bg-white font-bold text-slate-700">
+            <option value="Pre-tested">กำลังเรียน / Pre-tested</option>
             <option value="Passed">ผ่าน (Passed)</option>
             <option value="Retrain">ต้องอบรมซ้ำ (Retrain)</option>
           </select>
@@ -781,6 +767,47 @@
     </div>
   </div>
 
+  <!-- MODAL: Edit Profile -->
+  <div id="modal-edit-profile" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-base text-slate-900">แก้ไขข้อมูลส่วนตัว</h3>
+        <button onclick="closeProfileModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-base"></i></button>
+      </div>
+      <form onsubmit="handleSaveProfile(event)" class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">ชื่อจริง *</label>
+            <input type="text" id="ep-firstname" required class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">นามสกุล *</label>
+            <input type="text" id="ep-lastname" required class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">แผนก (Department) *</label>
+            <input type="text" id="ep-dept" required class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">ส่วนงาน (Division) *</label>
+            <select id="ep-division" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none bg-white">
+              <option value="Quality Control">Quality Control</option>
+              <option value="Production">Production</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Warehouse & Logistics">Warehouse & Logistics</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeProfileModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600">ยกเลิก</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">บันทึกการแก้ไข</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL: Google Sheets Settings -->
   <div id="modal-sheets-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
@@ -792,7 +819,7 @@
         <p class="text-slate-600">ระบุ Google Apps Script Web App URL เพื่อส่งผลคะแนนลงชีตอัตโนมัติ:</p>
         <input type="text" id="input-sheet-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none">
         <div class="p-3 rounded-xl bg-slate-50 text-slate-600 text-[11px]">
-          หากไม่ระบุ URL ข้อมูลจะถูกจัดเก็บในอุปกรณ์และซิงค์ผ่าน Firebase Database อัตโนมัติ
+          หากไม่ระบุ URL ข้อมูลจะถูกจัดเก็บในเครื่องและซิงค์ผ่าน Firebase Database อัตโนมัติ
         </div>
       </div>
       <div class="flex justify-end gap-2 pt-2">
@@ -802,10 +829,15 @@
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
+  <!-- Toast Container -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <script>
+    const MONTH_NAMES_TH = [
+      'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
+
     const DEFAULT_COURSES = [
       {
         id: 'c1',
@@ -814,7 +846,7 @@
         division: 'Quality Control',
         skillTopic: 'การวัดและตรวจสอบขนาด',
         year: 2026,
-        createdAt: '2026-09-01',
+        createdAt: '2026-09-01T09:00:00',
         videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         docUrl: 'https://drive.google.com',
         description: 'หลักการอ่านค่าสเกลเวอร์เนียร์ ค่าความคลาดเคลื่อน 0.02 mm และการตั้ง Zero บนไมโครมิเตอร์วัดนอก',
@@ -858,7 +890,7 @@
         division: 'Quality Control',
         skillTopic: 'ระบบคุณภาพ & ISO 9001',
         year: 2026,
-        createdAt: '2026-09-02',
+        createdAt: '2026-08-15T10:30:00',
         videoUrl: '',
         docUrl: '',
         description: 'แนวทางการระบุสถานะชิ้นงาน NC การติดป้าย Hold สีแดง และการบันทึกรายงาน NCR ตามข้อกำหนด',
@@ -893,7 +925,7 @@
     let courses = [];
     let users = [];
     let testResults = [];
-    let learningProgress = {}; // Key: `${userId}_${courseId}` -> { step: 0-3, preScore, postScore, status, updatedAt }
+    let learningProgress = {};
     let activeClassroomId = null;
     let currentClassroomStep = 1;
     let currentExamAnswers = {};
@@ -914,7 +946,6 @@
         firebaseDb = firebase.database();
         document.getElementById('firebase-status-badge')?.classList.remove('hidden');
 
-        // Listen for Realtime sync
         firebaseDb.ref('knt_qc_system').on('value', (snapshot) => {
           const val = snapshot.val();
           if (val) {
@@ -960,11 +991,10 @@
         learningProgress = localProgress ? JSON.parse(localProgress) : {};
         googleSheetUrl = localSheetUrl || '';
 
-        // Current active user
         if (localUser) {
           currentUser = JSON.parse(localUser);
         } else {
-          currentUser = users[0]; // Default to Master Admin
+          currentUser = users[0];
         }
       } catch (e) {
         courses = DEFAULT_COURSES;
@@ -979,7 +1009,11 @@
       localStorage.setItem('knt_results', JSON.stringify(testResults));
       localStorage.setItem('knt_progress', JSON.stringify(learningProgress));
       localStorage.setItem('knt_sheet_url', googleSheetUrl);
-      localStorage.setItem('knt_active_user', JSON.stringify(currentUser));
+      if (currentUser) {
+        localStorage.setItem('knt_active_user', JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem('knt_active_user');
+      }
       syncToFirebase();
     }
 
@@ -1005,13 +1039,12 @@
       if (viewName === 'roster') renderRosterView();
     };
 
-    // Helper to calculate progress percentage and meta
     window.getCourseProgressInfo = function(userId, courseId) {
       const key = `${userId}_${courseId}`;
       const prog = learningProgress[key];
 
       if (!prog || prog.step === 0 || prog.step === undefined) {
-        return { percent: 0, label: '0% ยังไม่ได้ทำอะไร', color: 'bg-slate-300', textClass: 'text-slate-500', status: 'Not Started' };
+        return { percent: 0, label: '0% ยังไม่ได้เริ่มเรียน', color: 'bg-slate-300', textClass: 'text-slate-500', status: 'Not Started' };
       }
 
       if (prog.step === 1) {
@@ -1038,7 +1071,7 @@
     };
 
     window.renderCourseCards = function() {
-      const container = document.getElementById('course-grid-container');
+      const container = document.getElementById('course-grouped-container');
       if (!container) return;
 
       const search = (document.getElementById('course-search-input')?.value || '').toLowerCase();
@@ -1052,7 +1085,6 @@
         return matchesSearch && matchesDiv && matchesYear;
       });
 
-      // Update counters
       document.getElementById('hero-course-count').textContent = `${courses.length} หลักสูตรทั้งหมด`;
       const passedCount = courses.filter(c => {
         const p = getCourseProgressInfo(currentUser?.id, c.id);
@@ -1062,7 +1094,7 @@
 
       if (filtered.length === 0) {
         container.innerHTML = `
-          <div class="col-span-full py-12 text-center text-slate-400">
+          <div class="py-16 text-center text-slate-400 bg-white rounded-3xl border border-slate-200">
             <i class="fa-solid fa-folder-open text-4xl mb-3"></i>
             <p class="text-xs">ไม่พบหลักสูตรที่ตรงกับเงื่อนไขการค้นหา</p>
           </div>
@@ -1070,67 +1102,128 @@
         return;
       }
 
+      // Group courses: Year -> Month
+      const grouped = {};
+      filtered.forEach(c => {
+        const cDate = c.createdAt ? new Date(c.createdAt) : new Date();
+        const year = c.year || cDate.getFullYear();
+        const monthIndex = isNaN(cDate.getMonth()) ? 8 : cDate.getMonth(); // Default to Sept if invalid
+        const monthKey = `${monthIndex}`;
+
+        if (!grouped[year]) grouped[year] = {};
+        if (!grouped[year][monthKey]) grouped[year][monthKey] = [];
+        grouped[year][monthKey].push(c);
+      });
+
+      // Sort Years descending
+      const sortedYears = Object.keys(grouped).sort((a, b) => Number(b) - Number(a));
       const isPrivileged = currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Master Admin');
 
-      container.innerHTML = filtered.map(c => {
-        const prog = getCourseProgressInfo(currentUser?.id, c.id);
+      let html = '';
 
-        let actionBtnText = 'เข้าสู่การอบรม';
-        let actionBtnClass = 'bg-blue-600 hover:bg-blue-700 text-white';
-        if (prog.percent === 30) {
-          actionBtnText = 'เรียนเนื้อหาต่อ (Step 2)';
-          actionBtnClass = 'bg-amber-600 hover:bg-amber-700 text-white';
-        } else if (prog.percent === 70) {
-          actionBtnText = 'ทำแบบทดสอบ Post-test';
-          actionBtnClass = 'bg-emerald-600 hover:bg-emerald-700 text-white';
-        } else if (prog.status === 'Passed' || prog.status === 'Retrain') {
-          actionBtnText = 'ทบทวนบทเรียน';
-          actionBtnClass = 'bg-slate-700 hover:bg-slate-800 text-white';
-        }
-
-        return `
-          <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all p-5 flex flex-col justify-between">
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-mono text-[10px] font-bold border border-blue-100">${c.code}</span>
-                <span class="text-[11px] text-slate-400 font-medium">ปี ${c.year}</span>
+      sortedYears.forEach(year => {
+        html += `
+          <div class="space-y-5">
+            <!-- Year Header Banner -->
+            <div class="flex items-center gap-3 border-b border-slate-200 pb-2">
+              <div class="px-3 py-1 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs">
+                <i class="fa-solid fa-calendar-days text-slate-300"></i>
+                <span>ปีงบประมาณ ${year}</span>
               </div>
-              <div>
-                <h3 class="font-bold text-slate-900 text-sm leading-snug line-clamp-2">${c.title}</h3>
-                <div class="flex items-center gap-1.5 text-slate-500 text-[11px] mt-1">
-                  <i class="fa-solid fa-layer-group text-slate-400"></i>
-                  <span>${c.division}</span>
-                  <span>&bull;</span>
-                  <span>${c.skillTopic}</span>
+              <div class="h-0.5 flex-1 bg-gradient-to-r from-slate-200 to-transparent"></div>
+            </div>
+        `;
+
+        // Sort Months descending
+        const sortedMonths = Object.keys(grouped[year]).sort((a, b) => Number(b) - Number(a));
+
+        sortedMonths.forEach(mIdx => {
+          const monthName = MONTH_NAMES_TH[Number(mIdx)] || `เดือนที่ ${Number(mIdx) + 1}`;
+          const courseList = grouped[year][mIdx];
+
+          html += `
+            <div class="space-y-3.5 pl-2 sm:pl-4">
+              <!-- Month Subheader -->
+              <div class="flex items-center gap-2 text-slate-700 font-bold text-xs">
+                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                <span>เดือน ${monthName}</span>
+                <span class="text-[11px] text-slate-400 font-medium">(${courseList.length} หลักสูตร)</span>
+              </div>
+
+              <!-- Course Cards Grid for this Month -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          `;
+
+          courseList.forEach(c => {
+            const prog = getCourseProgressInfo(currentUser?.id, c.id);
+
+            let actionBtnText = 'เข้าสู่การอบรม';
+            let actionBtnClass = 'bg-blue-600 hover:bg-blue-700 text-white';
+            if (prog.percent === 30) {
+              actionBtnText = 'เรียนเนื้อหาต่อ (Step 2)';
+              actionBtnClass = 'bg-amber-600 hover:bg-amber-700 text-white';
+            } else if (prog.percent === 70) {
+              actionBtnText = 'ทำแบบทดสอบ Post-test';
+              actionBtnClass = 'bg-emerald-600 hover:bg-emerald-700 text-white';
+            } else if (prog.status === 'Passed' || prog.status === 'Retrain') {
+              actionBtnText = 'ทบทวนบทเรียน';
+              actionBtnClass = 'bg-slate-700 hover:bg-slate-800 text-white';
+            }
+
+            html += `
+              <div class="bg-white rounded-3xl border border-slate-200/90 shadow-2xs hover:shadow-md transition-all p-5 flex flex-col justify-between">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-mono text-[10px] font-bold border border-blue-100">${c.code}</span>
+                    <span class="text-[11px] text-slate-400 font-medium">ปี ${c.year}</span>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-slate-900 text-sm leading-snug line-clamp-2">${c.title}</h3>
+                    <div class="flex items-center gap-1.5 text-slate-500 text-[11px] mt-1">
+                      <i class="fa-solid fa-layer-group text-slate-400"></i>
+                      <span>${c.division}</span>
+                      <span>&bull;</span>
+                      <span>${c.skillTopic}</span>
+                    </div>
+                  </div>
+                  <p class="text-slate-600 text-xs line-clamp-2 leading-relaxed">${c.description || 'ไม่มีคำอธิบายเพิ่มเติม'}</p>
+                </div>
+
+                <!-- Dynamic Progress Bar -->
+                <div class="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-slate-500 font-medium">ความคืบหน้า</span>
+                    <span class="font-bold ${prog.textClass}">${prog.label}</span>
+                  </div>
+                  <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500 ${prog.color}" style="width: ${Math.min(100, Math.max(0, prog.percent))}%"></div>
+                  </div>
+
+                  <div class="pt-2 flex items-center justify-between gap-2">
+                    <button onclick="openCourseClassroom('${c.id}')" class="flex-1 py-2 rounded-xl ${actionBtnClass} text-xs font-bold transition-all shadow-2xs text-center">
+                      ${actionBtnText}
+                    </button>
+                    ${isPrivileged ? `
+                      <button onclick="openCourseModal('${c.id}')" class="w-9 h-9 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-all" title="แก้ไขหลักสูตร">
+                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                      </button>
+                    ` : ''}
+                  </div>
                 </div>
               </div>
-              <p class="text-slate-600 text-xs line-clamp-2 leading-relaxed">${c.description || 'ไม่มีคำอธิบายเพิ่มเติม'}</p>
-            </div>
+            `;
+          });
 
-            <!-- Dynamic Progress Bar -->
-            <div class="mt-4 pt-4 border-t border-slate-100 space-y-2">
-              <div class="flex items-center justify-between text-[11px]">
-                <span class="text-slate-500 font-medium">ความคืบหน้า</span>
-                <span class="font-bold ${prog.textClass}">${prog.label}</span>
-              </div>
-              <div class="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-                <div class="h-full rounded-full transition-all duration-500 ${prog.color}" style="width: ${Math.min(100, Math.max(0, prog.percent))}%"></div>
-              </div>
-
-              <div class="pt-2 flex items-center justify-between gap-2">
-                <button onclick="openCourseClassroom('${c.id}')" class="flex-1 py-2 rounded-xl ${actionBtnClass} text-xs font-bold transition-all shadow-2xs text-center">
-                  ${actionBtnText}
-                </button>
-                ${isPrivileged ? `
-                  <button onclick="openCourseModal('${c.id}')" class="w-9 h-9 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 flex items-center justify-center transition-all" title="แก้ไขหลักสูตร">
-                    <i class="fa-solid fa-pen-to-square text-xs"></i>
-                  </button>
-                ` : ''}
+          html += `
               </div>
             </div>
-          </div>
-        `;
-      }).join('');
+          `;
+        });
+
+        html += `</div>`;
+      });
+
+      container.innerHTML = html;
     };
 
     window.renderProgressTrackingView = function() {
@@ -1152,11 +1245,8 @@
       }
 
       const selectedUserId = (isPrivileged && userSelect) ? userSelect.value : currentUser?.id;
-
-      // Filter target users
       const targetUsers = (selectedUserId === 'all') ? users : users.filter(u => u.id === selectedUserId);
 
-      // Flatten user-course matrix
       let rowsData = [];
       targetUsers.forEach(u => {
         courses.forEach(c => {
@@ -1167,7 +1257,6 @@
         });
       });
 
-      // Update summary counters
       let count0 = 0, count30 = 0, count70 = 0, countFinal = 0;
       rowsData.forEach(r => {
         if (r.info.percent === 0) count0++;
@@ -1228,12 +1317,12 @@
             </td>
             <td class="py-3 px-4 text-center font-mono text-slate-400 text-[10px]">${p.updatedAt || '-'}</td>
             <td class="py-3 px-4 text-center">
-              <div class="flex items-center justify-center gap-1">
+              <div class="flex items-center justify-center gap-1.5">
                 <button onclick="openCourseClassroom('${c.id}')" class="px-3 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-[11px] font-semibold transition-all">
                   ${p.step === 0 ? 'เข้าเรียน' : p.step === 3 ? 'ทบทวน' : 'เรียนต่อ'}
                 </button>
-                ${(isMasterAdmin && p.step === 3) ? `
-                  <button onclick="openEditScoreModalByContext('${u.id}', '${c.id}')" class="p-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-all" title="แก้ไขคะแนน (Master Admin)">
+                ${isMasterAdmin ? `
+                  <button onclick="openEditScoreModalByContext('${u.id}', '${c.id}')" class="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-all" title="แก้ไขคะแนน (Master Admin)">
                     <i class="fa-solid fa-pen-to-square text-xs"></i>
                   </button>
                 ` : ''}
@@ -1256,16 +1345,14 @@
       document.getElementById('cr-course-year').textContent = `ปี ${course.year}`;
       document.getElementById('cr-course-title').textContent = course.title;
 
-      // Check current user progress
       const key = `${currentUser?.id}_${courseId}`;
       const prog = learningProgress[key] || { step: 0, preScore: null, postScore: null, preAnswers: {} };
 
-      // Restore previously submitted preAnswers if available
       if (prog.preAnswers) {
-        currentExamAnswers = { ...prog.preAnswers };
+        currentExamAnswers['pre'] = { ...prog.preAnswers };
       }
 
-      // Populate Step 2 Media
+      // Step 2 Media
       const videoCont = document.getElementById('cr-media-video-container');
       const videoFrame = document.getElementById('cr-media-video-frame');
       if (course.videoUrl && course.videoUrl.trim() !== '') {
@@ -1299,11 +1386,9 @@
 
       document.getElementById('cr-media-desc').textContent = course.description || 'ไม่มีคำอธิบายเพิ่มเติมสำหรับหลักสูตรนี้';
 
-      // Render Questions
       renderClassroomQuestions('pre', course.preQuestions, 'pretest-questions-container');
       renderClassroomQuestions('post', course.postQuestions, 'posttest-questions-container');
 
-      // Pretest banner check
       const preBanner = document.getElementById('pretest-completed-banner');
       if (prog.step >= 1 && prog.preScore !== null && prog.preScore !== undefined) {
         preBanner?.classList.remove('hidden');
@@ -1312,13 +1397,12 @@
         preBanner?.classList.add('hidden');
       }
 
-      // SMART RESUME: Jump to the step the user currently needs
       if (prog.step === 1) {
-        goToClassroomStep(2); // Jump to learning materials
+        goToClassroomStep(2);
       } else if (prog.step === 2) {
-        goToClassroomStep(3); // Jump to post-test
+        goToClassroomStep(3);
       } else {
-        goToClassroomStep(1); // Default to pre-test or review
+        goToClassroomStep(1);
       }
 
       document.getElementById('modal-classroom')?.classList.remove('hidden');
@@ -1360,26 +1444,33 @@
         return;
       }
 
-      cont.innerHTML = questions.map((q, idx) => `
-        <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
-          <div class="flex items-start justify-between gap-2">
-            <div class="font-bold text-slate-900 text-xs flex items-start gap-2">
-              <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] shrink-0 font-mono">${idx + 1}</span>
-              <span>${q.question}</span>
-            </div>
-            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">${q.points || 10} คะแนน</span>
-          </div>
+      const key = `${currentUser?.id}_${activeClassroomId}`;
+      const savedPreAns = learningProgress[key]?.preAnswers || {};
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-            ${(q.options || []).map((opt, optIdx) => `
-              <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-all text-xs">
-                <input type="radio" name="${type}_q_${idx}" value="${optIdx}" onchange="recordClassroomAnswer('${type}', ${idx}, ${optIdx})" class="w-4 h-4 text-blue-600 border-slate-300">
-                <span class="text-slate-700 font-medium">${opt}</span>
-              </label>
-            `).join('')}
+      cont.innerHTML = questions.map((q, idx) => {
+        const isPreChecked = (type === 'pre' && savedPreAns[idx] !== undefined) ? savedPreAns[idx] : null;
+
+        return `
+          <div class="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
+            <div class="flex items-start justify-between gap-2">
+              <div class="font-bold text-slate-900 text-xs flex items-start gap-2">
+                <span class="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center text-[10px] shrink-0 font-mono">${idx + 1}</span>
+                <span>${q.question}</span>
+              </div>
+              <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md shrink-0">${q.points || 10} คะแนน</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              ${(q.options || []).map((opt, optIdx) => `
+                <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-all text-xs">
+                  <input type="radio" name="${type}_q_${idx}" value="${optIdx}" ${isPreChecked === optIdx ? 'checked' : ''} onchange="recordClassroomAnswer('${type}', ${idx}, ${optIdx})" class="w-4 h-4 text-blue-600 border-slate-300">
+                  <span class="text-slate-700 font-medium">${opt}</span>
+                </label>
+              `).join('')}
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     window.recordClassroomAnswer = function(type, qIdx, optIdx) {
@@ -1405,9 +1496,8 @@
       });
 
       const scorePercent = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 100;
-
-      // Save progress (Step 1 -> 30%)
       const key = `${currentUser?.id}_${course.id}`;
+
       if (!learningProgress[key]) {
         learningProgress[key] = { step: 1, preScore: scorePercent, postScore: null, status: 'Pre-tested', preAnswers: currentExamAnswers['pre'] };
       } else {
@@ -1420,7 +1510,6 @@
       saveState();
       showToast(`บันทึกคะแนน Pre-test เรียบร้อย: ${scorePercent}% (ความคืบหน้า 30%)`, 'info');
 
-      // Advance to step 2
       goToClassroomStep(2);
       renderAllViews();
     };
@@ -1468,7 +1557,6 @@
       const key = `${currentUser?.id}_${course.id}`;
       const preScore = learningProgress[key]?.preScore ?? 0;
 
-      // Update progress to Step 3 (Final)
       learningProgress[key] = {
         step: 3,
         preScore: preScore,
@@ -1477,7 +1565,6 @@
         updatedAt: new Date().toLocaleString('th-TH')
       };
 
-      // Add to Test Results Logs
       const newResult = {
         id: 'res_' + Date.now(),
         userId: currentUser.id,
@@ -1497,7 +1584,6 @@
       testResults.unshift(newResult);
       saveState();
 
-      // Trigger Google Sheet sync if configured
       if (googleSheetUrl && googleSheetUrl.trim() !== '') {
         try {
           fetch(googleSheetUrl, {
@@ -1569,6 +1655,7 @@
 
       document.getElementById('es-pre-score').value = res.preScore ?? 0;
       document.getElementById('es-post-score').value = res.postScore ?? 0;
+      document.getElementById('es-step').value = 3;
       document.getElementById('es-status').value = res.status || 'Passed';
       document.getElementById('es-note').value = res.editNote || '';
 
@@ -1629,7 +1716,6 @@
       const newStatus = document.getElementById('es-status').value;
       const note = document.getElementById('es-note').value.trim();
 
-      // Update or create learningProgress entry
       const key = `${userId}_${courseId}`;
       if (!learningProgress[key]) {
         learningProgress[key] = {};
@@ -1640,7 +1726,6 @@
       learningProgress[key].status = newStatus;
       learningProgress[key].updatedAt = new Date().toLocaleString('th-TH');
 
-      // Update or create testResults entry
       let res = testResults.find(r => (resultId && r.id === resultId) || (r.userId === userId && r.courseId === courseId));
       if (res) {
         res.preScore = newPreScore;
@@ -1676,47 +1761,6 @@
       showToast(`แก้ไขคะแนนและสถานะของ ${u ? u.firstName : ''} เรียบร้อยแล้ว`, 'success');
     };
 
-    window.closeEditScoreModal = function() {
-      document.getElementById('modal-edit-score')?.classList.add('hidden');
-    };
-
-    window.handleSaveScoreEdit = function(e) {
-      e.preventDefault();
-      if (!currentUser || currentUser.role !== 'Master Admin') {
-        showToast('เฉพาะ Master Admin เท่านั้นที่สามารถแก้ไขคะแนนได้', 'error');
-        return;
-      }
-
-      const resultId = document.getElementById('es-result-id').value;
-      const res = testResults.find(r => r.id === resultId);
-      if (!res) return;
-
-      const newPreScore = Math.max(0, Math.min(100, parseInt(document.getElementById('es-pre-score').value, 10) || 0));
-      const newPostScore = Math.max(0, Math.min(100, parseInt(document.getElementById('es-post-score').value, 10) || 0));
-      const newStatus = document.getElementById('es-status').value;
-      const note = document.getElementById('es-note').value.trim();
-
-      res.preScore = newPreScore;
-      res.postScore = newPostScore;
-      res.status = newStatus;
-      res.editNote = note;
-      res.editedBy = `${currentUser.firstName} ${currentUser.lastName}`;
-      res.editedAt = new Date().toLocaleString('th-TH');
-
-      const key = `${res.userId}_${res.courseId}`;
-      if (learningProgress[key]) {
-        learningProgress[key].preScore = newPreScore;
-        learningProgress[key].postScore = newPostScore;
-        learningProgress[key].status = newStatus;
-        learningProgress[key].updatedAt = new Date().toLocaleString('th-TH');
-      }
-
-      saveState();
-      closeEditScoreModal();
-      renderAllViews();
-      showToast(`แก้ไขคะแนนของ ${res.userName} เรียบร้อยแล้ว`, 'success');
-    };
-
     window.openCourseModal = function(courseId = null) {
       const modal = document.getElementById('modal-course-editor');
       const delBtn = document.getElementById('btn-delete-course');
@@ -1745,6 +1789,7 @@
           division: 'Quality Control',
           skillTopic: '',
           year: 2026,
+          createdAt: new Date().toISOString(),
           videoUrl: '',
           docUrl: '',
           description: '',
@@ -1855,19 +1900,16 @@
         return;
       }
 
-      // Deep copy and shuffle
       editorCourseData.postQuestions = editorCourseData.preQuestions.map(q => {
         const originalOptions = [...q.options];
         const correctText = originalOptions[q.correctIndex];
 
-        // Fisher-Yates choice shuffle
         const shuffledOptions = [...originalOptions];
         for (let i = shuffledOptions.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
         }
 
-        // Remap new correct index
         const newCorrectIndex = shuffledOptions.indexOf(correctText);
 
         return {
@@ -1897,7 +1939,6 @@
       const desc = document.getElementById('ce-media-desc').value.trim();
       const autoCopy = document.getElementById('ce-auto-copy-post').checked;
 
-      // Auto-shuffle to post-test if empty and checked
       if (autoCopy && editorCourseData.postQuestions.length === 0 && editorCourseData.preQuestions.length > 0) {
         copyPreTestToPostTestShuffled();
       }
@@ -2068,6 +2109,64 @@
       closeAddUserModal();
       renderRosterView();
       showToast(`เพิ่มพนักงาน "${fn} ${ln}" สำเร็จ`, 'success');
+    };
+
+    window.openProfileModal = function() {
+      if (!currentUser) return;
+      document.getElementById('ep-firstname').value = currentUser.firstName;
+      document.getElementById('ep-lastname').value = currentUser.lastName;
+      document.getElementById('ep-dept').value = currentUser.department;
+      document.getElementById('ep-division').value = currentUser.division;
+      document.getElementById('modal-edit-profile')?.classList.remove('hidden');
+      document.getElementById('user-dropdown')?.classList.add('hidden');
+    };
+
+    window.closeProfileModal = function() {
+      document.getElementById('modal-edit-profile')?.classList.add('hidden');
+    };
+
+    window.handleSaveProfile = function(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const fn = document.getElementById('ep-firstname').value.trim();
+      const ln = document.getElementById('ep-lastname').value.trim();
+      const dept = document.getElementById('ep-dept').value.trim();
+      const div = document.getElementById('ep-division').value;
+
+      currentUser.firstName = fn;
+      currentUser.lastName = ln;
+      currentUser.department = dept;
+      currentUser.division = div;
+
+      const uIdx = users.findIndex(u => u.id === currentUser.id);
+      if (uIdx >= 0) {
+        users[uIdx] = { ...users[uIdx], firstName: fn, lastName: ln, department: dept, division: div };
+      }
+
+      saveState();
+      closeProfileModal();
+      renderAllViews();
+      showToast('บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว', 'success');
+    };
+
+    window.handleLogout = function() {
+      if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+        document.getElementById('user-dropdown')?.classList.add('hidden');
+        // Clear active session
+        localStorage.removeItem('knt_active_user');
+        currentUser = null;
+
+        // Prompt or switch to default test account
+        showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
+        
+        // Re-assign to standard user or guest
+        setTimeout(() => {
+          currentUser = users[users.length - 1] || DEFAULT_USERS[2];
+          saveState();
+          renderAllViews();
+        }, 300);
+      }
     };
 
     window.deleteUser = function(userId) {
