@@ -1487,25 +1487,10 @@
     };
 
     window.openLoginModal = function() {
-      const list = document.getElementById('login-accounts-list');
-      if (list) {
-        list.innerHTML = users.map(u => `
-          <button type="button" onclick="handleLogin('${u.id}')" class="w-full text-left p-2.5 rounded-2xl border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 flex items-center justify-between transition-all">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
-                ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : (u.firstName || 'U')[0].toUpperCase()}
-              </div>
-              <div>
-                <div class="font-bold text-slate-900 text-xs">${u.firstName} ${u.lastName} <span class="text-[10px] text-slate-400 font-mono">(@${u.username || u.id})</span></div>
-                <div class="text-[10px] text-slate-500">${u.department} / ${u.division || '-'}</div>
-              </div>
-            </div>
-            <span class="px-2 py-0.5 rounded-md text-[9px] font-bold ${u.role === 'master_admin' ? 'bg-purple-100 text-purple-800' : u.role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}">
-              ${u.role}
-            </span>
-          </button>
-        `).join('');
-      }
+      const uInput = document.getElementById('login-input-username');
+      const pInput = document.getElementById('login-input-password');
+      if (uInput) uInput.value = '';
+      if (pInput) pInput.value = '';
       document.getElementById('modal-auth-login')?.classList.remove('hidden');
     };
 
@@ -1514,7 +1499,14 @@
     };
 
     window.handleLogin = function(userId) {
-      window.switchUser(userId);
+      const u = users.find(x => x.id === userId);
+      if (u) {
+        currentUser = u;
+        saveState();
+        updateNavUserDisplay();
+        renderAllViews();
+        showToast(`เข้าสู่ระบบสำเร็จในชื่อคุณ ${u.firstName} ${u.lastName}`, 'success');
+      }
       window.closeLoginModal();
     };
 
@@ -1683,6 +1675,11 @@
         }
       }
 
+      const menuFullname = document.getElementById('user-menu-fullname');
+      const menuUsername = document.getElementById('user-menu-username');
+      if (menuFullname) menuFullname.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+      if (menuUsername) menuUsername.textContent = `@${currentUser.username || currentUser.id} (${currentUser.role})`;
+
       if (btnCreate) {
         if (currentUser.role === 'admin' || currentUser.role === 'master_admin') {
           btnCreate.classList.remove('hidden');
@@ -1691,21 +1688,6 @@
           btnCreate.classList.add('hidden');
           btnCreate.classList.remove('flex');
         }
-      }
-
-      const container = document.getElementById('user-switch-list');
-      if (container) {
-        container.innerHTML = users.map(u => `
-          <button type="button" onclick="switchUser('${u.id}')" class="w-full text-left px-2 py-1.5 rounded-lg flex items-center justify-between text-[11px] ${u.id === currentUser.id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:bg-slate-50'}">
-            <div class="flex items-center gap-1.5">
-              <div class="w-5 h-5 rounded-full overflow-hidden bg-slate-900 text-white flex items-center justify-center text-[9px]">
-                ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : (u.firstName || 'U')[0].toUpperCase()}
-              </div>
-              <span>${u.firstName} ${u.lastName}</span>
-            </div>
-            <span class="text-[9px] uppercase px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-700">${u.role}</span>
-          </button>
-        `).join('');
       }
     }
 
@@ -2139,9 +2121,17 @@
           <td class="px-5 py-3 text-slate-500">${u.division || '-'}</td>
           <td class="px-5 py-3 text-[11px] font-mono text-slate-600">${u.startDate || '-'}</td>
           <td class="px-5 py-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'master_admin' ? 'bg-purple-100 text-purple-800' : u.role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}">
-              ${u.role}
-            </span>
+            ${isMasterAdmin ? `
+              <select onchange="changeUserRole('${u.id}', this.value)" class="px-2 py-1 rounded-xl border border-slate-200 bg-white font-bold text-[11px] outline-none focus:border-purple-500 cursor-pointer ${u.role === 'master_admin' ? 'text-purple-700 bg-purple-50 border-purple-200' : u.role === 'admin' ? 'text-blue-700 bg-blue-50 border-blue-200' : 'text-slate-700'}">
+                <option value="user" ${u.role === 'user' ? 'selected' : ''}>User (พนักงาน)</option>
+                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin (ผู้ดูแล)</option>
+                <option value="master_admin" ${u.role === 'master_admin' ? 'selected' : ''}>Master Admin</option>
+              </select>
+            ` : `
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role === 'master_admin' ? 'bg-purple-100 text-purple-800' : u.role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}">
+                ${u.role}
+              </span>
+            `}
           </td>
           <td class="px-5 py-3 text-right">
             ${(isMasterAdmin && currentUser && u.id !== currentUser.id) ? `
@@ -3609,7 +3599,6 @@
       const dept = document.getElementById('nu-dept').value.trim();
       const div = document.getElementById('nu-division').value.trim();
       const sd = document.getElementById('nu-start-date').value;
-      const role = document.getElementById('nu-role').value;
       const avatarBase64 = document.getElementById('nu-avatar-base64')?.value || '';
 
       if (users.some(u => u.username && u.username.toLowerCase() === un.toLowerCase())) {
@@ -3627,7 +3616,7 @@
         division: div,
         startDate: sd,
         avatar: avatarBase64,
-        role: role,
+        role: 'user', // สิทธิ์เริ่มต้นเป็น User เสมอ
         status: 'approved'
       };
 
@@ -3636,7 +3625,28 @@
       syncToFirebase('users', newUser);
       closeAddUserModal();
       renderAdminHub();
-      showToast(`เพิ่มพนักงานคุณ ${fn} ${ln} (@${un}) เรียบร้อยแล้ว`, 'success');
+      showToast(`เพิ่มพนักงานคุณ ${fn} ${ln} (@${un}) สิทธิ์ User เรียบร้อยแล้ว`, 'success');
+    };
+
+    window.changeUserRole = function(targetUserId, newRole) {
+      if (!currentUser || currentUser.role !== 'master_admin') {
+        showToast('คุณไม่มีสิทธิ์ในการเปลี่ยนระดับสิทธิ์ผู้ใช้งาน', 'error');
+        return;
+      }
+
+      const target = users.find(u => u.id === targetUserId);
+      if (!target) return;
+
+      target.role = newRole;
+      if (currentUser.id === target.id) {
+        currentUser.role = newRole;
+      }
+
+      saveState();
+      syncToFirebase('users', target);
+      renderAdminHub();
+      updateNavUserDisplay();
+      showToast(`อัปเดตสิทธิ์ของ ${target.firstName} ${target.lastName} เป็น "${newRole}" เรียบร้อยแล้ว`, 'success');
     };
 
     window.deleteUser = function(id) {
