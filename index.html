@@ -1576,12 +1576,104 @@
     };
 
     window.openEditScoreModalByContext = function(userId, courseId) {
-      const res = testResults.find(r => r.userId === userId && r.courseId === courseId);
-      if (res) {
-        openEditScoreModal(res.id);
-      } else {
-        showToast('ยังไม่มีบันทึกผลการสอบของหลักสูตรนี้', 'info');
+      if (!currentUser || currentUser.role !== 'Master Admin') {
+        showToast('เฉพาะ Master Admin เท่านั้นที่สามารถแก้ไขคะแนนได้', 'error');
+        return;
       }
+
+      const u = users.find(item => item.id === userId);
+      const c = courses.find(item => item.id === courseId);
+      if (!u || !c) return;
+
+      const key = `${userId}_${courseId}`;
+      const prog = learningProgress[key] || { step: 0, preScore: 0, postScore: null, status: 'Not Started' };
+      const res = testResults.find(r => r.userId === userId && r.courseId === courseId);
+
+      document.getElementById('es-result-id').value = res ? res.id : '';
+      document.getElementById('es-user-id').value = userId;
+      document.getElementById('es-course-id').value = courseId;
+      document.getElementById('es-user-name').textContent = `พนักงาน: ${u.firstName} ${u.lastName} (${u.division})`;
+      document.getElementById('es-course-title').textContent = `หลักสูตร: ${c.title} (${c.code})`;
+      document.getElementById('es-completed-at').textContent = res ? `สอบเมื่อ: ${res.completedAt}` : `อัปเดตล่าสุด: ${prog.updatedAt || 'ยังไม่มีประวัติการสอบ'}`;
+
+      document.getElementById('es-pre-score').value = (prog.preScore !== null && prog.preScore !== undefined) ? prog.preScore : (res?.preScore ?? 0);
+      document.getElementById('es-post-score').value = (prog.postScore !== null && prog.postScore !== undefined) ? prog.postScore : (res?.postScore ?? 0);
+      document.getElementById('es-step').value = prog.step !== undefined ? prog.step : (res ? 3 : 0);
+      document.getElementById('es-status').value = prog.status || res?.status || 'Pre-tested';
+      document.getElementById('es-note').value = res?.editNote || '';
+
+      document.getElementById('modal-edit-score')?.classList.remove('hidden');
+    };
+
+    window.closeEditScoreModal = function() {
+      document.getElementById('modal-edit-score')?.classList.add('hidden');
+    };
+
+    window.handleSaveScoreEdit = function(e) {
+      e.preventDefault();
+      if (!currentUser || currentUser.role !== 'Master Admin') {
+        showToast('เฉพาะ Master Admin เท่านั้นที่สามารถแก้ไขคะแนนได้', 'error');
+        return;
+      }
+
+      const resultId = document.getElementById('es-result-id').value;
+      const userId = document.getElementById('es-user-id').value;
+      const courseId = document.getElementById('es-course-id').value;
+
+      const u = users.find(item => item.id === userId);
+      const c = courses.find(item => item.id === courseId);
+
+      const newPreScore = Math.max(0, Math.min(100, parseInt(document.getElementById('es-pre-score').value, 10) || 0));
+      const newPostScore = Math.max(0, Math.min(100, parseInt(document.getElementById('es-post-score').value, 10) || 0));
+      const newStep = parseInt(document.getElementById('es-step').value, 10);
+      const newStatus = document.getElementById('es-status').value;
+      const note = document.getElementById('es-note').value.trim();
+
+      // Update or create learningProgress entry
+      const key = `${userId}_${courseId}`;
+      if (!learningProgress[key]) {
+        learningProgress[key] = {};
+      }
+      learningProgress[key].step = newStep;
+      learningProgress[key].preScore = newPreScore;
+      learningProgress[key].postScore = newStep === 3 ? newPostScore : (newPostScore > 0 ? newPostScore : null);
+      learningProgress[key].status = newStatus;
+      learningProgress[key].updatedAt = new Date().toLocaleString('th-TH');
+
+      // Update or create testResults entry
+      let res = testResults.find(r => (resultId && r.id === resultId) || (r.userId === userId && r.courseId === courseId));
+      if (res) {
+        res.preScore = newPreScore;
+        res.postScore = newPostScore;
+        res.status = newStatus;
+        res.editNote = note;
+        res.editedBy = `${currentUser.firstName} ${currentUser.lastName}`;
+        res.editedAt = new Date().toLocaleString('th-TH');
+      } else if (newStep === 3 || newPostScore > 0) {
+        res = {
+          id: 'res_' + Date.now(),
+          userId: userId,
+          userName: u ? `${u.firstName} ${u.lastName}` : '-',
+          department: u ? u.department : '-',
+          division: u ? u.division : '-',
+          courseId: courseId,
+          courseTitle: c ? c.title : '-',
+          skillTopic: c ? c.skillTopic : '-',
+          preScore: newPreScore,
+          postScore: newPostScore,
+          status: newStatus,
+          editNote: note,
+          editedBy: `${currentUser.firstName} ${currentUser.lastName}`,
+          editedAt: new Date().toLocaleString('th-TH'),
+          completedAt: new Date().toLocaleString('th-TH')
+        };
+        testResults.unshift(res);
+      }
+
+      saveState();
+      closeEditScoreModal();
+      renderAllViews();
+      showToast(`แก้ไขคะแนนและสถานะของ ${u ? u.firstName : ''} เรียบร้อยแล้ว`, 'success');
     };
 
     window.closeEditScoreModal = function() {
