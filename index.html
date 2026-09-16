@@ -199,7 +199,7 @@
       </div>
     </section>
 
-    <!-- VIEW 2: Progress Tracking (ความคืบหน้าการเรียนรู้ 4 ขั้นตอน 0% -> 30% -> 70% -> Post-test %) -->
+    <!-- VIEW 2: Progress Tracking -->
     <section id="view-progress" class="hidden space-y-6">
       <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         <div>
@@ -316,7 +316,7 @@
             <i class="fa-solid fa-shield-halved text-blue-600"></i>
             <span>ศูนย์ควบคุมผู้ดูแลระบบ (Admin Hub)</span>
           </h2>
-          <p class="text-xs text-slate-500 mt-1">จัดการอนุมัติผู้ใช้งานใหม่, กำหนดระดับสิทธิ์, และตรวจสอบผลคะแนนสด</p>
+          <p class="text-xs text-slate-500 mt-1">จัดการอนุมัติผู้ใช้งานใหม่, จัดการหลักสูตร, กำหนดสิทธิ์ และตรวจข้อสอบ</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="forceRealtimeSync()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5">
@@ -326,7 +326,7 @@
         </div>
       </div>
 
-      <!-- Pending User Approvals Queue (คำขอสมัครสมาชิกรออนุมัติ) -->
+      <!-- Pending User Approvals Queue -->
       <div id="admin-pending-approval-card" class="bg-amber-50/90 rounded-2xl border border-amber-200 shadow-xs p-5 hidden">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
@@ -353,6 +353,38 @@
               </tr>
             </thead>
             <tbody id="pending-approval-table-body" class="divide-y divide-amber-100 font-medium">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Course Management Section in Admin Hub -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-book-open-reader text-indigo-600"></i>
+            <h3 class="font-bold text-sm text-slate-800">จัดการหลักสูตรและสื่อการเรียนรู้ทั้งหมด (Course Management)</h3>
+          </div>
+          <button onclick="openAddCourseModal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs">
+            <i class="fa-solid fa-plus"></i>
+            <span>เพิ่มหลักสูตร</span>
+          </button>
+        </div>
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-50 font-bold text-slate-500 uppercase border-b border-slate-200">
+              <tr>
+                <th class="p-3">ชื่อหลักสูตร</th>
+                <th class="p-3">หัวข้อทักษะ</th>
+                <th class="p-3">แผนก</th>
+                <th class="p-3">ประเภท</th>
+                <th class="p-3">ปี/เดือนงบประมาณ</th>
+                <th class="p-3 text-center">สื่อการสอน</th>
+                <th class="p-3 text-center">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="admin-course-table-body" class="divide-y divide-slate-100 font-medium">
               <!-- Dynamically populated -->
             </tbody>
           </table>
@@ -424,7 +456,6 @@
 
     <!-- VIEW 5: Course Classroom & Examination Workspace -->
     <section id="view-classroom" class="hidden space-y-6">
-      <!-- Classroom Top Info Header -->
       <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
         <div class="flex items-center gap-3">
           <button onclick="switchView('catalog')" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-all">
@@ -439,7 +470,7 @@
           </div>
         </div>
 
-        <!-- 3-Step Indicator for Theory Courses -->
+        <!-- Stepper for Theory Courses -->
         <div id="cr-theory-stepper" class="flex items-center gap-2">
           <div id="step-pill-1" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white flex items-center gap-1.5">
             <span>1</span>
@@ -468,7 +499,7 @@
           <p class="text-xs text-slate-500 mt-1">วัดระดับความรู้พื้นฐานก่อนเริ่มศึกษาเนื้อหา (ทำเสร็จความคืบหน้าจะปรับเป็น 30%)</p>
         </div>
         <div id="cr-pretest-questions-list" class="space-y-6">
-          <!-- Populated dynamically -->
+          <!-- Dynamically populated -->
         </div>
         <div class="pt-4 border-t border-slate-100 flex justify-end">
           <button onclick="submitPreTest()" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/20 active:scale-95 transition-all flex items-center gap-2">
@@ -478,18 +509,18 @@
         </div>
       </div>
 
-      <!-- Theory Step 2: Learning Materials Workspace -->
+      <!-- Theory Step 2: Learning Materials Workspace (Dynamic list of links) -->
       <div id="cr-content-step2" class="hidden bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
         <div class="border-b border-slate-100 pb-4">
           <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-book-open text-indigo-600"></i>
             <span>เอกสารและสื่อการเรียนรู้ (Learning Materials)</span>
           </h3>
-          <p class="text-xs text-slate-500 mt-1">ศึกษาเอกสารคู่มือมาตรฐานและวิดีโอปฏิบัติการ (ศึกษาเสร็จความคืบหน้าจะปรับเป็น 70%)</p>
+          <p class="text-xs text-slate-500 mt-1">ศึกษาเอกสารคู่มือมาตรฐาน วิดีโอ หรือสไลด์นำเสนอ (ศึกษาเสร็จความคืบหน้าจะปรับเป็น 70%)</p>
         </div>
         
         <div id="cr-materials-container" class="space-y-4">
-          <!-- Dynamic video / document embeds -->
+          <!-- Dynamic embeds/links -->
         </div>
 
         <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
@@ -510,7 +541,7 @@
           <p class="text-xs text-slate-500 mt-1">ประเมินผลการเรียนรู้ครั้งสุดท้ายเพื่อวัดผลสำเร็จของสมรรถนะ</p>
         </div>
         <div id="cr-posttest-questions-list" class="space-y-6">
-          <!-- Populated dynamically -->
+          <!-- Dynamically populated -->
         </div>
         <div class="pt-4 border-t border-slate-100 flex justify-end">
           <button onclick="submitPostTest()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2">
@@ -520,7 +551,7 @@
         </div>
       </div>
 
-      <!-- PRACTICAL MODE WORKSPACE (โหมดทดสอบภาคปฏิบัติ ตรวจสอบชิ้นงานจริง สูงสุด 100 ชิ้น + จับเวลา) -->
+      <!-- PRACTICAL MODE WORKSPACE (ชิ้นงานจริง สูงสุด 100 ชิ้น + จับเวลา) -->
       <div id="cr-content-practical" class="hidden bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
         <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -538,7 +569,7 @@
           </div>
         </div>
 
-        <!-- Start Practical Button Screen (Before timer begins) -->
+        <!-- Start Screen -->
         <div id="practical-start-screen" class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
           <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl mx-auto shadow-xs">
             <i class="fa-solid fa-stopwatch-20"></i>
@@ -554,7 +585,7 @@
           </button>
         </div>
 
-        <!-- Practical Inspection Items Grid / Table (Active during inspection) -->
+        <!-- Inspection Items Screen -->
         <div id="practical-inspection-screen" class="hidden space-y-6">
           <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
             <table class="w-full text-left text-xs text-slate-700">
@@ -567,7 +598,7 @@
                 </tr>
               </thead>
               <tbody id="practical-samples-table-body" class="divide-y divide-slate-100 font-medium">
-                <!-- Dynamically populated up to 100 samples -->
+                <!-- Dynamically populated -->
               </tbody>
             </table>
           </div>
@@ -582,13 +613,13 @@
           </div>
         </div>
 
-        <!-- Practical Result Display Modal / View -->
+        <!-- Result Screen -->
         <div id="practical-result-screen" class="hidden p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
           <div id="practical-result-icon-box" class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-xs">
             <i class="fa-solid fa-circle-check"></i>
           </div>
           <h4 id="practical-result-title" class="text-2xl font-black text-slate-900">ผ่านการทดสอบ (Passed)</h4>
-          <p id="practical-result-meta" class="text-sm text-slate-600">คะแนนความแม่นยำ: 100% | เวลาที่ใช้: 01:25 นาที</p>
+          <p id="practical-result-meta" class="text-sm text-slate-600">คะแนนความแม่นยำ: 100%</p>
           <div class="flex items-center justify-center gap-3 pt-2">
             <button onclick="switchView('progress')" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all">
               <span>ดูตารางความคืบหน้า</span>
@@ -602,7 +633,7 @@
     </section>
   </main>
 
-  <!-- MODAL: Course Builder (รองรับทฤษฎี & ปฏิบัติ พร้อมชิ้นงาน 100 ชิ้น) -->
+  <!-- MODAL: Course Builder & Editor (สร้าง / แก้ไข หลักสูตร) -->
   <div id="modal-course-builder" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
       <!-- Modal Header -->
@@ -618,6 +649,7 @@
 
       <!-- Modal Body (Form Fields) -->
       <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+        <input type="hidden" id="cb-course-id" value="">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">ชื่อหลักสูตร <span class="text-rose-500">*</span></label>
@@ -643,9 +675,51 @@
               <option value="practical">ภาคปฏิบัติ (ตรวจสอบชิ้นงานจริง)</option>
             </select>
           </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">ปีงบประมาณ</label>
+            <input type="number" id="cb-budget-year" value="2026" class="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">เดือนงบประมาณ</label>
+            <select id="cb-budget-month" class="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50">
+              <option value="1">1 - มกราคม</option>
+              <option value="2">2 - กุมภาพันธ์</option>
+              <option value="3">3 - มีนาคม</option>
+              <option value="4">4 - เมษายน</option>
+              <option value="5">5 - พฤษภาคม</option>
+              <option value="6">6 - มิถุนายน</option>
+              <option value="7">7 - กรกฎาคม</option>
+              <option value="8">8 - สิงหาคม</option>
+              <option value="9" selected>9 - กันยายน</option>
+              <option value="10">10 - ตุลาคม</option>
+              <option value="11">11 - พฤศจิกายน</option>
+              <option value="12">12 - ธันวาคม</option>
+            </select>
+          </div>
         </div>
 
-        <!-- PRACTICAL BUILDER SECTION (แสดงเมื่อเลือกภาคปฏิบัติ) -->
+        <!-- DYNAMIC LEARNING MATERIALS SECTION (เพิ่มได้ไม่จำกัด หรือไม่ใส่ก็ได้) -->
+        <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-photo-film text-indigo-600"></i>
+                <span>สื่อและเอกสารประกอบการเรียนรู้ (Learning Materials)</span>
+              </h4>
+              <p class="text-[11px] text-indigo-700">สามารถเพิ่มลิงก์วิดีโอ (YouTube/MP4), เอกสาร SOP, PDF, สไลด์ หรือเว็บไซต์ได้ไม่จำกัดจำนวน (หรือไม่ใส่ก็ได้)</p>
+            </div>
+            <button type="button" onclick="addMaterialRow()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs flex items-center gap-1">
+              <i class="fa-solid fa-plus"></i>
+              <span>เพิ่มสื่อการสอน (+1)</span>
+            </button>
+          </div>
+
+          <div id="cb-materials-list-container" class="space-y-2">
+            <!-- Dynamically populated material rows -->
+          </div>
+        </div>
+
+        <!-- PRACTICAL BUILDER SECTION -->
         <div id="cb-practical-section" class="hidden p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4">
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
@@ -701,23 +775,8 @@
           </div>
         </div>
 
-        <!-- THEORY BUILDER SECTION (แสดงเมื่อเลือกภาคทฤษฎี) -->
+        <!-- THEORY BUILDER SECTION -->
         <div id="cb-theory-section" class="space-y-6">
-          <!-- Learning Materials (Optional) -->
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-            <h4 class="text-xs font-bold text-slate-800">สื่อและเอกสารประกอบการเรียนรู้ (Optional)</h4>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-[11px] font-medium text-slate-600 mb-1">ลิงก์วิดีโอ (YouTube Embed URL)</label>
-                <input type="text" id="cb-video-url" placeholder="https://www.youtube.com/embed/..." class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-white">
-              </div>
-              <div>
-                <label class="block text-[11px] font-medium text-slate-600 mb-1">ลิงก์เอกสารคู่มือ (PDF URL)</label>
-                <input type="text" id="cb-doc-url" placeholder="https://..." class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-white">
-              </div>
-            </div>
-          </div>
-
           <!-- Pre-test Questions Editor -->
           <div class="space-y-3">
             <div class="flex items-center justify-between">
@@ -768,7 +827,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Detailed Question-by-Question Review & Written Grading for Master Admin -->
+  <!-- MODAL: Detailed Question-by-Question Review & Written Grading -->
   <div id="modal-review-detail" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
       <!-- Header -->
@@ -855,7 +914,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Profile Editor (แก้ไขข้อมูลส่วนตัว, รูปภาพ, Username & Password) -->
+  <!-- MODAL: Profile Editor -->
   <div id="modal-profile" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -923,7 +982,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Authentication Login (เข้าสู่ระบบด้วย Username & Password - ไม่มีช่องโชว์รหัสผ่าน) -->
+  <!-- MODAL: Authentication Login -->
   <div id="modal-auth-login" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 space-y-4">
       <div class="text-center space-y-1">
@@ -967,7 +1026,7 @@
     </div>
   </div>
 
-  <!-- MODAL: User Registration (ลงทะเบียนพนักงานใหม่ - ไม่มีช่องเลือกสิทธิ์ สิทธิ์เริ่มต้นคือ User รออนุมัติ) -->
+  <!-- MODAL: User Registration -->
   <div id="modal-add-user" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1029,7 +1088,7 @@
     // ----------------------------------------------------
     // 1. CONFIGURATION & STATE
     // ----------------------------------------------------
-    const STORAGE_KEY = 'KNT_QC_TRAINING_APP_STATE_V3';
+    const STORAGE_KEY = 'KNT_QC_TRAINING_APP_STATE_V4';
     const FIREBASE_RTDB_URL = 'https://training-5a545-default-rtdb.asia-southeast1.firebasedatabase.app/knt_training.json';
 
     // Default Fallback Users
@@ -1071,11 +1130,13 @@
         department: 'QC',
         type: 'theory',
         budgetYear: 2026,
-        budgetMonth: 9, // กันยายน
+        budgetMonth: 9,
         createdAt: '2026-09-10T08:00:00.000Z',
         passingScore: 70,
-        videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-        docUrl: '',
+        materials: [
+          { type: 'video', title: 'วิดีโอสาธิตการใช้ Vernier Caliper', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
+          { type: 'pdf', title: 'คู่มือมาตรฐาน SOP-QC-001', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' }
+        ],
         preQuestions: [
           {
             id: 'q1',
@@ -1123,7 +1184,10 @@
         passingScore: 80,
         timerEnabled: true,
         timerSeconds: 120,
-        evalCriteria: 'both', // method & judgement
+        evalCriteria: 'both',
+        materials: [
+          { type: 'video', title: 'วิดีโอเทคนิคการใช้ Micrometer อย่างถูกต้อง', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
+        ],
         samples: [
           { id: 's1', name: 'ชิ้นงานตัวอย่าง #01 (Pin A)', expectedMethod: 'correct', expectedJudgement: 'OK' },
           { id: 's2', name: 'ชิ้นงานตัวอย่าง #02 (Shaft B)', expectedMethod: 'correct', expectedJudgement: 'NG' },
@@ -1135,8 +1199,8 @@
     let users = [...defaultUsers];
     let courses = [...defaultCourses];
     let testResults = [];
-    let learningProgress = {}; // { 'userId_courseId': { step: 0|1|2|3, preScore, postScore, status, questionAnswers: {} } }
-    let currentUser = null; // Default to null so visiting shows login modal
+    let learningProgress = {};
+    let currentUser = null;
     let currentCourseId = null;
     let currentReviewResultId = null;
     let currentReviewTab = 'post';
@@ -1145,13 +1209,12 @@
     let practicalTimerInterval = null;
     let practicalSecondsLeft = 0;
     let practicalStartTime = null;
-    let practicalUserAnswers = {}; // { sampleIndex: { method: 'correct'|'incorrect', judgement: 'OK'|'NG' } }
+    let practicalUserAnswers = {};
 
     // ----------------------------------------------------
     // 2. DATA SANITIZATION & STATE PERSISTENCE
     // ----------------------------------------------------
     function sanitizeUsers() {
-      // 1. Deduplicate by username (case-insensitive)
       const seen = new Set();
       users = users.filter(u => {
         const uname = (u.username || '').toLowerCase().trim();
@@ -1160,7 +1223,6 @@
         return true;
       });
 
-      // 2. Guarantee that primary 'admin' is strictly Master Admin and approved
       let adminUser = users.find(u => (u.username || '').toLowerCase() === 'admin');
       if (adminUser) {
         adminUser.role = 'Master Admin';
@@ -1170,7 +1232,6 @@
         users.unshift(adminUser);
       }
 
-      // 3. Prevent current user from losing Master Admin if logged in as admin
       if (currentUser && (currentUser.username || '').toLowerCase() === 'admin') {
         currentUser.role = 'Master Admin';
         currentUser.status = 'approved';
@@ -1203,6 +1264,15 @@
           courses = parsed.courses && parsed.courses.length ? parsed.courses : defaultCourses;
           testResults = parsed.testResults || [];
           learningProgress = parsed.learningProgress || {};
+
+          // Normalization: Ensure old videoUrl/docUrl format is converted to materials array
+          courses.forEach(c => {
+            if (!c.materials) {
+              c.materials = [];
+              if (c.videoUrl) c.materials.push({ type: 'video', title: 'วิดีโอประกอบการเรียนรู้', url: c.videoUrl });
+              if (c.docUrl) c.materials.push({ type: 'pdf', title: 'เอกสารคู่มือมาตรฐาน (SOP)', url: c.docUrl });
+            }
+          });
 
           sanitizeUsers();
 
@@ -1293,6 +1363,14 @@
       }
       if (cloudData.courses && Array.isArray(cloudData.courses)) {
         courses = cloudData.courses;
+        // Normalize materials
+        courses.forEach(c => {
+          if (!c.materials) {
+            c.materials = [];
+            if (c.videoUrl) c.materials.push({ type: 'video', title: 'วิดีโอการเรียนรู้', url: c.videoUrl });
+            if (c.docUrl) c.materials.push({ type: 'pdf', title: 'เอกสารคู่มือ', url: c.docUrl });
+          }
+        });
         changed = true;
       }
       if (cloudData.testResults && Array.isArray(cloudData.testResults)) {
@@ -1359,7 +1437,6 @@
         targetBtn.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition-all text-blue-700 bg-white shadow-xs';
       }
 
-      // Re-render corresponding view content
       if (viewName === 'catalog') renderCatalogView();
       if (viewName === 'progress') renderProgressView();
       if (viewName === 'matrix') renderMatrixView();
@@ -1375,7 +1452,7 @@
     }
 
     // ----------------------------------------------------
-    // 5. USER AUTHENTICATION & APPROVAL GATE
+    // 5. USER AUTHENTICATION & PROFILE
     // ----------------------------------------------------
     function updateUserNavbar() {
       const loggedOutSec = document.getElementById('auth-logged-out-section');
@@ -1406,7 +1483,6 @@
         else createCourseTopBtn.classList.add('hidden');
       }
 
-      // Update User Navbar Labels
       const navUserName = document.getElementById('nav-user-name');
       const navRoleBadge = document.getElementById('nav-role-badge');
       const navUserDept = document.getElementById('nav-user-dept');
@@ -1427,7 +1503,6 @@
       if (menuRole) menuRole.textContent = currentUser.role;
       if (menuDeptDiv) menuDeptDiv.textContent = `${currentUser.department} - ${currentUser.division || 'Main'}`;
 
-      // Update Avatar
       const navAvatarText = document.getElementById('nav-avatar-text');
       const navAvatarImg = document.getElementById('nav-avatar-img');
       if (currentUser.avatarUrl) {
@@ -1488,7 +1563,6 @@
         return;
       }
 
-      // Check Approval Status
       if (user.status === 'pending') {
         showToast('บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากผู้ดูแลระบบ', 'warning');
         return;
@@ -1545,8 +1619,8 @@
         department: dept,
         division: div,
         startDate: sDate,
-        role: 'User', // Always User by default
-        status: 'pending', // Always pending for admin approval
+        role: 'User',
+        status: 'pending',
         avatarUrl: ''
       };
 
@@ -1630,7 +1704,6 @@
         currentUser.avatarUrl = previewImg.src;
       }
 
-      // Update in users array
       const idx = users.findIndex(u => u.id === currentUser.id);
       if (idx !== -1) users[idx] = currentUser;
 
@@ -1695,6 +1768,8 @@
         showToast('ไม่สามารถลบบัญชี Master Admin หลักได้', 'warning');
         return;
       }
+      if (!confirm(`ยืนยันที่จะลบพนักงาน ${user ? user.firstName : ''} ออกจากระบบ?`)) return;
+
       users = users.filter(u => u.id !== userId);
       saveState(true);
       renderAdminHub();
@@ -1702,7 +1777,7 @@
     }
 
     // ----------------------------------------------------
-    // 7. COURSE CATALOG RENDERER (YEAR > MONTH HIERARCHY)
+    // 7. COURSE CATALOG & MANAGEMENT RENDERER
     // ----------------------------------------------------
     const THAI_MONTHS = [
       '', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
@@ -1721,7 +1796,6 @@
       const deptFilter = document.getElementById('catalog-dept-filter')?.value || '';
       const typeFilter = document.getElementById('catalog-type-filter')?.value || '';
 
-      // Filter courses
       const filtered = courses.filter(c => {
         const matchesQ = !q || c.title.toLowerCase().includes(q) || c.skillTopic.toLowerCase().includes(q);
         const matchesDept = !deptFilter || c.department === deptFilter || c.department === 'All';
@@ -1742,7 +1816,6 @@
         return;
       }
 
-      // Group by Budget Year -> Budget Month
       const groups = {};
       filtered.forEach(c => {
         const year = c.budgetYear || 2026;
@@ -1752,14 +1825,12 @@
         groups[year][month].push(c);
       });
 
-      // Sort Years descending, Months descending
       const sortedYears = Object.keys(groups).sort((a, b) => b - a);
 
       let html = '';
       sortedYears.forEach(year => {
         html += `
           <div class="space-y-4">
-            <!-- Year Header Banner -->
             <div class="flex items-center gap-3">
               <div class="px-3 py-1 rounded-xl bg-blue-600 text-white font-extrabold text-xs shadow-xs flex items-center gap-1.5">
                 <i class="fa-solid fa-calendar-days"></i>
@@ -1798,8 +1869,9 @@
     function renderCourseCard(course) {
       const isPractical = course.type === 'practical';
       const userProgress = (currentUser && learningProgress[`${currentUser.id}_${course.id}`]) || { step: 0 };
-      
-      // Calculate progress visual
+      const isMasterAdmin = currentUser && currentUser.role === 'Master Admin';
+      const isAdmin = currentUser && (currentUser.role === 'Admin' || isMasterAdmin);
+
       let progressPercent = 0;
       let progressColor = 'bg-slate-300';
       let statusText = 'ยังไม่เริ่มเรียน';
@@ -1818,14 +1890,19 @@
         statusText = userProgress.status === 'Passed' ? `ผ่านเกณฑ์ (${progressPercent}%)` : `ต้องอบรมซ้ำ (${progressPercent}%)`;
       }
 
+      const matCount = (course.materials || []).length;
+
       return `
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-200 transition-all flex flex-col justify-between overflow-hidden">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-200 transition-all flex flex-col justify-between overflow-hidden relative group">
           <div class="p-5 space-y-3">
             <div class="flex items-center justify-between gap-2">
               <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${isPractical ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800 border border-blue-200'}">
                 ${isPractical ? '<i class="fa-solid fa-wrench mr-1"></i>ภาคปฏิบัติ' : '<i class="fa-solid fa-file-pen mr-1"></i>ทฤษฎี'}
               </span>
-              <span class="text-[11px] text-slate-400 font-semibold">${course.department}</span>
+              <div class="flex items-center gap-1.5">
+                ${matCount > 0 ? `<span class="text-[11px] px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold border border-indigo-100"><i class="fa-solid fa-paperclip mr-1"></i>${matCount} สื่อ</span>` : ''}
+                <span class="text-[11px] text-slate-400 font-semibold">${course.department}</span>
+              </div>
             </div>
 
             <div>
@@ -1848,9 +1925,18 @@
             </div>
           </div>
 
-          <!-- Bottom Action Buttons -->
+          <!-- Bottom Action Buttons & Admin Controls -->
           <div class="p-4 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between gap-2">
-            <span class="text-[11px] font-bold text-slate-400">เกณฑ์: ${course.passingScore || 70}%</span>
+            <div class="flex items-center gap-1">
+              ${isAdmin ? `
+                <button onclick="openEditCourseModal('${course.id}')" title="แก้ไขหลักสูตร / สื่อการสอน" class="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:border-amber-400 hover:text-amber-600 text-slate-600 flex items-center justify-center text-xs transition-all shadow-2xs">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteCourse('${course.id}')" title="ลบหลักสูตร" class="w-8 h-8 rounded-xl bg-white border border-slate-200 hover:border-rose-400 hover:text-rose-600 text-slate-600 flex items-center justify-center text-xs transition-all shadow-2xs">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              ` : `<span class="text-[11px] font-bold text-slate-400">เกณฑ์: ${course.passingScore || 70}%</span>`}
+            </div>
             <button onclick="enterClassroom('${course.id}')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95">
               <span>${userProgress.step > 0 && userProgress.step < 3 ? 'เรียนต่อ' : (userProgress.step === 3 ? 'ดูผลการสอบ' : 'เข้าเรียน')}</span>
               <i class="fa-solid fa-arrow-right"></i>
@@ -1877,7 +1963,6 @@
       const isPractical = course.type === 'practical';
       const userProgress = learningProgress[`${currentUser.id}_${course.id}`] || { step: 0 };
 
-      // Set Header Info
       document.getElementById('cr-course-title').textContent = course.title;
       document.getElementById('cr-type-badge').textContent = isPractical ? 'ภาคปฏิบัติ' : 'ทฤษฎี';
       document.getElementById('cr-type-badge').className = isPractical ? 'px-2 py-0.5 rounded-md text-xs font-extrabold bg-amber-100 text-amber-800' : 'px-2 py-0.5 rounded-md text-xs font-extrabold bg-blue-100 text-blue-800';
@@ -1897,14 +1982,11 @@
         step2.classList.add('hidden');
         step3.classList.add('hidden');
         practicalSec.classList.remove('hidden');
-
-        // Init Practical View
         renderPracticalWorkspace(course);
       } else {
         stepper.classList.remove('hidden');
         practicalSec.classList.add('hidden');
 
-        // Jump straight to the pending step
         if (userProgress.step === 0) {
           showTheoryStep(1, course);
         } else if (userProgress.step === 1) {
@@ -1992,38 +2074,70 @@
       }).join('');
     }
 
+    // Dynamic Learning Materials Viewer in Classroom
     function renderMaterialsList(course) {
       const container = document.getElementById('cr-materials-container');
       if (!container) return;
 
-      let html = '';
-      if (course.videoUrl) {
-        html += `
-          <div class="aspect-video w-full rounded-2xl overflow-hidden bg-slate-900 shadow-md">
-            <iframe src="${course.videoUrl}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+      const list = course.materials || [];
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+            <i class="fa-solid fa-folder-open text-slate-400 text-3xl"></i>
+            <p class="text-xs font-bold text-slate-600">ไม่มีสื่อการสอนที่ต้องศึกษาสำหรับหลักสูตรนี้</p>
+            <p class="text-[11px] text-slate-400">สามารถกดปุ่ม "ไปทำ Post-test" ได้ทันที</p>
           </div>
         `;
+        return;
       }
-      if (course.docUrl) {
-        html += `
-          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <i class="fa-solid fa-file-pdf text-rose-500 text-xl"></i>
-              <div>
-                <p class="text-xs font-bold text-slate-800">คู่มือมาตรฐานการปฏิบัติงาน (SOP)</p>
-                <p class="text-[11px] text-slate-400">เอกสารประกอบการฝึกอบรม</p>
+
+      container.innerHTML = list.map((m, idx) => {
+        const isVideo = m.type === 'video' || m.url.includes('youtube') || m.url.includes('youtu.be');
+        const isPdf = m.type === 'pdf' || m.url.toLowerCase().endsWith('.pdf');
+
+        if (isVideo) {
+          // Format YouTube embed URL if needed
+          let embedUrl = m.url;
+          if (embedUrl.includes('watch?v=')) {
+            embedUrl = embedUrl.replace('watch?v=', 'embed/');
+          } else if (embedUrl.includes('youtu.be/')) {
+            embedUrl = embedUrl.replace('youtu.be/', 'www.youtube.com/embed/');
+          }
+
+          return `
+            <div class="space-y-2 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                  <i class="fa-brands fa-youtube text-rose-600 text-base"></i>
+                  <span>${m.title || `วิดีโอประกอบการเรียนรู้ #${idx + 1}`}</span>
+                </h4>
+                <a href="${m.url}" target="_blank" class="text-xs text-blue-600 hover:underline">เปิดดูภายนอก <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+              </div>
+              <div class="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-inner">
+                <iframe src="${embedUrl}" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
               </div>
             </div>
-            <a href="${course.docUrl}" target="_blank" class="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700">เปิดเอกสาร</a>
+          `;
+        }
+
+        return `
+          <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between hover:border-indigo-300 transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg">
+                <i class="fa-solid ${isPdf ? 'fa-file-pdf text-rose-500' : 'fa-link'}"></i>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-800">${m.title || `เอกสารประกอบการเรียนรู้ #${idx + 1}`}</p>
+                <p class="text-[11px] text-slate-400 truncate max-w-sm sm:max-w-md">${m.url}</p>
+              </div>
+            </div>
+            <a href="${m.url}" target="_blank" class="px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 text-xs font-bold text-slate-700 transition-all shadow-2xs flex items-center gap-1.5">
+              <span>เปิดดูเอกสาร</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+            </a>
           </div>
         `;
-      }
-
-      if (!html) {
-        html = `<p class="text-xs text-slate-500 p-4 text-center">ไม่มีเอกสารหรือวิดีโอเพิ่มเติมสำหรับหลักสูตรนี้ สามารถกดปุ่มต่อไปเพื่อทำ Post-test ได้ทันที</p>`;
-      }
-
-      container.innerHTML = html;
+      }).join('');
     }
 
     function submitPreTest() {
@@ -2041,7 +2155,7 @@
         if (q.type === 'written') {
           const val = document.getElementById(`ans_pre_${idx}`)?.value.trim() || '';
           recordedAnswers[idx] = val;
-          if (val.length > 5) earned += pts; // Placeholder until admin manual grading
+          if (val.length > 5) earned += pts;
         } else {
           const selected = document.querySelector(`input[name="ans_pre_${idx}"]:checked`);
           const val = selected ? parseInt(selected.value) : -1;
@@ -2054,7 +2168,7 @@
       const progressKey = `${currentUser.id}_${course.id}`;
 
       learningProgress[progressKey] = {
-        step: 1, // Pre-test done = 30%
+        step: 1,
         preScore: pct,
         status: 'InProgress',
         preAnswers: recordedAnswers
@@ -2072,7 +2186,7 @@
       const progressKey = `${currentUser.id}_${course.id}`;
       if (!learningProgress[progressKey]) learningProgress[progressKey] = { step: 1 };
 
-      learningProgress[progressKey].step = 2; // Materials studied = 70%
+      learningProgress[progressKey].step = 2;
       saveState(true);
 
       showToast('บันทึกการศึกษาเนื้อหาเรียบร้อย ความคืบหน้า 70%', 'success');
@@ -2111,14 +2225,13 @@
       const preScore = learningProgress[progressKey]?.preScore || 0;
 
       learningProgress[progressKey] = {
-        step: 3, // Finished
+        step: 3,
         preScore: preScore,
         postScore: pct,
         status: status,
         postAnswers: recordedAnswers
       };
 
-      // Add to overall testResults logs
       const resultLog = {
         id: 'res_' + Date.now(),
         userId: currentUser.id,
@@ -2198,7 +2311,6 @@
         </tr>
       `).join('');
 
-      // Setup Timer
       if (course.timerEnabled && course.timerSeconds > 0) {
         practicalSecondsLeft = course.timerSeconds;
         practicalStartTime = Date.now();
@@ -2211,7 +2323,7 @@
           updateTimerDisplay();
           if (practicalSecondsLeft <= 0) {
             clearInterval(practicalTimerInterval);
-            finishPracticalSession(true); // Timed out
+            finishPracticalSession(true);
           }
         }, 1000);
       }
@@ -2257,7 +2369,6 @@
       const passed = !isTimeout && pct >= passPct;
       const status = passed ? 'Passed' : 'Retrain';
 
-      // Update progress
       const progressKey = `${currentUser.id}_${course.id}`;
       learningProgress[progressKey] = {
         step: 3,
@@ -2267,7 +2378,6 @@
         practicalAnswers: practicalUserAnswers
       };
 
-      // Add Exam Log
       const resultLog = {
         id: 'res_' + Date.now(),
         userId: currentUser.id,
@@ -2286,7 +2396,6 @@
       testResults.unshift(resultLog);
       saveState(true);
 
-      // Display Result Screen
       document.getElementById('practical-inspection-screen').classList.add('hidden');
       document.getElementById('practical-result-screen').classList.remove('hidden');
 
@@ -2315,7 +2424,7 @@
     }
 
     // ----------------------------------------------------
-    // 9. PROGRESS TRACKING DASHBOARD & CSV EXPORT
+    // 9. PROGRESS TRACKING & CSV
     // ----------------------------------------------------
     function renderProgressView() {
       const userFilterEl = document.getElementById('progress-user-filter');
@@ -2325,7 +2434,6 @@
 
       if (isAdmin && wrapperEl && userFilterEl) {
         wrapperEl.classList.remove('hidden');
-        // Populate users dropdown
         const currentVal = userFilterEl.value || 'all';
         userFilterEl.innerHTML = `
           <option value="all">ทุกคน (All Employees)</option>
@@ -2462,8 +2570,6 @@
       const deptFilter = document.getElementById('matrix-dept-filter')?.value || '';
 
       const filteredUsers = users.filter(u => u.status === 'approved' && (!deptFilter || u.department === deptFilter));
-
-      // Skill topics
       const skillTopics = [...new Set(courses.map(c => c.skillTopic))];
 
       headEl.innerHTML = `
@@ -2502,7 +2608,7 @@
     }
 
     // ----------------------------------------------------
-    // 11. ADMIN HUB VIEW RENDERER
+    // 11. ADMIN HUB VIEW RENDERER (WITH COURSE MANAGEMENT)
     // ----------------------------------------------------
     function renderAdminHub() {
       const isMasterAdmin = currentUser && currentUser.role === 'Master Admin';
@@ -2535,7 +2641,45 @@
         pendingCard.classList.add('hidden');
       }
 
-      // 2. Approved Users Table
+      // 2. Course Management Table
+      const courseBody = document.getElementById('admin-course-table-body');
+      if (courseBody) {
+        courseBody.innerHTML = courses.map(c => `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3">
+              <span class="font-bold text-slate-900 block">${c.title}</span>
+              <span class="text-[10px] text-slate-400">ID: ${c.id}</span>
+            </td>
+            <td class="p-3">${c.skillTopic}</td>
+            <td class="p-3">${c.department}</td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.type === 'practical' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">
+                ${c.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}
+              </span>
+            </td>
+            <td class="p-3 text-slate-500">${c.budgetYear || '-'} / ${c.budgetMonth ? (THAI_MONTHS[c.budgetMonth] || c.budgetMonth) : '-'}</td>
+            <td class="p-3 text-center">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                ${(c.materials || []).length} รายการ
+              </span>
+            </td>
+            <td class="p-3 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="openEditCourseModal('${c.id}')" title="แก้ไขหลักสูตร" class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs flex items-center gap-1">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                  <span>แก้ไข</span>
+                </button>
+                <button onclick="deleteCourse('${c.id}')" title="ลบหลักสูตร" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center gap-1">
+                  <i class="fa-solid fa-trash-can"></i>
+                  <span>ลบ</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // 3. Approved Users Table
       const approvedUsers = users.filter(u => u.status !== 'pending');
       const userBody = document.getElementById('admin-user-table-body');
 
@@ -2587,7 +2731,7 @@
         `;
       }).join('');
 
-      // 3. Exam Results Logs
+      // 4. Exam Results Logs
       const resultsBody = document.getElementById('admin-results-table-body');
       resultsBody.innerHTML = testResults.map(r => `
         <tr class="hover:bg-slate-50">
@@ -2632,20 +2776,25 @@
     }
 
     // ----------------------------------------------------
-    // 12. COURSE BUILDER (CREATION & PRACTICAL SAMPLES)
+    // 12. COURSE BUILDER (CREATION, EDITING, UNLIMITED MATERIALS & PRACTICAL)
     // ----------------------------------------------------
     let tempBuilderSamples = [];
+    let tempBuilderMaterials = [];
     let tempBuilderPreQ = [];
     let tempBuilderPostQ = [];
 
     function openAddCourseModal() {
       const modal = document.getElementById('modal-course-builder');
+      document.getElementById('cb-modal-title').textContent = 'สร้างหลักสูตรใหม่ (New QC Course)';
+      document.getElementById('cb-course-id').value = '';
       document.getElementById('cb-title').value = '';
       document.getElementById('cb-topic').value = '';
-      document.getElementById('cb-video-url').value = '';
-      document.getElementById('cb-doc-url').value = '';
+      document.getElementById('cb-department').value = 'QC';
       document.getElementById('cb-type').value = 'theory';
+      document.getElementById('cb-budget-year').value = new Date().getFullYear();
+      document.getElementById('cb-budget-month').value = new Date().getMonth() + 1;
 
+      tempBuilderMaterials = [];
       tempBuilderSamples = [
         { id: 's1', name: 'ตัวอย่างชิ้นงาน #01', expectedMethod: 'correct', expectedJudgement: 'OK' }
       ];
@@ -2655,11 +2804,69 @@
       tempBuilderPostQ = [];
 
       toggleCourseBuilderMode();
+      renderBuilderMaterialsList();
       renderBuilderSamplesTable();
       renderBuilderQuestions('pre');
       renderBuilderQuestions('post');
 
       modal.classList.remove('hidden');
+    }
+
+    function openEditCourseModal(courseId) {
+      const course = courses.find(c => c.id === courseId);
+      if (!course) return;
+
+      const modal = document.getElementById('modal-course-builder');
+      document.getElementById('cb-modal-title').textContent = 'แก้ไขหลักสูตร (Edit QC Course)';
+      document.getElementById('cb-course-id').value = course.id;
+      document.getElementById('cb-title').value = course.title;
+      document.getElementById('cb-topic').value = course.skillTopic;
+      document.getElementById('cb-department').value = course.department || 'QC';
+      document.getElementById('cb-type').value = course.type || 'theory';
+      document.getElementById('cb-budget-year').value = course.budgetYear || new Date().getFullYear();
+      document.getElementById('cb-budget-month').value = course.budgetMonth || (new Date().getMonth() + 1);
+
+      // Deep copy materials
+      tempBuilderMaterials = (course.materials || []).map(m => ({ ...m }));
+      
+      // Deep copy practical samples
+      tempBuilderSamples = (course.samples || []).map(s => ({ ...s }));
+      document.getElementById('cb-timer-enabled').checked = !!course.timerEnabled;
+      document.getElementById('cb-timer-seconds').value = course.timerSeconds || 120;
+      toggleTimerSettings();
+      if (course.evalCriteria) {
+        document.getElementById('cb-eval-criteria').value = course.evalCriteria;
+      }
+
+      // Deep copy questions
+      tempBuilderPreQ = (course.preQuestions || []).map(q => ({ ...q, choices: q.choices ? [...q.choices] : [] }));
+      tempBuilderPostQ = (course.postQuestions || []).map(q => ({ ...q, choices: q.choices ? [...q.choices] : [] }));
+
+      toggleCourseBuilderMode();
+      renderBuilderMaterialsList();
+      renderBuilderSamplesTable();
+      renderBuilderQuestions('pre');
+      renderBuilderQuestions('post');
+
+      modal.classList.remove('hidden');
+    }
+
+    function deleteCourse(courseId) {
+      if (!currentUser || (currentUser.role !== 'Master Admin' && currentUser.role !== 'Admin')) {
+        showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบหลักสูตรได้', 'error');
+        return;
+      }
+
+      const course = courses.find(c => c.id === courseId);
+      if (!confirm(`ยืนยันที่จะลบหลักสูตร "${course ? course.title : courseId}" หรือไม่?\n(ข้อมูลความคืบหน้าจะยังคงอยู่ในระบบ)`)) {
+        return;
+      }
+
+      courses = courses.filter(c => c.id !== courseId);
+      saveState(true);
+      renderCatalogView();
+      renderAdminHub();
+      showToast('ลบหลักสูตรเรียบร้อยแล้ว', 'info');
     }
 
     function closeCourseBuilderModal() {
@@ -2688,6 +2895,51 @@
       else wrapper.classList.add('hidden');
     }
 
+    // Dynamic Learning Materials Builder (Unlimited Links)
+    function addMaterialRow() {
+      tempBuilderMaterials.push({
+        type: 'video',
+        title: `สื่อการเรียนรู้ #${tempBuilderMaterials.length + 1}`,
+        url: ''
+      });
+      renderBuilderMaterialsList();
+    }
+
+    function removeMaterialRow(idx) {
+      tempBuilderMaterials.splice(idx, 1);
+      renderBuilderMaterialsList();
+    }
+
+    function renderBuilderMaterialsList() {
+      const container = document.getElementById('cb-materials-list-container');
+      if (!container) return;
+
+      if (tempBuilderMaterials.length === 0) {
+        container.innerHTML = `
+          <div class="p-3 text-center bg-white rounded-xl border border-dashed border-indigo-300">
+            <p class="text-xs text-indigo-700">ยังไม่มีสื่อการสอนแนบไว้ (กดปุ่ม <b>"+ เพิ่มสื่อการสอน"</b> ด้านบนหากต้องการแนบลิงก์ หรือปล่อยว่างไว้ได้)</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = tempBuilderMaterials.map((m, idx) => `
+        <div class="p-2.5 rounded-xl bg-white border border-indigo-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <select onchange="tempBuilderMaterials[${idx}].type = this.value" class="p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 font-bold">
+            <option value="video" ${m.type === 'video' ? 'selected' : ''}>🎬 วิดีโอ (YouTube / MP4)</option>
+            <option value="pdf" ${m.type === 'pdf' ? 'selected' : ''}>📄 เอกสารคู่มือ (PDF / SOP)</option>
+            <option value="link" ${m.type === 'link' ? 'selected' : ''}>🔗 เว็บไซต์ / สไลด์ (Link)</option>
+          </select>
+          <input type="text" value="${m.title || ''}" placeholder="ชื่อสื่อ เช่น วิดีโอสาธิต 01" onchange="tempBuilderMaterials[${idx}].title = this.value" class="sm:w-48 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
+          <input type="text" value="${m.url || ''}" placeholder="URL เช่น https://www.youtube.com/embed/... หรือ https://..." onchange="tempBuilderMaterials[${idx}].url = this.value" class="flex-1 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
+          <button type="button" onclick="removeMaterialRow(${idx})" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // Practical Sample Row Engine
     function addSampleRow() {
       if (tempBuilderSamples.length >= 100) {
         showToast('เพิ่มชิ้นงานตัวอย่างได้สูงสุด 100 ชิ้น', 'warning');
@@ -2808,7 +3060,6 @@
       renderBuilderQuestions(type);
     }
 
-    // Smart Copy Pre-test to Post-test with Option Shuffling
     function copyPreToPostTest() {
       if (tempBuilderPreQ.length === 0) {
         showToast('กรุณาเพิ่มข้อสอบใน Pre-test ก่อนทำการคัดลอก', 'warning');
@@ -2820,11 +3071,9 @@
           return { ...q, id: 'post_' + Date.now() + Math.random().toString(36).substring(2, 5) };
         }
 
-        // Shuffle choices and track correct answer
         const originalChoices = [...q.choices];
         const correctChoiceText = originalChoices[q.correctIndex];
 
-        // Fisher-Yates shuffle
         const shuffled = [...originalChoices];
         for (let i = shuffled.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -2846,49 +3095,78 @@
     }
 
     function saveCourseFromBuilder() {
+      const courseId = document.getElementById('cb-course-id').value;
       const title = document.getElementById('cb-title').value.trim();
       const topic = document.getElementById('cb-topic').value.trim();
       const dept = document.getElementById('cb-department').value;
       const type = document.getElementById('cb-type').value;
+      const bYear = parseInt(document.getElementById('cb-budget-year').value) || 2026;
+      const bMonth = parseInt(document.getElementById('cb-budget-month').value) || 9;
 
       if (!title || !topic) {
         showToast('กรุณาระบุชื่อหลักสูตรและหัวข้อทักษะ', 'error');
         return;
       }
 
-      const now = new Date();
-      const currentYear = now.getFullYear();
-      const currentMonth = now.getMonth() + 1;
+      const validMaterials = tempBuilderMaterials.filter(m => m.url && m.url.trim() !== '');
 
-      const newCourse = {
-        id: 'crs_' + Date.now(),
-        title,
-        skillTopic: topic,
-        department: dept,
-        type,
-        budgetYear: currentYear,
-        budgetMonth: currentMonth,
-        createdAt: now.toISOString(),
-        passingScore: 70,
-        videoUrl: document.getElementById('cb-video-url').value.trim(),
-        docUrl: document.getElementById('cb-doc-url').value.trim()
-      };
+      if (courseId) {
+        // Edit existing course
+        const idx = courses.findIndex(c => c.id === courseId);
+        if (idx !== -1) {
+          courses[idx].title = title;
+          courses[idx].skillTopic = topic;
+          courses[idx].department = dept;
+          courses[idx].type = type;
+          courses[idx].budgetYear = bYear;
+          courses[idx].budgetMonth = bMonth;
+          courses[idx].materials = validMaterials;
 
-      if (type === 'practical') {
-        newCourse.timerEnabled = document.getElementById('cb-timer-enabled').checked;
-        newCourse.timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 120;
-        newCourse.evalCriteria = document.getElementById('cb-eval-criteria').value;
-        newCourse.samples = tempBuilderSamples;
+          if (type === 'practical') {
+            courses[idx].timerEnabled = document.getElementById('cb-timer-enabled').checked;
+            courses[idx].timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 120;
+            courses[idx].evalCriteria = document.getElementById('cb-eval-criteria').value;
+            courses[idx].samples = tempBuilderSamples;
+          } else {
+            courses[idx].preQuestions = tempBuilderPreQ;
+            courses[idx].postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
+          }
+          showToast('แก้ไขหลักสูตรเรียบร้อยแล้ว', 'success');
+        }
       } else {
-        newCourse.preQuestions = tempBuilderPreQ;
-        newCourse.postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
+        // Create new course
+        const now = new Date();
+        const newCourse = {
+          id: 'crs_' + Date.now(),
+          title,
+          skillTopic: topic,
+          department: dept,
+          type,
+          budgetYear: bYear,
+          budgetMonth: bMonth,
+          createdAt: now.toISOString(),
+          passingScore: 70,
+          materials: validMaterials
+        };
+
+        if (type === 'practical') {
+          newCourse.timerEnabled = document.getElementById('cb-timer-enabled').checked;
+          newCourse.timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 120;
+          newCourse.evalCriteria = document.getElementById('cb-eval-criteria').value;
+          newCourse.samples = tempBuilderSamples;
+        } else {
+          newCourse.preQuestions = tempBuilderPreQ;
+          newCourse.postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
+        }
+
+        courses.unshift(newCourse);
+        showToast('สร้างหลักสูตรใหม่สำเร็จเรียบร้อยแล้ว', 'success');
       }
 
-      courses.unshift(newCourse);
       saveState(true);
       closeCourseBuilderModal();
       renderCatalogView();
-      showToast('สร้างหลักสูตรใหม่สำเร็จเรียบร้อยแล้ว', 'success');
+      renderAdminHub();
     }
 
     // ----------------------------------------------------
