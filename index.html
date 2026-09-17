@@ -2247,9 +2247,9 @@ function completeLearningStep2() {
       showTheoryStep(3, course);
     }
 
-    function submitPostTest() {
+    ffunction submitPostTest() {
       const course = courses.find(c => c.id === currentCourseId);
-      if (!course) return;
+      if (!course || !currentUser) return;
 
       const qList = course.postQuestions || [];
       let earned = 0;
@@ -2271,19 +2271,25 @@ function completeLearningStep2() {
         }
       });
 
-      const pct = total > 0 ? Math.round((earned / total) * 100) : 0;
+      const newPct = total > 0 ? Math.round((earned / total) * 100) : 0;
       const passPct = course.passingScore !== undefined ? course.passingScore : 80;
-      const status = pct >= passPct ? 'Passed' : 'Retrain';
 
       const progressKey = `${currentUser.id}_${course.id}`;
-      const preScore = learningProgress[progressKey]?.preScore || 0;
+      const existingProgress = learningProgress[progressKey] || {};
+      const oldPostScore = existingProgress.postScore !== undefined ? existingProgress.postScore : -1;
+
+      // ⭐️ เปรียบเทียบ High Score: จะอัปเดตเฉพาะเมื่อคะแนนใหม่สูงกว่าเดิมเท่านั้น
+      const isNewHighScore = newPct > oldPostScore;
+      const finalPostScore = isNewHighScore ? newPct : oldPostScore;
+      const status = finalPostScore >= passPct ? 'Passed' : 'Retrain';
 
       learningProgress[progressKey] = {
+        ...existingProgress,
         step: 3,
-        preScore: preScore,
-        postScore: pct,
+        preScore: existingProgress.preScore || 0,
+        postScore: finalPostScore, // เก็บคะแนนสูงสุดไว้
         status: status,
-        postAnswers: recordedAnswers
+        postAnswers: isNewHighScore ? recordedAnswers : (existingProgress.postAnswers || recordedAnswers)
       };
 
       const resultLog = {
@@ -2296,8 +2302,8 @@ function completeLearningStep2() {
         courseTitle: course.title,
         skillTopic: course.skillTopic,
         type: 'theory',
-        preScore: preScore,
-        postScore: pct,
+        preScore: existingProgress.preScore || 0,
+        postScore: finalPostScore,
         status: status,
         completedAt: new Date().toISOString()
       };
@@ -2305,10 +2311,16 @@ function completeLearningStep2() {
       testResults.unshift(resultLog);
       saveState(true);
 
-      showToast(status === 'Passed' ? `ยินดีด้วย! คุณผ่านการทดสอบ (${pct}%)` : `คะแนน ${pct}% ยังไม่ผ่านเกณฑ์ (${passPct}%)`, status === 'Passed' ? 'success' : 'warning');
+      // แจ้งเตือนผู้ใช้ตามผลคะแนน
+      if (isNewHighScore) {
+        showToast(status === 'Passed' ? `ยินดีด้วย! คุณสอบได้คะแนนใหม่สูงสุด (${finalPostScore}%)` : `คะแนนใหม่ของคุณคือ ${newPct}% (คะแนนสูงสุดที่บันทึก: ${finalPostScore}%)`, status === 'Passed' ? 'success' : 'warning');
+      } else {
+        showToast(`คะแนนครั้งนี้ (${newPct}%) ไม่สูงกว่าคะแนนสูงสุดเดิม (${oldPostScore}%) ระบบจึงคงคะแนนสูงสุดเดิมไว้`, 'info');
+      }
+
       switchView('progress');
     }
-
+    
 // goToTheoryStep
 function showTheoryStep(stepNumber, course) {
       const s1 = document.getElementById('cr-content-step1');
@@ -2349,17 +2361,67 @@ function showTheoryStep(stepNumber, course) {
     }
 
     // ⭐️ ฟังก์ชันใหม่สำหรับกดสลับ Step ได้ปลอดภัย ไม่กระทบคะแนน
+function showTheoryStep(stepNumber, courseObj) {
+      // ดึงข้อมูลวิชาอัตโนมัติ ป้องกันปัญหา course เป็น undefined
+      const course = courseObj || courses.find(c => c.id === currentCourseId);
+      if (!course) return;
+
+      const s1 = document.getElementById('cr-content-step1');
+      const s2 = document.getElementById('cr-content-step2');
+      const s3 = document.getElementById('cr-content-step3');
+
+      if (!s1 || !s2 || !s3) return;
+
+      // อัปเดตสีและสถานะปุ่ม Stepper ด้านบน
+      [1, 2, 3].forEach(i => {
+        const pill = document.getElementById(`step-pill-${i}`);
+        if (pill) {
+          pill.onclick = () => goToTheoryStep(i);
+          pill.classList.add('cursor-pointer');
+
+          if (i === stepNumber) {
+            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white flex items-center gap-1.5 shadow-xs cursor-pointer';
+          } else if (i < stepNumber) {
+            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1.5 cursor-pointer';
+          } else {
+            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 flex items-center gap-1.5 cursor-pointer';
+          }
+        }
+      });
+
+      // ซ่อนทุก Step ก่อน แล้วค่อยเปิดเฉพาะ Step ที่เลือก
+      s1.classList.add('hidden');
+      s2.classList.add('hidden');
+      s3.classList.add('hidden');
+
+      if (stepNumber === 1) {
+        s1.classList.remove('hidden');
+        renderQuestionsList('pre', course.preQuestions || []);
+      } else if (stepNumber === 2) {
+        s2.classList.remove('hidden');
+        renderMaterialsList(course);
+      } else if (stepNumber === 3) {
+        s3.classList.remove('hidden');
+        renderQuestionsList('post', course.postQuestions || []);
+      }
+    }
+
+    // ฟังก์ชันจัดการการคลิกสลับ Step อย่างปลอดภัย
     function goToTheoryStep(targetStep) {
       const course = courses.find(c => c.id === currentCourseId);
-      if (!course) return;
+      if (!course || !currentUser) return;
 
       const progressKey = `${currentUser.id}_${course.id}`;
       const p = learningProgress[progressKey] || { step: 0 };
 
-      // สลับระหว่าง Step 2 และ Step 3 ได้ตลอดเมื่อทำ Pre-test เสร็จแล้ว
+      // Step 1 กดดูได้เสมอ
       if (targetStep === 1) {
         showTheoryStep(1, course);
-      } else if (targetStep === 2 || targetStep === 3) {
+        return;
+      }
+
+      // Step 2 และ Step 3 สลับไป-มาได้ตลอดเมื่อผ่าน Pre-test แล้ว
+      if (targetStep === 2 || targetStep === 3) {
         if (p.step >= 1 || p.preScore !== undefined) {
           showTheoryStep(targetStep, course);
         } else {
