@@ -2247,7 +2247,7 @@ function completeLearningStep2() {
       showTheoryStep(3, course);
     }
 
-    ffunction submitPostTest() {
+    function submitPostTest() {
       const course = courses.find(c => c.id === currentCourseId);
       if (!course || !currentUser) return;
 
