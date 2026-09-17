@@ -2,7 +2,7 @@
 <html lang="th" class="h-full bg-slate-50">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>KNT-QC Training & Practical Examination System</title>
   <!-- Google Fonts: Inter & Sarabun -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,67 +55,81 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
       background: #94a3b8;
     }
+
+    /* 🟢 นำมาวางต่อตรงนี้ครับ */
+    .touch-scroll {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
 <body class="h-full flex flex-col text-slate-800 antialiased selection:bg-blue-500 selection:text-white">
 
   <!-- Top Navigation Header -->
   <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-2">
+        
         <!-- Brand Logo -->
-        <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('catalog')">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-            <i class="fa-solid fa-microscope text-xl"></i>
+        <div class="flex items-center gap-2 sm:gap-3 cursor-pointer shrink-0" onclick="switchView('catalog')">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+            <i class="fa-solid fa-microscope text-lg sm:text-xl"></i>
           </div>
           <div>
-            <div class="flex items-center gap-2">
-              <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">KNT-QC</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-200">ระบบฝึกอบรม</span>
+            <div class="flex items-center gap-1.5">
+              <span class="font-extrabold text-base sm:text-lg tracking-tight bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">KNT-QC</span>
+              <span class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-200">ระบบฝึกอบรม</span>
             </div>
-            <p class="text-[11px] text-slate-500 hidden sm:block">Quality Control Training & Skill Assessment System</p>
+            <p class="text-[11px] text-slate-500 hidden md:block">Quality Control Training & Skill Assessment System</p>
           </div>
         </div>
 
-        <!-- Navigation Tabs -->
-        <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200">
-          <button id="nav-btn-catalog" onclick="switchView('catalog')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-blue-700 bg-white shadow-xs">
-            <i class="fa-solid fa-graduation-cap mr-1.5"></i>คลังหลักสูตร
+        <!-- Navigation Tabs (รองรับทั้งจอคอม และปาดเลื่อนบนจอมือถือ) -->
+        <nav class="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200 overflow-x-auto touch-scroll no-scrollbar max-w-[50vw] sm:max-w-none">
+          <button id="nav-btn-catalog" onclick="switchView('catalog')" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-blue-700 bg-white shadow-xs whitespace-nowrap active:scale-95">
+            <i class="fa-solid fa-graduation-cap mr-1 sm:mr-1.5"></i><span>คลังหลักสูตร</span>
           </button>
-          <button id="nav-btn-progress" onclick="switchView('progress')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
-            <i class="fa-solid fa-chart-line mr-1.5"></i>ความคืบหน้า
+          <button id="nav-btn-progress" onclick="switchView('progress')" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900 whitespace-nowrap active:scale-95">
+            <i class="fa-solid fa-chart-line mr-1 sm:mr-1.5"></i><span>ความคืบหน้า</span>
           </button>
-          <button id="nav-btn-matrix" onclick="switchView('matrix')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
-            <i class="fa-solid fa-table-cells mr-1.5"></i>Skill Matrix
+          <button id="nav-btn-matrix" onclick="switchView('matrix')" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900 whitespace-nowrap active:scale-95">
+            <i class="fa-solid fa-table-cells mr-1 sm:mr-1.5"></i><span>Skill Matrix</span>
           </button>
-          <button id="nav-btn-admin" onclick="switchView('admin')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all text-slate-600 hover:text-slate-900">
-            <i class="fa-solid fa-shield-halved mr-1.5"></i>Admin Hub
+          <button id="nav-btn-admin" onclick="switchView('admin')" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-600 hover:text-slate-900 whitespace-nowrap active:scale-95">
+            <i class="fa-solid fa-shield-halved mr-1 sm:mr-1.5"></i><span>Admin Hub</span>
           </button>
         </nav>
 
         <!-- User Authentication & Profile Controls -->
-        <div class="flex items-center gap-2 sm:gap-3">
-          <!-- Real-time Cloud Status Indicator -->
+        <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <!-- Real-time Cloud Status Indicator (ซ่อนบนมือถือเพื่อประหยัดพื้นที่) -->
           <div id="cloud-status-badge" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>Cloud Realtime</span>
           </div>
 
           <!-- Logged Out State View -->
-          <div id="auth-logged-out-section" class="flex items-center gap-2">
-            <button onclick="openLoginModal()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-all flex items-center gap-1.5">
-              <i class="fa-solid fa-right-to-bracket"></i>
+          <div id="auth-logged-out-section" class="flex items-center gap-1.5 sm:gap-2">
+            <button onclick="openLoginModal()" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/20 transition-all flex items-center gap-1">
+              <i class="fa-solid fa-right-to-bracket text-xs"></i>
               <span>เข้าสู่ระบบ</span>
             </button>
-            <button onclick="openAddUserModal()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-sm transition-all shadow-2xs">
+            <button onclick="openAddUserModal()" class="hidden xs:inline-flex px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition-all shadow-2xs">
               <span>ลงทะเบียน</span>
             </button>
           </div>
 
           <!-- Logged In User Profile Menu -->
           <div id="auth-logged-in-section" class="relative hidden">
-            <button onclick="toggleUserMenu()" class="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all">
-              <div id="nav-avatar-container" class="w-9 h-9 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs border border-white">
+            <button onclick="toggleUserMenu()" class="flex items-center gap-1.5 sm:gap-2.5 p-1 sm:p-1.5 rounded-xl hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all">
+              <div id="nav-avatar-container" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-xs border border-white">
                 <span id="nav-avatar-text">AD</span>
                 <img id="nav-avatar-img" src="" alt="Profile" class="w-full h-full object-cover hidden">
               </div>
@@ -126,7 +140,7 @@
                 </div>
                 <span id="nav-user-dept" class="text-[11px] text-slate-500">Quality Assurance</span>
               </div>
-              <i class="fa-solid fa-chevron-down text-xs text-slate-400"></i>
+              <i class="fa-solid fa-chevron-down text-[10px] sm:text-xs text-slate-400"></i>
             </button>
 
             <!-- Profile Dropdown Menu -->
@@ -155,38 +169,39 @@
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </header>
 
-  <!-- Main Application Content Area -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<!-- Main Application Content Area -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
     <!-- VIEW 1: Course Catalog (จัดกลุ่มตาม ปีงบประมาณ > เดือน) -->
-    <section id="view-catalog" class="space-y-6">
-      <!-- Search, Filter & Quick Action Bar -->
-      <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+    <section id="view-catalog" class="space-y-4 sm:space-y-6">
+      <!-- Search, Filter & Quick Action Bar (Responsive Mobile/Tablet/Desktop) -->
+      <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4">
+        <div class="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
           <div class="relative flex-1">
-            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-            <input type="text" id="catalog-search-input" oninput="filterCatalog()" placeholder="ค้นหาหลักสูตร, ทักษะ, หรือรหัสวิชา..." class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs sm:text-sm"></i>
+            <input type="text" id="catalog-search-input" oninput="filterCatalog()" placeholder="ค้นหาหลักสูตร, ทักษะ, หรือรหัสวิชา..." class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
           </div>
-          <div class="flex items-center gap-2">
-            <select id="catalog-dept-filter" onchange="filterCatalog()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500">
+          <div class="grid grid-cols-2 sm:flex sm:items-center gap-2">
+            <select id="catalog-dept-filter" onchange="filterCatalog()" class="w-full sm:w-auto px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="">ทุกแผนก/ส่วนงาน</option>
               <option value="QC">QC</option>
               <option value="QA">QA</option>
               <option value="Production">Production</option>
             </select>
-            <select id="catalog-type-filter" onchange="filterCatalog()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500">
+            <select id="catalog-type-filter" onchange="filterCatalog()" class="w-full sm:w-auto px-2.5 sm:px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500">
               <option value="">ทุกประเภทการประเมิน</option>
-              <option value="theory">ทฤษฎี (Pre/Post-test)</option>
-              <option value="practical">ภาคปฏิบัติ (Hands-on)</option>
+              <option value="theory">ทฤษฎี</option>
+              <option value="practical">ภาคปฏิบัติ</option>
             </select>
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btn-create-course-top" onclick="openAddCourseModal()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5 active:scale-95">
+          <button id="btn-create-course-top" onclick="openAddCourseModal()" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5 active:scale-95">
             <i class="fa-solid fa-plus"></i>
             <span>สร้างหลักสูตรใหม่</span>
           </button>
@@ -194,18 +209,18 @@
       </div>
 
       <!-- Course Catalog Tree Render Target (Year > Month Hierarchy) -->
-      <div id="catalog-tree-container" class="space-y-8">
+      <div id="catalog-tree-container" class="space-y-6 sm:space-y-8">
         <!-- Rendered dynamically via JavaScript -->
       </div>
     </section>
 
     <!-- VIEW 2: Progress Tracking -->
-<section id="view-progress" class="space-y-6 hidden">
+    <section id="view-progress" class="space-y-4 sm:space-y-6 hidden">
       <!-- Header Bar with Integrated Dual Filters & Export CSV -->
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
               <i class="fa-solid fa-chart-line"></i>
             </div>
             <h2 class="text-base sm:text-lg font-bold text-slate-900">รายงานความคืบหน้าการฝึกอบรม (Learning Progress)</h2>
@@ -214,27 +229,27 @@
         </div>
 
         <!-- Filter Controls Container (User + Course + Export CSV) -->
-        <div class="flex items-center flex-wrap gap-2.5">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center flex-wrap gap-2.5">
           <!-- User Filter (Admin / Master Admin) -->
-          <div id="progress-user-selector-wrapper" class="flex items-center gap-1.5">
+          <div id="progress-user-selector-wrapper" class="flex items-center gap-1.5 flex-1 sm:flex-initial">
             <span class="text-xs font-bold text-slate-500 whitespace-nowrap">พนักงาน:</span>
-            <select id="progress-user-filter" onchange="renderProgressView()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 max-w-[180px] truncate">
+            <select id="progress-user-filter" onchange="renderProgressView()" class="w-full sm:w-auto px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 max-w-full sm:max-w-[180px] truncate">
               <option value="">ทุกคน (All Employees)</option>
               <!-- Populated via JS -->
             </select>
           </div>
 
           <!-- Course Filter -->
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 flex-1 sm:flex-initial">
             <span class="text-xs font-bold text-slate-500 whitespace-nowrap">หลักสูตร:</span>
-            <select id="progress-course-filter" onchange="renderProgressView()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 max-w-[200px] truncate">
+            <select id="progress-course-filter" onchange="renderProgressView()" class="w-full sm:w-auto px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 max-w-full sm:max-w-[200px] truncate">
               <option value="">ทุกหลักสูตร (All Courses)</option>
               <!-- Populated via JS -->
             </select>
           </div>
 
           <!-- Export CSV Button -->
-          <button onclick="exportProgressCSV()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5 active:scale-95 whitespace-nowrap">
+          <button onclick="exportProgressCSV()" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5 active:scale-95 whitespace-nowrap">
             <i class="fa-solid fa-file-excel"></i>
             <span>Export CSV</span>
           </button>
@@ -242,43 +257,43 @@
       </div>
 
       <!-- Overall Metrics Summary Cards -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <p class="text-xs font-semibold text-slate-400">หลักสูตรที่ลงทะเบียน</p>
-          <p id="stat-progress-enrolled" class="text-2xl font-black text-slate-800 mt-1">0</p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <p class="text-[11px] sm:text-xs font-semibold text-slate-400">หลักสูตรที่ลงทะเบียน</p>
+          <p id="stat-progress-enrolled" class="text-xl sm:text-2xl font-black text-slate-800 mt-1">0</p>
         </div>
-        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <p class="text-xs font-semibold text-blue-600">กำลังศึกษา (InProgress)</p>
-          <p id="stat-progress-learning" class="text-2xl font-black text-blue-600 mt-1">0</p>
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <p class="text-[11px] sm:text-xs font-semibold text-blue-600">กำลังศึกษา (InProgress)</p>
+          <p id="stat-progress-learning" class="text-xl sm:text-2xl font-black text-blue-600 mt-1">0</p>
         </div>
-        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <p class="text-xs font-semibold text-emerald-600">ผ่านการทดสอบ (Passed)</p>
-          <p id="stat-progress-passed" class="text-2xl font-black text-emerald-600 mt-1">0</p>
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <p class="text-[11px] sm:text-xs font-semibold text-emerald-600">ผ่านการทดสอบ (Passed)</p>
+          <p id="stat-progress-passed" class="text-xl sm:text-2xl font-black text-emerald-600 mt-1">0</p>
         </div>
-        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <p class="text-xs font-semibold text-rose-600">ต้องอบรมซ้ำ (Retrain)</p>
-          <p id="stat-progress-failed" class="text-2xl font-black text-rose-600 mt-1">0</p>
+        <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <p class="text-[11px] sm:text-xs font-semibold text-rose-600">ต้องอบรมซ้ำ (Retrain)</p>
+          <p id="stat-progress-failed" class="text-xl sm:text-2xl font-black text-rose-600 mt-1">0</p>
         </div>
       </div>
 
       <!-- Progress Detail Table -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 class="font-bold text-sm text-slate-800">รายละเอียดความคืบหน้ารายหลักสูตร</h3>
-          <span class="text-xs text-slate-400 font-medium">Auto-synced</span>
+        <div class="p-3.5 sm:p-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 class="font-bold text-xs sm:text-sm text-slate-800">รายละเอียดความคืบหน้ารายหลักสูตร</h3>
+          <span class="text-[10px] sm:text-xs text-slate-400 font-medium">Auto-synced</span>
         </div>
-        <div class="overflow-x-auto custom-scrollbar">
-          <table class="w-full text-left text-sm text-slate-600">
-            <thead class="bg-slate-50/80 text-xs font-bold text-slate-500 uppercase border-b border-slate-200">
+        <div class="overflow-x-auto custom-scrollbar touch-scroll">
+          <table class="w-full text-left text-xs sm:text-sm text-slate-600 min-w-[700px]">
+            <thead class="bg-slate-50/80 text-[11px] sm:text-xs font-bold text-slate-500 uppercase border-b border-slate-200">
               <tr>
-                <th class="p-3.5">พนักงาน</th>
-                <th class="p-3.5">หลักสูตร</th>
-                <th class="p-3.5">ประเภท</th>
-                <th class="p-3.5">ความคืบหน้า (Progress)</th>
-                <th class="p-3.5 text-center">Pre-test</th>
-                <th class="p-3.5 text-center">Post-test</th>
-                <th class="p-3.5 text-center">สถานะ</th>
-                <th class="p-3.5 text-center">จัดการ</th>
+                <th class="p-3 sm:p-3.5">พนักงาน</th>
+                <th class="p-3 sm:p-3.5">หลักสูตร</th>
+                <th class="p-3 sm:p-3.5">ประเภท</th>
+                <th class="p-3 sm:p-3.5">ความคืบหน้า (Progress)</th>
+                <th class="p-3 sm:p-3.5 text-center">Pre-test</th>
+                <th class="p-3 sm:p-3.5 text-center">Post-test</th>
+                <th class="p-3 sm:p-3.5 text-center">สถานะ</th>
+                <th class="p-3 sm:p-3.5 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody id="progress-table-body" class="divide-y divide-slate-100 font-medium">
@@ -290,17 +305,17 @@
     </section>
 
     <!-- VIEW 3: Skill Matrix -->
-    <section id="view-matrix" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+    <section id="view-matrix" class="hidden space-y-4 sm:space-y-6">
+      <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+          <h2 class="text-base sm:text-xl font-bold text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-table-cells text-indigo-600"></i>
             <span>QC Skill Matrix (ตารางสมรรถนะการตรวจสอบ)</span>
           </h2>
           <p class="text-xs text-slate-500 mt-1">แสดงระดับทักษะความเชี่ยวชาญของพนักงานเทียบกับเกณฑ์มาตรฐาน QC</p>
         </div>
-        <div class="flex items-center gap-2">
-          <select id="matrix-dept-filter" onchange="renderMatrixView()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <select id="matrix-dept-filter" onchange="renderMatrixView()" class="w-full sm:w-auto px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700">
             <option value="">ทุกแผนก/ส่วนงาน</option>
             <option value="QC">QC</option>
             <option value="QA">QA</option>
@@ -310,8 +325,8 @@
       </div>
 
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div class="overflow-x-auto custom-scrollbar">
-          <table class="w-full text-left text-xs border-collapse">
+        <div class="overflow-x-auto custom-scrollbar touch-scroll">
+          <table class="w-full text-left text-xs border-collapse min-w-[650px]">
             <thead id="matrix-table-head" class="bg-slate-50/90 text-slate-600 font-bold border-b border-slate-200">
               <!-- Dynamic Headers -->
             </thead>
@@ -324,18 +339,18 @@
     </section>
 
     <!-- VIEW 4: Admin Hub -->
-    <section id="view-admin" class="hidden space-y-6">
+    <section id="view-admin" class="hidden space-y-4 sm:space-y-6">
       <!-- Admin Hub Header -->
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+          <h2 class="text-base sm:text-xl font-bold text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-shield-halved text-blue-600"></i>
             <span>ศูนย์ควบคุมผู้ดูแลระบบ (Admin Hub)</span>
           </h2>
           <p class="text-xs text-slate-500 mt-1">จัดการอนุมัติผู้ใช้งานใหม่, จัดการหลักสูตร, กำหนดสิทธิ์ และตรวจข้อสอบ</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="forceRealtimeSync()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button onclick="forceRealtimeSync()" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-95">
             <i class="fa-solid fa-arrows-rotate"></i>
             <span>ซิงค์ข้อมูล Cloud</span>
           </button>
@@ -343,21 +358,21 @@
       </div>
 
       <!-- Pending User Approvals Queue -->
-      <div id="admin-pending-approval-card" class="bg-amber-50/90 rounded-2xl border border-amber-200 shadow-xs p-5 hidden">
-        <div class="flex items-center justify-between mb-3">
+      <div id="admin-pending-approval-card" class="bg-amber-50/90 rounded-2xl border border-amber-200 shadow-xs p-3.5 sm:p-5 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+            <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
               <i class="fa-solid fa-user-clock"></i>
             </div>
             <div>
               <h3 class="font-bold text-amber-900 text-sm">คำขอสมัครสมาชิกรอการอนุมัติ (Pending Approvals)</h3>
-              <p class="text-xs text-amber-700">พนักงานที่สมัครใหม่จะไม่สามารถเข้าสู่ระบบได้จนกว่า Master Admin หรือ Admin จะอนุมัติ</p>
+              <p class="text-[11px] sm:text-xs text-amber-700">พนักงานที่สมัครใหม่จะไม่สามารถเข้าสู่ระบบได้จนกว่า Master Admin หรือ Admin จะอนุมัติ</p>
             </div>
           </div>
-          <span id="pending-approval-count-badge" class="px-2.5 py-1 rounded-full bg-amber-200 text-amber-900 font-extrabold text-xs">0 คำขอ</span>
+          <span id="pending-approval-count-badge" class="px-2.5 py-1 rounded-full bg-amber-200 text-amber-900 font-extrabold text-xs w-fit">0 คำขอ</span>
         </div>
-        <div class="overflow-x-auto custom-scrollbar bg-white rounded-xl border border-amber-200/80">
-          <table class="w-full text-left text-xs text-slate-700">
+        <div class="overflow-x-auto custom-scrollbar touch-scroll bg-white rounded-xl border border-amber-200/80">
+          <table class="w-full text-left text-xs text-slate-700 min-w-[600px]">
             <thead class="bg-amber-100/60 font-bold text-amber-900 border-b border-amber-200">
               <tr>
                 <th class="p-3">ชื่อ - นามสกุล</th>
@@ -377,18 +392,18 @@
 
       <!-- Course Management Section in Admin Hub -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-3.5 sm:p-4 border-b border-slate-100 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-book-open-reader text-indigo-600"></i>
-            <h3 class="font-bold text-sm text-slate-800">จัดการหลักสูตรและสื่อการเรียนรู้ทั้งหมด (Course Management)</h3>
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800">จัดการหลักสูตรและสื่อการเรียนรู้ทั้งหมด (Course Management)</h3>
           </div>
-          <button onclick="openAddCourseModal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs">
+          <button onclick="openAddCourseModal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs active:scale-95">
             <i class="fa-solid fa-plus"></i>
             <span>เพิ่มหลักสูตร</span>
           </button>
         </div>
-        <div class="overflow-x-auto custom-scrollbar">
-          <table class="w-full text-left text-xs text-slate-600">
+        <div class="overflow-x-auto custom-scrollbar touch-scroll">
+          <table class="w-full text-left text-xs text-slate-600 min-w-[650px]">
             <thead class="bg-slate-50 font-bold text-slate-500 uppercase border-b border-slate-200">
               <tr>
                 <th class="p-3">ชื่อหลักสูตร</th>
@@ -409,15 +424,15 @@
 
       <!-- Approved Users Management Table -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-users text-blue-600"></i>
-            <h3 class="font-bold text-sm text-slate-800">รายชื่อพนักงานที่ได้รับอนุมัติในระบบ</h3>
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800">รายชื่อพนักงานที่ได้รับอนุมัติในระบบ</h3>
           </div>
-          <span class="text-xs text-slate-400 font-medium">Master Admin สามารถปรับสิทธิ์และจัดการสมาชิกได้</span>
+          <span class="text-[11px] sm:text-xs text-slate-400 font-medium">Master Admin สามารถปรับสิทธิ์และจัดการสมาชิกได้</span>
         </div>
-        <div class="overflow-x-auto custom-scrollbar">
-          <table class="w-full text-left text-xs text-slate-600">
+        <div class="overflow-x-auto custom-scrollbar touch-scroll">
+          <table class="w-full text-left text-xs text-slate-600 min-w-[700px]">
             <thead class="bg-slate-50 font-bold text-slate-500 uppercase border-b border-slate-200">
               <tr>
                 <th class="p-3">พนักงาน</th>
@@ -438,18 +453,18 @@
 
       <!-- Live Test Results & Examination Logs -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div class="flex items-center gap-2">
             <i class="fa-solid fa-clipboard-list text-emerald-600"></i>
-            <h3 class="font-bold text-sm text-slate-800">บันทึกผลการทดสอบทั้งหมด (Exam Logs & Assessments)</h3>
-</div>
-<button onclick="exportLogsCSV()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center gap-1">
-  <i class="fa-solid fa-download"></i>
-  <span>Export CSV</span>
-</button>
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800">บันทึกผลการทดสอบทั้งหมด (Exam Logs & Assessments)</h3>
+          </div>
+          <button onclick="exportLogsCSV()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center justify-center gap-1 w-full sm:w-auto">
+            <i class="fa-solid fa-download"></i>
+            <span>Export CSV</span>
+          </button>
         </div>
-        <div class="overflow-x-auto custom-scrollbar">
-          <table class="w-full text-left text-xs text-slate-600">
+        <div class="overflow-x-auto custom-scrollbar touch-scroll">
+          <table class="w-full text-left text-xs text-slate-600 min-w-[720px]">
             <thead class="bg-slate-50 font-bold text-slate-500 uppercase border-b border-slate-200">
               <tr>
                 <th class="p-3">วันเวลา</th>
@@ -471,34 +486,34 @@
     </section>
 
     <!-- VIEW 5: Course Classroom & Examination Workspace -->
-    <section id="view-classroom" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+    <section id="view-classroom" class="hidden space-y-4 sm:space-y-6">
+      <div class="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
         <div class="flex items-center gap-3">
-          <button onclick="switchView('catalog')" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-all">
-            <i class="fa-solid fa-arrow-left"></i>
+          <button onclick="switchView('catalog')" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-all shrink-0 active:scale-95">
+            <i class="fa-solid fa-arrow-left text-xs sm:text-sm"></i>
           </button>
           <div>
             <div class="flex items-center gap-2">
-              <span id="cr-type-badge" class="px-2 py-0.5 rounded-md text-xs font-extrabold bg-blue-100 text-blue-800">ทฤษฎี</span>
-              <h2 id="cr-course-title" class="text-lg font-black text-slate-900 leading-tight">ชื่อหลักสูตร QC</h2>
+              <span id="cr-type-badge" class="px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-extrabold bg-blue-100 text-blue-800">ทฤษฎี</span>
+              <h2 id="cr-course-title" class="text-base sm:text-lg font-black text-slate-900 leading-tight line-clamp-1">ชื่อหลักสูตร QC</h2>
             </div>
-            <p id="cr-course-meta" class="text-xs text-slate-500 mt-0.5">QC Department | เกณฑ์ผ่าน: 70%</p>
+            <p id="cr-course-meta" class="text-[11px] sm:text-xs text-slate-500 mt-0.5">QC Department | เกณฑ์ผ่าน: 80%</p>
           </div>
         </div>
 
-        <!-- Stepper for Theory Courses -->
-        <div id="cr-theory-stepper" class="flex items-center gap-2">
-          <div id="step-pill-1" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white flex items-center gap-1.5">
+        <!-- Stepper for Theory Courses (รองรับการปาดเลื่อนบนมือถือ ไม่หลุดจอ) -->
+        <div id="cr-theory-stepper" class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto touch-scroll no-scrollbar py-1">
+          <div id="step-pill-1" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white flex items-center gap-1.5 whitespace-nowrap">
             <span>1</span>
             <span>Pre-test</span>
           </div>
-          <i class="fa-solid fa-chevron-right text-xs text-slate-300"></i>
-          <div id="step-pill-2" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 flex items-center gap-1.5">
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 shrink-0"></i>
+          <div id="step-pill-2" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 flex items-center gap-1.5 whitespace-nowrap">
             <span>2</span>
             <span>ศึกษาเนื้อหา</span>
           </div>
-          <i class="fa-solid fa-chevron-right text-xs text-slate-300"></i>
-          <div id="step-pill-3" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 flex items-center gap-1.5">
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-300 shrink-0"></i>
+          <div id="step-pill-3" class="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 flex items-center gap-1.5 whitespace-nowrap">
             <span>3</span>
             <span>Post-test</span>
           </div>
