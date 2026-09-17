@@ -2480,7 +2480,7 @@ function renderProgressView() {
       const isMasterAdmin = currentUser && currentUser.role === "Master Admin";
       const isAdmin = currentUser && (currentUser.role === "Admin" || isMasterAdmin);
 
-      // 1. จัดการตัวเลือกรายชื่อพนักงาน (เฉพาะ Admin และ Master Admin)
+      // 1. จัดการตัวเลือกรายชื่อพนักงาน (Admin / Master Admin)
       if (isAdmin && wrapperEl && userFilterEl) {
         wrapperEl.classList.remove("hidden");
         const currentVal = userFilterEl.value || "";
@@ -2492,7 +2492,7 @@ function renderProgressView() {
         wrapperEl.classList.add("hidden");
       }
 
-      // 2. เติมรายชื่อหลักสูตรทั้งหมดลงใน Dropdown กรองหลักสูตร
+      // 2. เติมรายชื่อหลักสูตรทั้งหมดลงใน Dropdown
       if (courseFilterEl) {
         const currentCourseVal = courseFilterEl.value || "";
         courseFilterEl.innerHTML = `
@@ -2501,7 +2501,7 @@ function renderProgressView() {
         `;
       }
 
-      // 3. กรองรายชื่อพนักงานตามสิทธิ์และเงื่อนไขที่เลือก
+      // 3. กรองรายชื่อพนักงาน
       let userList = [];
       if (isAdmin) {
         const selectedUser = userFilterEl ? userFilterEl.value : "";
@@ -2510,7 +2510,7 @@ function renderProgressView() {
         userList = currentUser ? users.filter(u => u.id === currentUser.id) : [];
       }
 
-      // 4. กรองหลักสูตรตามที่เลือก
+      // 4. กรองหลักสูตร
       const selectedCourse = courseFilterEl ? courseFilterEl.value : "";
       const courseList = selectedCourse ? courses.filter(c => c.id === selectedCourse) : courses;
 
@@ -2528,10 +2528,19 @@ function renderProgressView() {
           const key = `${u.id}_${c.id}`;
           const p = learningProgress[key] || { step: 0 };
 
+          // ⭐️ จุดสำคัญ: ดึงเกณฑ์คะแนนผ่านของวิชานั้นมาใช้ (ถ้าไม่ได้ตั้งไว้ให้ใช้ 80 เป็นมาตรฐาน)
+          const passCriteria = c.passingScore !== undefined ? c.passingScore : 80;
+
+          // คำนวณสถานะแบบ Dynamic ตามคะแนนและเกณฑ์ล่าสุด
+          let currentStatus = p.status || "รอเรียน";
+          if (p.step === 3 && p.postScore !== undefined) {
+            currentStatus = p.postScore >= passCriteria ? "Passed" : "Retrain";
+          }
+
           if (p.step > 0) enrolledCount++;
           if (p.step === 1 || p.step === 2) learningCount++;
-          if (p.status === "Passed") passedCount++;
-          if (p.status === "Retrain") failedCount++;
+          if (currentStatus === "Passed") passedCount++;
+          if (currentStatus === "Retrain") failedCount++;
 
           let pPct = 0;
           let pColor = "bg-slate-300";
@@ -2547,8 +2556,8 @@ function renderProgressView() {
             pText = "ศึกษาเนื้อหา (70%)";
           } else if (p.step === 3) {
             pPct = p.postScore !== undefined ? p.postScore : 100;
-            pColor = p.status === "Passed" ? "bg-emerald-500" : "bg-rose-500";
-            pText = p.status === "Passed" ? `ผ่าน (${pPct}%)` : `อบรมซ้ำ (${pPct}%)`;
+            pColor = currentStatus === "Passed" ? "bg-emerald-500" : "bg-rose-500";
+            pText = currentStatus === "Passed" ? `ผ่าน (${pPct}%)` : `อบรมซ้ำ (${pPct}%)`;
           }
 
           rows.push(`
@@ -2559,7 +2568,7 @@ function renderProgressView() {
               </td>
               <td class="p-3.5">
                 <span class="font-semibold text-slate-800 line-clamp-1">${c.title}</span>
-                <span class="text-[10px] text-slate-400">${c.skillTopic || c.topic}</span>
+                <span class="text-[10px] text-slate-400">${c.skillTopic || c.topic || "-"} (เกณฑ์ผ่าน ${passCriteria}%)</span>
               </td>
               <td class="p-3.5">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.type === "practical" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"}">
@@ -2579,8 +2588,8 @@ function renderProgressView() {
               <td class="p-3.5 text-center font-bold">${p.preScore !== undefined ? p.preScore + "%" : "-"}</td>
               <td class="p-3.5 text-center font-bold">${p.postScore !== undefined ? p.postScore + "%" : "-"}</td>
               <td class="p-3.5 text-center">
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${p.status === "Passed" ? "bg-emerald-100 text-emerald-800" : (p.status === "Retrain" ? "bg-rose-100 text-rose-800" : "bg-slate-100 text-slate-600")}">
-                  ${p.status || "รอเรียน"}
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${currentStatus === "Passed" ? "bg-emerald-100 text-emerald-800" : (currentStatus === "Retrain" ? "bg-rose-100 text-rose-800" : "bg-slate-100 text-slate-600")}">
+                  ${currentStatus}
                 </span>
               </td>
               <td class="p-3.5 text-center">
@@ -2604,7 +2613,7 @@ function renderProgressView() {
         </tr>
       `;
 
-      // อัปเดตตัวเลขการ์ดสถิติด้านบนตามผลลัพธ์ที่กรอง
+      // อัปเดตตัวเลขการ์ดสถิติตามเกณฑ์ล่าสุด
       const statEnrolled = document.getElementById("stat-progress-enrolled");
       const statLearning = document.getElementById("stat-progress-learning");
       const statPassed = document.getElementById("stat-progress-passed");
@@ -2633,13 +2642,20 @@ function renderProgressView() {
       const selectedCourse = courseFilterEl ? courseFilterEl.value : "";
       const courseList = selectedCourse ? courses.filter(c => c.id === selectedCourse) : courses;
 
-      let csv = "\uFEFFพนักงาน,แผนก,ส่วนงาน,หลักสูตร,หัวข้อทักษะ,ประเภท,ขั้นตอน,Pre-test,Post-test,สถานะ\n";
+      let csv = "\uFEFFพนักงาน,แผนก,ส่วนงาน,หลักสูตร,หัวข้อทักษะ,เกณฑ์ผ่าน(%),ประเภท,ขั้นตอน,Pre-test,Post-test,สถานะ\n";
       userList.forEach(u => {
         courseList.forEach(c => {
           const key = `${u.id}_${c.id}`;
           const p = learningProgress[key] || { step: 0 };
+          const passCriteria = c.passingScore !== undefined ? c.passingScore : 80;
+          
+          let currentStatus = p.status || "รอเรียน";
+          if (p.step === 3 && p.postScore !== undefined) {
+            currentStatus = p.postScore >= passCriteria ? "Passed" : "Retrain";
+          }
+
           const stepText = p.step === 1 ? "Pre-test" : (p.step === 2 ? "ศึกษาเนื้อหา" : (p.step === 3 ? "Post-test" : "ยังไม่เริ่ม"));
-          csv += `"${u.firstName} ${u.lastName}","${u.department}","${u.division || "-"}","${c.title}","${c.skillTopic || c.topic || "-"}","${c.type === "practical" ? "ปฏิบัติ" : "ทฤษฎี"}","${stepText}","${p.preScore !== undefined ? p.preScore + "%" : "-"}","${p.postScore !== undefined ? p.postScore + "%" : "-"}","${p.status || "รอเรียน"}"\n`;
+          csv += `"${u.firstName} ${u.lastName}","${u.department}","${u.division || "-"}","${c.title}","${c.skillTopic || c.topic || "-"}","${passCriteria}%","${c.type === "practical" ? "ปฏิบัติ" : "ทฤษฎี"}","${stepText}","${p.preScore !== undefined ? p.preScore + "%" : "-"}","${p.postScore !== undefined ? p.postScore + "%" : "-"}","${currentStatus}"\n`;
         });
       });
 
