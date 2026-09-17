@@ -2962,7 +2962,7 @@ function renderProgressView() {
       document.getElementById('cb-type').value = course.type || 'theory';
       document.getElementById('cb-budget-year').value = course.budgetYear || new Date().getFullYear();
       document.getElementById('cb-budget-month').value = course.budgetMonth || (new Date().getMonth() + 1);
-      document.getElementById('cb-passing-score').value = (courses[idx]?.passingScore !== undefined) ? courses[idx].passingScore : (c?.passingScore !== undefined ? c.passingScore : 80);
+      document.getElementById('cb-passing-score').value = course.passingScore !== undefined ? course.passingScore : 80;
 
       // Deep copy materials
       tempBuilderMaterials = (course.materials || []).map(m => ({ ...m }));
