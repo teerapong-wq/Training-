@@ -200,25 +200,40 @@
     </section>
 
     <!-- VIEW 2: Progress Tracking -->
-    <section id="view-progress" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+<section id="view-progress" class="space-y-6 hidden">
+      <!-- Header Bar with Integrated Dual Filters & Export CSV -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-blue-600"></i>
-            <span>รายงานความคืบหน้าการฝึกอบรม (Learning Progress)</span>
-          </h2>
-          <p class="text-xs text-slate-500 mt-1">ติดตามสถานะ 4 ขั้นตอน: 0% ยังไม่เริ่ม &rarr; 30% Pre-test &rarr; 70% ศึกษาเนื้อหา &rarr; ประเมินผลสำเร็จ</p>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">รายงานความคืบหน้าการฝึกอบรม (Learning Progress)</h2>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">ติดตามสถานะ 4 ขั้นตอน: 0% ยังไม่เริ่ม → 30% Pre-test → 70% ศึกษาเนื้อหา → ประเมินผลสำเร็จ</p>
         </div>
-        
-        <!-- เพิ่มตัวเลือกกรองหลักสูตร -->
+
+        <!-- Filter Controls Container (User + Course + Export CSV) -->
+        <div class="flex items-center flex-wrap gap-2.5">
+          <!-- User Filter (Admin / Master Admin) -->
+          <div id="progress-user-selector-wrapper" class="flex items-center gap-1.5">
+            <span class="text-xs font-bold text-slate-500 whitespace-nowrap">พนักงาน:</span>
+            <select id="progress-user-filter" onchange="renderProgressView()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 max-w-[180px] truncate">
+              <option value="">ทุกคน (All Employees)</option>
+              <!-- Populated via JS -->
+            </select>
+          </div>
+
+          <!-- Course Filter -->
           <div class="flex items-center gap-1.5">
-            <label class="text-xs font-bold text-slate-500 whitespace-nowrap">เลือกหลักสูตร:</label>
+            <span class="text-xs font-bold text-slate-500 whitespace-nowrap">หลักสูตร:</span>
             <select id="progress-course-filter" onchange="renderProgressView()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 max-w-[200px] truncate">
               <option value="">ทุกหลักสูตร (All Courses)</option>
               <!-- Populated via JS -->
             </select>
           </div>
 
+          <!-- Export CSV Button -->
           <button onclick="exportProgressCSV()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5 active:scale-95 whitespace-nowrap">
             <i class="fa-solid fa-file-excel"></i>
             <span>Export CSV</span>
@@ -2428,37 +2443,48 @@
     // 9. PROGRESS TRACKING & CSV
     // ----------------------------------------------------
 function renderProgressView() {
-      const userFilterEl = document.getElementById('progress-user-filter');
-      const courseFilterEl = document.getElementById('progress-course-filter');
-      const wrapperEl = document.getElementById('progress-user-selector-wrapper');
-      const isMasterAdmin = currentUser && currentUser.role === 'Master Admin';
-      const isAdmin = currentUser && (currentUser.role === 'Admin' || isMasterAdmin);
+      const userFilterEl = document.getElementById("progress-user-filter");
+      const courseFilterEl = document.getElementById("progress-course-filter");
+      const wrapperEl = document.getElementById("progress-user-selector-wrapper");
+      
+      const isMasterAdmin = currentUser && currentUser.role === "Master Admin";
+      const isAdmin = currentUser && (currentUser.role === "Admin" || isMasterAdmin);
 
-      // 1. เติมรายชื่อพนักงานลงในตัวกรอง
+      // 1. จัดการตัวเลือกรายชื่อพนักงาน (เฉพาะ Admin และ Master Admin)
       if (isAdmin && wrapperEl && userFilterEl) {
-        wrapperEl.classList.remove('hidden');
-        const currentVal = userFilterEl.value || '';
+        wrapperEl.classList.remove("hidden");
+        const currentVal = userFilterEl.value || "";
         userFilterEl.innerHTML = `
           <option value="">ทุกคน (All Employees)</option>
-          ${users.map(u => `<option value="${u.id}" ${u.id === currentVal ? 'selected' : ''}>${u.firstName} ${u.lastName} (${u.department})</option>`).join('')}
+          ${users.map(u => `<option value="${u.id}" ${u.id === currentVal ? "selected" : ""}>${u.firstName} ${u.lastName} (${u.department})</option>`).join("")}
         `;
       } else if (wrapperEl) {
-        wrapperEl.classList.add('hidden');
+        wrapperEl.classList.add("hidden");
       }
 
-      // 2. เติมรายชื่อหลักสูตรลงในตัวกรอง
+      // 2. เติมรายชื่อหลักสูตรทั้งหมดลงใน Dropdown กรองหลักสูตร
       if (courseFilterEl) {
-        const currentCourseVal = courseFilterEl.value || '';
+        const currentCourseVal = courseFilterEl.value || "";
         courseFilterEl.innerHTML = `
           <option value="">ทุกหลักสูตร (All Courses)</option>
-          ${courses.map(c => `<option value="${c.id}" ${c.id === currentCourseVal ? 'selected' : ''}>${c.title}</option>`).join('')}
+          ${courses.map(c => `<option value="${c.id}" ${c.id === currentCourseVal ? "selected" : ""}>${c.title}</option>`).join("")}
         `;
       }
 
-      // ตรวจสอบเงื่อนไขตัวกรอง
-      const targetUserId = (isAdmin && userFilterEl) ? userFilterEl.value : (currentUser ? currentUser.id : '');
-      const targetCourseId = courseFilterEl ? courseFilterEl.value : '';
-      const tableBody = document.getElementById('progress-table-body');
+      // 3. กรองรายชื่อพนักงานตามสิทธิ์และเงื่อนไขที่เลือก
+      let userList = [];
+      if (isAdmin) {
+        const selectedUser = userFilterEl ? userFilterEl.value : "";
+        userList = selectedUser ? users.filter(u => u.id === selectedUser) : users;
+      } else {
+        userList = currentUser ? users.filter(u => u.id === currentUser.id) : [];
+      }
+
+      // 4. กรองหลักสูตรตามที่เลือก
+      const selectedCourse = courseFilterEl ? courseFilterEl.value : "";
+      const courseList = selectedCourse ? courses.filter(c => c.id === selectedCourse) : courses;
+
+      const tableBody = document.getElementById("progress-table-body");
       if (!tableBody) return;
 
       let rows = [];
@@ -2467,10 +2493,6 @@ function renderProgressView() {
       let passedCount = 0;
       let failedCount = 0;
 
-      // กรองตามพนักงานและหลักสูตรที่เลือก
-      const userList = targetUserId ? users.filter(u => u.id === targetUserId) : users;
-      const courseList = targetCourseId ? courses.filter(c => c.id === targetCourseId) : courses;
-
       userList.forEach(u => {
         courseList.forEach(c => {
           const key = `${u.id}_${c.id}`;
@@ -2478,71 +2500,63 @@ function renderProgressView() {
 
           if (p.step > 0) enrolledCount++;
           if (p.step === 1 || p.step === 2) learningCount++;
-          if (p.status === 'Passed') passedCount++;
-          if (p.status === 'Retrain') failedCount++;
+          if (p.status === "Passed") passedCount++;
+          if (p.status === "Retrain") failedCount++;
 
           let pPct = 0;
-          let pColor = 'bg-slate-300';
-          let pText = 'ยังไม่เริ่ม (0%)';
+          let pColor = "bg-slate-300";
+          let pText = "ยังไม่เริ่ม (0%)";
 
           if (p.step === 1) {
             pPct = 30;
-            pColor = 'bg-blue-500';
-            pText = 'Pre-test (30%)';
+            pColor = "bg-blue-500";
+            pText = "Pre-test (30%)";
           } else if (p.step === 2) {
             pPct = 70;
-            pColor = 'bg-indigo-500';
-            pText = 'ศึกษาเนื้อหา (70%)';
+            pColor = "bg-indigo-500";
+            pText = "ศึกษาเนื้อหา (70%)";
           } else if (p.step === 3) {
             pPct = p.postScore !== undefined ? p.postScore : 100;
-            pColor = p.status === 'Passed' ? 'bg-emerald-500' : 'bg-rose-500';
-            pText = p.status === 'Passed' ? `ผ่าน (${pPct}%)` : `อบรมซ้ำ (${pPct}%)`;
+            pColor = p.status === "Passed" ? "bg-emerald-500" : "bg-rose-500";
+            pText = p.status === "Passed" ? `ผ่าน (${pPct}%)` : `อบรมซ้ำ (${pPct}%)`;
           }
 
           rows.push(`
             <tr class="hover:bg-slate-50">
               <td class="p-3.5">
                 <span class="font-bold text-slate-900 block">${u.firstName} ${u.lastName}</span>
-                <span class="text-[11px] text-slate-400">${u.department} ${u.division ? `(${u.division})` : ''}</span>
+                <span class="text-[11px] text-slate-400">${u.department} ${u.division ? `(${u.division})` : ""}</span>
               </td>
               <td class="p-3.5">
                 <span class="font-semibold text-slate-800 line-clamp-1">${c.title}</span>
-                <span class="text-[10px] text-slate-400">${c.skillTopic}</span>
+                <span class="text-[10px] text-slate-400">${c.skillTopic || c.topic}</span>
               </td>
               <td class="p-3.5">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.type === 'practical' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">
-                  ${c.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.type === "practical" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"}">
+                  ${c.type === "practical" ? "ปฏิบัติ" : "ทฤษฎี"}
                 </span>
               </td>
               <td class="p-3.5">
                 <div class="space-y-1 w-32">
                   <div class="flex justify-between text-[10px]">
-                    <span class="text-slate-500">${pText}</span>
+                    <span class="text-slate-500 font-semibold">${pText}</span>
                   </div>
                   <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
                     <div class="h-full rounded-full ${pColor}" style="width: ${pPct}%"></div>
                   </div>
                 </div>
               </td>
-              <td class="p-3.5 text-center font-bold">${p.preScore !== undefined ? p.preScore + '%' : '-'}</td>
-              <td class="p-3.5 text-center font-bold">${p.postScore !== undefined ? p.postScore + '%' : '-'}</td>
+              <td class="p-3.5 text-center font-bold">${p.preScore !== undefined ? p.preScore + "%" : "-"}</td>
+              <td class="p-3.5 text-center font-bold">${p.postScore !== undefined ? p.postScore + "%" : "-"}</td>
               <td class="p-3.5 text-center">
-                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${p.status === 'Passed' ? 'bg-emerald-100 text-emerald-800' : (p.status === 'Retrain' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600')}">
-                  ${p.status || 'รอเรียน'}
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${p.status === "Passed" ? "bg-emerald-100 text-emerald-800" : (p.status === "Retrain" ? "bg-rose-100 text-rose-800" : "bg-slate-100 text-slate-600")}">
+                  ${p.status || "รอเรียน"}
                 </span>
               </td>
               <td class="p-3.5 text-center">
                 <div class="flex items-center justify-center gap-1">
-                  ${isMasterAdmin ? `
-                    <button onclick="openQuickScoreModal('${u.id}', '${c.id}')" title="แก้ไขคะแนน/สถานะ" class="w-7 h-7 rounded-lg text-amber-600 hover:bg-amber-50 flex items-center justify-center">
-                      <i class="fa-solid fa-pen-to-square"></i>
-                    </button>
-                    <button onclick="openReviewModalForProgress('${u.id}', '${c.id}')" title="ตรวจคำตอบรายข้อ" class="w-7 h-7 rounded-lg text-blue-600 hover:bg-blue-50 flex items-center justify-center">
-                      <i class="fa-solid fa-clipboard-check"></i>
-                    </button>
-                  ` : ''}
                   <button onclick="enterClassroom('${c.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold">
-                    ${p.step === 3 ? 'ดูผล' : 'เรียนต่อ'}
+                    ${p.step === 3 ? "ดูผล" : "เรียนต่อ"}
                   </button>
                 </div>
               </td>
@@ -2551,20 +2565,20 @@ function renderProgressView() {
         });
       });
 
-      tableBody.innerHTML = rows.length > 0 ? rows.join('') : `
+      tableBody.innerHTML = rows.length > 0 ? rows.join("") : `
         <tr>
           <td colspan="8" class="p-8 text-center text-slate-400 font-medium">
             <i class="fa-solid fa-inbox text-3xl mb-2 block opacity-40"></i>
-            ไม่พบข้อมูลตามหลักสูตรหรือพนักงานที่เลือก
+            ไม่พบข้อมูลตามเงื่อนไขที่เลือก
           </td>
         </tr>
       `;
 
-      // อัปเดตตัวเลขสถิติด้านบนตามผลการกรอง
-      const statEnrolled = document.getElementById('stat-progress-enrolled');
-      const statLearning = document.getElementById('stat-progress-learning');
-      const statPassed = document.getElementById('stat-progress-passed');
-      const statFailed = document.getElementById('stat-progress-failed');
+      // อัปเดตตัวเลขการ์ดสถิติด้านบนตามผลลัพธ์ที่กรอง
+      const statEnrolled = document.getElementById("stat-progress-enrolled");
+      const statLearning = document.getElementById("stat-progress-learning");
+      const statPassed = document.getElementById("stat-progress-passed");
+      const statFailed = document.getElementById("stat-progress-failed");
 
       if (statEnrolled) statEnrolled.textContent = enrolledCount;
       if (statLearning) statLearning.textContent = learningCount;
@@ -2573,26 +2587,34 @@ function renderProgressView() {
     }
 
     function exportProgressCSV() {
-      const userFilterEl = document.getElementById('progress-user-filter');
-      const courseFilterEl = document.getElementById('progress-course-filter');
-      const targetUserId = userFilterEl ? userFilterEl.value : '';
-      const targetCourseId = courseFilterEl ? courseFilterEl.value : '';
+      const userFilterEl = document.getElementById("progress-user-filter");
+      const courseFilterEl = document.getElementById("progress-course-filter");
+      const isMasterAdmin = currentUser && currentUser.role === "Master Admin";
+      const isAdmin = currentUser && (currentUser.role === "Admin" || isMasterAdmin);
 
-      const userList = targetUserId ? users.filter(u => u.id === targetUserId) : users;
-      const courseList = targetCourseId ? courses.filter(c => c.id === targetCourseId) : courses;
+      let userList = [];
+      if (isAdmin) {
+        const selectedUser = userFilterEl ? userFilterEl.value : "";
+        userList = selectedUser ? users.filter(u => u.id === selectedUser) : users;
+      } else {
+        userList = currentUser ? users.filter(u => u.id === currentUser.id) : [];
+      }
 
-      let csv = '\uFEFFพนักงาน,แผนก,ส่วนงาน,หลักสูตร,หัวข้อทักษะ,ประเภท,ขั้นตอน,Pre-test,Post-test,สถานะ\n';
+      const selectedCourse = courseFilterEl ? courseFilterEl.value : "";
+      const courseList = selectedCourse ? courses.filter(c => c.id === selectedCourse) : courses;
+
+      let csv = "\uFEFFพนักงาน,แผนก,ส่วนงาน,หลักสูตร,หัวข้อทักษะ,ประเภท,ขั้นตอน,Pre-test,Post-test,สถานะ\n";
       userList.forEach(u => {
         courseList.forEach(c => {
           const key = `${u.id}_${c.id}`;
           const p = learningProgress[key] || { step: 0 };
-          const stepText = p.step === 1 ? 'Pre-test' : (p.step === 2 ? 'ศึกษาเนื้อหา' : (p.step === 3 ? 'Post-test' : 'ยังไม่เริ่ม'));
-          csv += `"${u.firstName} ${u.lastName}","${u.department}","${u.division || '-'}","${c.title}","${c.skillTopic || '-'}","${c.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}","${stepText}","${p.preScore !== undefined ? p.preScore + '%' : '-'}","${p.postScore !== undefined ? p.postScore + '%' : '-'}","${p.status || 'รอเรียน'}"\n`;
+          const stepText = p.step === 1 ? "Pre-test" : (p.step === 2 ? "ศึกษาเนื้อหา" : (p.step === 3 ? "Post-test" : "ยังไม่เริ่ม"));
+          csv += `"${u.firstName} ${u.lastName}","${u.department}","${u.division || "-"}","${c.title}","${c.skillTopic || c.topic || "-"}","${c.type === "practical" ? "ปฏิบัติ" : "ทฤษฎี"}","${stepText}","${p.preScore !== undefined ? p.preScore + "%" : "-"}","${p.postScore !== undefined ? p.postScore + "%" : "-"}","${p.status || "รอเรียน"}"\n`;
         });
       });
 
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `Progress_Report_${new Date().toISOString().slice(0, 10)}.csv`;
       link.click();
