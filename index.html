@@ -209,16 +209,17 @@
           </h2>
           <p class="text-xs text-slate-500 mt-1">ติดตามสถานะ 4 ขั้นตอน: 0% ยังไม่เริ่ม &rarr; 30% Pre-test &rarr; 70% ศึกษาเนื้อหา &rarr; ประเมินผลสำเร็จ</p>
         </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <!-- Employee Selector Filter (For Admin & Master Admin) -->
-          <div id="progress-user-selector-wrapper" class="hidden items-center gap-2">
-            <span class="text-xs font-bold text-slate-600">เลือกพนักงาน:</span>
-            <select id="progress-user-filter" onchange="renderProgressView()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500">
-              <option value="all">ทุกคน (All Employees)</option>
+        
+        <!-- เพิ่มตัวเลือกกรองหลักสูตร -->
+          <div class="flex items-center gap-1.5">
+            <label class="text-xs font-bold text-slate-500 whitespace-nowrap">เลือกหลักสูตร:</label>
+            <select id="progress-course-filter" onchange="renderProgressView()" class="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:outline-none focus:border-blue-500 max-w-[200px] truncate">
+              <option value="">ทุกหลักสูตร (All Courses)</option>
               <!-- Populated via JS -->
             </select>
           </div>
-          <button onclick="exportProgressCSV()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5 active:scale-95">
+
+          <button onclick="exportProgressCSV()" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5 active:scale-95 whitespace-nowrap">
             <i class="fa-solid fa-file-excel"></i>
             <span>Export CSV</span>
           </button>
@@ -2426,24 +2427,37 @@
     // ----------------------------------------------------
     // 9. PROGRESS TRACKING & CSV
     // ----------------------------------------------------
-    function renderProgressView() {
+function renderProgressView() {
       const userFilterEl = document.getElementById('progress-user-filter');
+      const courseFilterEl = document.getElementById('progress-course-filter');
       const wrapperEl = document.getElementById('progress-user-selector-wrapper');
       const isMasterAdmin = currentUser && currentUser.role === 'Master Admin';
       const isAdmin = currentUser && (currentUser.role === 'Admin' || isMasterAdmin);
 
+      // 1. เติมรายชื่อพนักงานลงในตัวกรอง
       if (isAdmin && wrapperEl && userFilterEl) {
         wrapperEl.classList.remove('hidden');
-        const currentVal = userFilterEl.value || 'all';
+        const currentVal = userFilterEl.value || '';
         userFilterEl.innerHTML = `
-          <option value="all">ทุกคน (All Employees)</option>
+          <option value="">ทุกคน (All Employees)</option>
           ${users.map(u => `<option value="${u.id}" ${u.id === currentVal ? 'selected' : ''}>${u.firstName} ${u.lastName} (${u.department})</option>`).join('')}
         `;
       } else if (wrapperEl) {
         wrapperEl.classList.add('hidden');
       }
 
-      const targetUserId = (isAdmin && userFilterEl) ? userFilterEl.value : (currentUser ? currentUser.id : 'all');
+      // 2. เติมรายชื่อหลักสูตรลงในตัวกรอง
+      if (courseFilterEl) {
+        const currentCourseVal = courseFilterEl.value || '';
+        courseFilterEl.innerHTML = `
+          <option value="">ทุกหลักสูตร (All Courses)</option>
+          ${courses.map(c => `<option value="${c.id}" ${c.id === currentCourseVal ? 'selected' : ''}>${c.title}</option>`).join('')}
+        `;
+      }
+
+      // ตรวจสอบเงื่อนไขตัวกรอง
+      const targetUserId = (isAdmin && userFilterEl) ? userFilterEl.value : (currentUser ? currentUser.id : '');
+      const targetCourseId = courseFilterEl ? courseFilterEl.value : '';
       const tableBody = document.getElementById('progress-table-body');
       if (!tableBody) return;
 
@@ -2453,10 +2467,12 @@
       let passedCount = 0;
       let failedCount = 0;
 
-      const userList = targetUserId === 'all' ? users : users.filter(u => u.id === targetUserId);
+      // กรองตามพนักงานและหลักสูตรที่เลือก
+      const userList = targetUserId ? users.filter(u => u.id === targetUserId) : users;
+      const courseList = targetCourseId ? courses.filter(c => c.id === targetCourseId) : courses;
 
       userList.forEach(u => {
-        courses.forEach(c => {
+        courseList.forEach(c => {
           const key = `${u.id}_${c.id}`;
           const p = learningProgress[key] || { step: 0 };
 
@@ -2535,32 +2551,52 @@
         });
       });
 
-      tableBody.innerHTML = rows.join('');
+      tableBody.innerHTML = rows.length > 0 ? rows.join('') : `
+        <tr>
+          <td colspan="8" class="p-8 text-center text-slate-400 font-medium">
+            <i class="fa-solid fa-inbox text-3xl mb-2 block opacity-40"></i>
+            ไม่พบข้อมูลตามหลักสูตรหรือพนักงานที่เลือก
+          </td>
+        </tr>
+      `;
 
-      document.getElementById('stat-progress-enrolled').textContent = enrolledCount;
-      document.getElementById('stat-progress-learning').textContent = learningCount;
-      document.getElementById('stat-progress-passed').textContent = passedCount;
-      document.getElementById('stat-progress-failed').textContent = failedCount;
+      // อัปเดตตัวเลขสถิติด้านบนตามผลการกรอง
+      const statEnrolled = document.getElementById('stat-progress-enrolled');
+      const statLearning = document.getElementById('stat-progress-learning');
+      const statPassed = document.getElementById('stat-progress-passed');
+      const statFailed = document.getElementById('stat-progress-failed');
+
+      if (statEnrolled) statEnrolled.textContent = enrolledCount;
+      if (statLearning) statLearning.textContent = learningCount;
+      if (statPassed) statPassed.textContent = passedCount;
+      if (statFailed) statFailed.textContent = failedCount;
     }
 
     function exportProgressCSV() {
-      let csv = '\uFEFFพนักงาน,แผนก,หลักสูตร,ประเภท,ขั้นตอน,Pre-test,Post-test,สถานะ\n';
-      users.forEach(u => {
-        courses.forEach(c => {
+      const userFilterEl = document.getElementById('progress-user-filter');
+      const courseFilterEl = document.getElementById('progress-course-filter');
+      const targetUserId = userFilterEl ? userFilterEl.value : '';
+      const targetCourseId = courseFilterEl ? courseFilterEl.value : '';
+
+      const userList = targetUserId ? users.filter(u => u.id === targetUserId) : users;
+      const courseList = targetCourseId ? courses.filter(c => c.id === targetCourseId) : courses;
+
+      let csv = '\uFEFFพนักงาน,แผนก,ส่วนงาน,หลักสูตร,หัวข้อทักษะ,ประเภท,ขั้นตอน,Pre-test,Post-test,สถานะ\n';
+      userList.forEach(u => {
+        courseList.forEach(c => {
           const key = `${u.id}_${c.id}`;
           const p = learningProgress[key] || { step: 0 };
-          csv += `"${u.firstName} ${u.lastName}","${u.department}","${c.title}","${c.type}","${p.step}","${p.preScore || '-'}","${p.postScore || '-'}","${p.status || 'Not Started'}"\n`;
+          const stepText = p.step === 1 ? 'Pre-test' : (p.step === 2 ? 'ศึกษาเนื้อหา' : (p.step === 3 ? 'Post-test' : 'ยังไม่เริ่ม'));
+          csv += `"${u.firstName} ${u.lastName}","${u.department}","${u.division || '-'}","${c.title}","${c.skillTopic || '-'}","${c.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}","${stepText}","${p.preScore !== undefined ? p.preScore + '%' : '-'}","${p.postScore !== undefined ? p.postScore + '%' : '-'}","${p.status || 'รอเรียน'}"\n`;
         });
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `knt_progress_report_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Progress_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
     }
-
     // ----------------------------------------------------
     // 10. SKILL MATRIX VIEW
     // ----------------------------------------------------
