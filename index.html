@@ -548,7 +548,12 @@
       </div>
 
       <!-- Theory Step 3: Post-test Workspace -->
-      <div id="cr-content-step3" class="hidden bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
+      <div>
+    <button type="button" onclick="goToTheoryStep(2)" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-2 transition-all cursor-pointer border border-slate-200 shadow-2xs active:scale-95">
+      <i class="fa-solid fa-book-open text-blue-600"></i>
+      <span>กลับไปอ่านเนื้อหา / ทบทวนบทเรียน (Step 2)</span>
+    </button>
+  </div>
         <div class="border-b border-slate-100 pb-4">
           <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
             <i class="fa-solid fa-award text-emerald-600"></i>
@@ -2012,7 +2017,7 @@
       document.getElementById('cr-course-title').textContent = course.title;
       document.getElementById('cr-type-badge').textContent = isPractical ? 'ภาคปฏิบัติ' : 'ทฤษฎี';
       document.getElementById('cr-type-badge').className = isPractical ? 'px-2 py-0.5 rounded-md text-xs font-extrabold bg-amber-100 text-amber-800' : 'px-2 py-0.5 rounded-md text-xs font-extrabold bg-blue-100 text-blue-800';
-      document.getElementById('cr-course-meta').textContent = `${course.department} | หัวข้อ: ${course.skillTopic} | เกณฑ์ผ่าน: ${course.passingScore || 70}%`;
+      document.getElementById('cr-course-meta').textContent = `${course.department} | หัวข้อ: ${course.skillTopic} | เกณฑ์ผ่าน: ${course.passingScore !== undefined ? course.passingScore : 80}%`;
 
       const stepper = document.getElementById('cr-theory-stepper');
       const step1 = document.getElementById('cr-content-step1');
@@ -2225,17 +2230,20 @@
       showTheoryStep(2, course);
     }
 
-    function completeLearningStep2() {
+function completeLearningStep2() {
       const course = courses.find(c => c.id === currentCourseId);
       if (!course) return;
 
       const progressKey = `${currentUser.id}_${course.id}`;
       if (!learningProgress[progressKey]) learningProgress[progressKey] = { step: 1 };
 
-      learningProgress[progressKey].step = 2;
-      saveState(true);
+      // บันทึก step = 2 เฉพาะคนที่ยังไม่เคยถึง step 2 หรือ 3
+      if (learningProgress[progressKey].step < 2) {
+        learningProgress[progressKey].step = 2;
+        saveState(true);
+        showToast('บันทึกการศึกษาเนื้อหาเรียบร้อย ความคืบหน้า 70%', 'success');
+      }
 
-      showToast('บันทึกการศึกษาเนื้อหาเรียบร้อย ความคืบหน้า 70%', 'success');
       showTheoryStep(3, course);
     }
 
@@ -2264,7 +2272,7 @@
       });
 
       const pct = total > 0 ? Math.round((earned / total) * 100) : 0;
-      const passPct = course.passingScore || 70;
+      const passPct = course.passingScore !== undefined ? course.passingScore : 80;
       const status = pct >= passPct ? 'Passed' : 'Retrain';
 
       const progressKey = `${currentUser.id}_${course.id}`;
@@ -2301,6 +2309,65 @@
       switchView('progress');
     }
 
+// goToTheoryStep
+function showTheoryStep(stepNumber, course) {
+      const s1 = document.getElementById('cr-content-step1');
+      const s2 = document.getElementById('cr-content-step2');
+      const s3 = document.getElementById('cr-content-step3');
+
+      [1, 2, 3].forEach(i => {
+        const pill = document.getElementById(`step-pill-${i}`);
+        if (pill) {
+          // เพิ่ม event ให้กดปุ่ม Stepper ด้านบนเพื่อสลับ Step ได้ตลอด
+          pill.onclick = () => goToTheoryStep(i);
+          pill.classList.add('cursor-pointer');
+
+          if (i === stepNumber) {
+            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white flex items-center gap-1.5 shadow-xs cursor-pointer';
+          } else if (i < stepNumber) {
+            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1.5 cursor-pointer';
+          } else {
+            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 flex items-center gap-1.5 cursor-pointer';
+          }
+        }
+      });
+
+      s1.classList.add('hidden');
+      s2.classList.add('hidden');
+      s3.classList.add('hidden');
+
+      if (stepNumber === 1) {
+        s1.classList.remove('hidden');
+        renderQuestionsList('pre', course.preQuestions || []);
+      } else if (stepNumber === 2) {
+        s2.classList.remove('hidden');
+        renderMaterialsList(course);
+      } else if (stepNumber === 3) {
+        s3.classList.remove('hidden');
+        renderQuestionsList('post', course.postQuestions || []);
+      }
+    }
+
+    // ⭐️ ฟังก์ชันใหม่สำหรับกดสลับ Step ได้ปลอดภัย ไม่กระทบคะแนน
+    function goToTheoryStep(targetStep) {
+      const course = courses.find(c => c.id === currentCourseId);
+      if (!course) return;
+
+      const progressKey = `${currentUser.id}_${course.id}`;
+      const p = learningProgress[progressKey] || { step: 0 };
+
+      // สลับระหว่าง Step 2 และ Step 3 ได้ตลอดเมื่อทำ Pre-test เสร็จแล้ว
+      if (targetStep === 1) {
+        showTheoryStep(1, course);
+      } else if (targetStep === 2 || targetStep === 3) {
+        if (p.step >= 1 || p.preScore !== undefined) {
+          showTheoryStep(targetStep, course);
+        } else {
+          showToast('กรุณาทำแบบทดสอบก่อนเรียน (Pre-test) ให้เสร็จสิ้นก่อนครับ', 'warning');
+        }
+      }
+    }
+    
     // Practical Handlers
     function renderPracticalWorkspace(course) {
       document.getElementById('practical-start-screen').classList.remove('hidden');
