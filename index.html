@@ -2566,13 +2566,90 @@ function showTheoryStep(stepNumber, courseObj) {
     
     // Practical Handlers
     function renderPracticalWorkspace(course) {
-      document.getElementById('practical-start-screen').classList.remove('hidden');
-      document.getElementById('practical-inspection-screen').classList.add('hidden');
-      document.getElementById('practical-result-screen').classList.add('hidden');
-      document.getElementById('practical-timer-box').classList.add('hidden');
+      currentCourseId = course.id;
+      practicalUserAnswers = {};
+      currentPracticalTestType = 'post'; // ค่าเริ่มต้นรอบสอบ
+      setPracticalTestType('post');
 
-      const sampleCount = (course.samples || []).length;
-      document.getElementById('practical-sample-count-text').textContent = sampleCount;
+      const screen = document.getElementById('practical-inspection-screen');
+      const resultScreen = document.getElementById('practical-result-screen');
+      if (resultScreen) resultScreen.classList.add('hidden');
+      if (!screen) return;
+      screen.classList.remove('hidden');
+
+      const samples = course.samples || [];
+      const tableBody = document.getElementById('practical-samples-table-body');
+      
+      // 🟢 ตรวจสอบเงื่อนไขว่าหลักสูตรเปิดตรวจวิธีปฏิบัติ หรือตัดสิน OK/NG
+      const evalCrit = course.evalCriteria || 'both';
+      const checkMethod = (evalCrit === 'both' || evalCrit === 'method_only');
+      const checkJudge = (evalCrit === 'both' || evalCrit === 'judgement_only');
+
+      // 🟢 ซ่อน/แสดงหัวตาราง <th> ของวิธีปฏิบัติการวัด และการตัดสิน OK/NG
+      const thMethod = document.getElementById('th-practical-method');
+      const thJudge = document.getElementById('th-practical-judgement');
+      if (thMethod) thMethod.style.display = checkMethod ? '' : 'none';
+      if (thJudge) thJudge.style.display = checkJudge ? '' : 'none';
+
+      // 🟢 วาดตารางชิ้นงาน โดยจะซ่อนคอลัมน์วิธีปฏิบัติทันทีถ้าไม่ได้เปิดใช้งาน
+      if (tableBody) {
+        tableBody.innerHTML = samples.map((s, idx) => `
+          <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
+            <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+            <td class="p-3">
+              <span class="font-bold text-xs text-slate-800 block">${s.name || `ชิ้นงาน #${idx + 1}`}</span>
+              ${s.id ? `<span class="text-[10px] text-slate-400 font-mono">ID: ${s.id}</span>` : ''}
+            </td>
+            ${checkMethod ? `
+              <td class="p-3 text-center">
+                <div class="inline-flex items-center gap-3">
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-emerald-700">
+                    <input type="radio" name="prac_method_${idx}" value="correct" onchange="setPracticalAnswer(${idx}, 'method', 'correct')" class="text-emerald-600 focus:ring-emerald-500">
+                    <span>ถูกต้อง</span>
+                  </label>
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-rose-700">
+                    <input type="radio" name="prac_method_${idx}" value="incorrect" onchange="setPracticalAnswer(${idx}, 'method', 'incorrect')" class="text-rose-600 focus:ring-rose-500">
+                    <span>ไม่ถูกต้อง</span>
+                  </label>
+                </div>
+              </td>
+            ` : ''}
+            ${checkJudge ? `
+              <td class="p-3 text-center">
+                <div class="inline-flex items-center gap-3">
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-black text-emerald-700">
+                    <input type="radio" name="prac_judge_${idx}" value="OK" onchange="setPracticalAnswer(${idx}, 'judgement', 'OK')" class="text-emerald-600 focus:ring-emerald-500">
+                    <span>OK</span>
+                  </label>
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-black text-rose-700">
+                    <input type="radio" name="prac_judge_${idx}" value="NG" onchange="setPracticalAnswer(${idx}, 'judgement', 'NG')" class="text-rose-600 focus:ring-rose-500">
+                    <span>NG</span>
+                  </label>
+                </div>
+              </td>
+            ` : ''}
+          </tr>
+        `).join('');
+      }
+
+      // ตั้งค่าตัวนับเวลา (Timer Setup)
+      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+      const timerWrapper = document.getElementById('practical-timer-badge');
+      if (course.timerEnabled && course.timerSeconds > 0) {
+        practicalSecondsLeft = course.timerSeconds;
+        if (timerWrapper) timerWrapper.classList.remove('hidden');
+        updatePracticalTimerDisplay();
+        practicalTimerInterval = setInterval(() => {
+          practicalSecondsLeft--;
+          updatePracticalTimerDisplay();
+          if (practicalSecondsLeft <= 0) {
+            clearInterval(practicalTimerInterval);
+            finishPracticalSession(true);
+          }
+        }, 1000);
+      } else {
+        if (timerWrapper) timerWrapper.classList.add('hidden');
+      }
     }
 
     function startPracticalSession() {
@@ -2657,7 +2734,6 @@ function finishPracticalSession(isTimeout = false) {
       const course = courses.find(c => c.id === currentCourseId);
       if (!course) return;
 
-      // ⏱️ คำนวณเวลาที่ใช้ไปจริง (วินาที และ นาที:วินาที)
       const totalAllocatedSec = ((course.practicalDuration || course.pracDuration || (course.timerSeconds ? Math.round(course.timerSeconds / 60) : 10)) * 60);
       let remainingSec = 0;
       if (typeof practicalSecondsLeft !== 'undefined') {
@@ -2675,22 +2751,19 @@ function finishPracticalSession(isTimeout = false) {
       let correctMatches = 0;
       let totalCriteria = 0;
 
-      // ตัวแปรสำหรับคำนวณ Gauge Attribute (Miss Rate & False Alarm)
       let totalExpectedNG = 0;
-      let ngJudgedAsOK = 0; // Miss: NG ตอบเป็น OK
+      let ngJudgedAsOK = 0; // Miss: ของเสียหลุด
       let totalExpectedOK = 0;
-      let okJudgedAsNG = 0; // False Alarm: OK ตอบเป็น NG
+      let okJudgedAsNG = 0; // False Alarm: ของดีถูกทิ้ง
 
       samples.forEach((s, idx) => {
         const ans = practicalUserAnswers[idx] || {};
 
-        // 1. ตรวจสอบวิธีปฏิบัติ (ถ้าหลักสูตรเปิดใช้งาน)
         if (course.evalCriteria === 'both' || course.evalCriteria === 'method_only') {
           totalCriteria++;
           if (ans.method === s.expectedMethod) correctMatches++;
         }
 
-        // 2. ตรวจสอบการตัดสิน OK / NG
         if (course.evalCriteria === 'both' || course.evalCriteria === 'judgement_only') {
           totalCriteria++;
           if (ans.judgement === s.expectedJudgement) correctMatches++;
@@ -2708,9 +2781,8 @@ function finishPracticalSession(isTimeout = false) {
         }
       });
 
-      // คำนวณความแม่นยำรวม (Accuracy %)
       const pct = isTimeout ? 0 : (totalCriteria > 0 ? Math.round((correctMatches / totalCriteria) * 100) : 0);
-      const passPct = course.passingScore || 80;
+      const passPct = course.passingScore !== undefined ? course.passingScore : 80;
 
       // คำนวณ Miss Rate & False Alarm
       const isGaugeMode = course.practicalEvalMode === 'gauge';
@@ -2720,24 +2792,22 @@ function finishPracticalSession(isTimeout = false) {
       const maxMissAllowed = course.maxMissRate !== undefined ? course.maxMissRate : 0;
       const maxFalseAlarmAllowed = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
 
-      // ตรวจสอบเงื่อนไขผ่าน
-      let passed = !isTimeout && pct >= passPct;
+      // 🟢 เงื่อนไขตัดสินผ่าน: ต้องผ่านทั้ง % รวม และไม่เกินเกณฑ์ความเสี่ยง Gauge Attribute
+      const passAccuracy = !isTimeout && pct >= passPct;
+      const passMiss = !isGaugeMode || (missRate <= maxMissAllowed);
+      const passFalseAlarm = !isGaugeMode || (falseAlarm <= maxFalseAlarmAllowed);
+
+      let passed = passAccuracy && passMiss && passFalseAlarm;
       let failReason = '';
 
-      if (isGaugeMode && passed) {
-        const passMiss = missRate <= maxMissAllowed;
-        const passFalseAlarm = falseAlarm <= maxFalseAlarmAllowed;
-
-        if (!passMiss || !passFalseAlarm) {
-          passed = false;
-          const reasons = [];
-          if (!passMiss) reasons.push(`Miss Rate (${missRate}%) เกินเกณฑ์ (${maxMissAllowed}%)`);
-          if (!passFalseAlarm) reasons.push(`False Alarm (${falseAlarm}%) เกินเกณฑ์ (${maxFalseAlarmAllowed}%)`);
-          failReason = reasons.join(', ');
-        }
+      if (!passAccuracy) {
+        failReason = `ความแม่นยำรวม (${pct}%) ต่ำกว่าเกณฑ์ (${passPct}%)`;
+      } else if (!passMiss) {
+        failReason = `Miss Rate (${missRate}%) เกินเกณฑ์ (${maxMissAllowed}%) เสี่ยงของเสียหลุด`;
+      } else if (!passFalseAlarm) {
+        failReason = `False Alarm (${falseAlarm}%) เกินเกณฑ์ (${maxFalseAlarmAllowed}%) ของดีถูกคัดทิ้ง`;
       }
 
-      // 🟢 แยกการบันทึกตาม currentPracticalTestType ('pre' หรือ 'post')
       const isPre = (currentPracticalTestType === 'pre');
       const progressKey = `${currentUser.id}_${course.id}`;
       const prevProgress = learningProgress[progressKey] || {};
@@ -2776,9 +2846,10 @@ function finishPracticalSession(isTimeout = false) {
         courseTitle: course.title,
         skillTopic: course.skillTopic,
         type: 'practical',
-        examPhase: currentPracticalTestType, // ระบุรอบ 'pre' หรือ 'post'
+        examPhase: currentPracticalTestType,
         preScore: isPre ? pct : (prevProgress.preScore !== undefined ? prevProgress.preScore : null),
-        postScore: !isPre ? pct : (prevProgress.postScore !== undefined ? prevProgress.postScore : null),
+        postScore: !isPre ? pct : null,
+        score: pct,
         status: isPre ? 'Pre-tested' : (passed ? 'Passed' : 'Retrain'),
         timeSpentSeconds: spentSec,
         timeSpentStr: timeSpentStr,
@@ -2890,13 +2961,20 @@ function renderProgressView() {
           const key = `${u.id}_${c.id}`;
           const p = learningProgress[key] || { step: 0 };
 
-          // ⭐️ จุดสำคัญ: ดึงเกณฑ์คะแนนผ่านของวิชานั้นมาใช้ (ถ้าไม่ได้ตั้งไว้ให้ใช้ 80 เป็นมาตรฐาน)
           const passCriteria = c.passingScore !== undefined ? c.passingScore : 80;
 
-          // คำนวณสถานะแบบ Dynamic ตามคะแนนและเกณฑ์ล่าสุด
+          // 🟢 คำนวณสถานะอย่างแม่นยำ (คำนึงถึง Gauge Attribute ด้วย)
           let currentStatus = p.status || "รอเรียน";
           if (p.step === 3 && p.postScore !== undefined) {
-            currentStatus = p.postScore >= passCriteria ? "Passed" : "Retrain";
+            const isGauge = (c.type === 'practical' && c.practicalEvalMode === 'gauge');
+            const maxMiss = c.maxMissRate !== undefined ? c.maxMissRate : 0;
+            const maxFalse = c.maxFalseAlarm !== undefined ? c.maxFalseAlarm : 5;
+
+            const passAccuracy = p.postScore >= passCriteria;
+            const passMiss = !isGauge || (p.missRate === undefined || p.missRate <= maxMiss);
+            const passFalse = !isGauge || (p.falseAlarm === undefined || p.falseAlarm <= maxFalse);
+
+            currentStatus = (passAccuracy && passMiss && passFalse) ? "Passed" : "Retrain";
           }
 
           if (p.step > 0) enrolledCount++;
@@ -2947,8 +3025,8 @@ function renderProgressView() {
                   </div>
                 </div>
               </td>
-              <td class="p-3.5 text-center font-bold">${p.preScore !== undefined ? p.preScore + "%" : "-"}</td>
-              <td class="p-3.5 text-center font-bold">${p.postScore !== undefined ? p.postScore + "%" : "-"}</td>
+              <td class="p-3.5 text-center font-bold">${p.preScore !== undefined && p.preScore !== null ? p.preScore + "%" : "-"}</td>
+              <td class="p-3.5 text-center font-bold">${p.postScore !== undefined && p.postScore !== null ? p.postScore + "%" : "-"}</td>
               <td class="p-3.5 text-center">
                 <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${currentStatus === "Passed" ? "bg-emerald-100 text-emerald-800" : (currentStatus === "Retrain" ? "bg-rose-100 text-rose-800" : "bg-slate-100 text-slate-600")}">
                   ${currentStatus}
@@ -2975,7 +3053,7 @@ function renderProgressView() {
         </tr>
       `;
 
-      // อัปเดตตัวเลขการ์ดสถิติตามเกณฑ์ล่าสุด
+      // อัปเดตตัวเลขการ์ดสถิติด้านบน
       const statEnrolled = document.getElementById("stat-progress-enrolled");
       const statLearning = document.getElementById("stat-progress-learning");
       const statPassed = document.getElementById("stat-progress-passed");
@@ -3013,11 +3091,19 @@ function renderProgressView() {
           
           let currentStatus = p.status || "รอเรียน";
           if (p.step === 3 && p.postScore !== undefined) {
-            currentStatus = p.postScore >= passCriteria ? "Passed" : "Retrain";
+            const isGauge = (c.type === 'practical' && c.practicalEvalMode === 'gauge');
+            const maxMiss = c.maxMissRate !== undefined ? c.maxMissRate : 0;
+            const maxFalse = c.maxFalseAlarm !== undefined ? c.maxFalseAlarm : 5;
+
+            const passAccuracy = p.postScore >= passCriteria;
+            const passMiss = !isGauge || (p.missRate === undefined || p.missRate <= maxMiss);
+            const passFalse = !isGauge || (p.falseAlarm === undefined || p.falseAlarm <= maxFalse);
+
+            currentStatus = (passAccuracy && passMiss && passFalse) ? "Passed" : "Retrain";
           }
 
           const stepText = p.step === 1 ? "Pre-test" : (p.step === 2 ? "ศึกษาเนื้อหา" : (p.step === 3 ? "Post-test" : "ยังไม่เริ่ม"));
-          csv += `"${u.firstName} ${u.lastName}","${u.department}","${u.division || "-"}","${c.title}","${c.skillTopic || c.topic || "-"}","${passCriteria}%","${c.type === "practical" ? "ปฏิบัติ" : "ทฤษฎี"}","${stepText}","${p.preScore !== undefined ? p.preScore + "%" : "-"}","${p.postScore !== undefined ? p.postScore + "%" : "-"}","${currentStatus}"\n`;
+          csv += `"${u.firstName} ${u.lastName}","${u.department}","${u.division || "-"}","${c.title}","${c.skillTopic || c.topic || "-"}","${passCriteria}%","${c.type === "practical" ? "ปฏิบัติ" : "ทฤษฎี"}","${stepText}","${p.preScore !== undefined && p.preScore !== null ? p.preScore + "%" : "-"}","${p.postScore !== undefined && p.postScore !== null ? p.postScore + "%" : "-"}","${currentStatus}"\n`;
         });
       });
 
