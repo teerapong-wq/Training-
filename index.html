@@ -3538,19 +3538,186 @@ function renderProgressView() {
       renderReviewModalContent();
     }
 
-    function renderReviewModalContent() {
+function renderReviewModalContent() {
       const container = document.getElementById('review-questions-container');
       const course = courses.find(c => c.id === activeReviewCourse);
       const key = `${activeReviewUser}_${activeReviewCourse}`;
       const p = learningProgress[key] || {};
 
-      if (!course) return;
+      if (!container || !course) return;
 
+      // ==============================================================
+      // 🟢 กรณีที่ 1: หลักสูตรภาคปฏิบัติ (PRACTICAL INSPECTION REVIEW)
+      // ==============================================================
+      if (course.type === 'practical') {
+        // ดึงรายการชิ้นงานตัวอย่าง และคำตอบที่พนักงานกดไว้
+        const samples = course.samples || [];
+        // ค้นหาคำตอบจาก learningProgress หรือใน testResults ล่าสุด
+        let practicalAns = p.practicalAnswers;
+        if (!practicalAns && typeof testResults !== 'undefined') {
+          const matchLog = testResults.find(r => r.userId === activeReviewUser && r.courseId === activeReviewCourse && r.practicalAnswers);
+          if (matchLog) practicalAns = matchLog.practicalAnswers;
+        }
+        practicalAns = practicalAns || {};
+
+        if (samples.length === 0) {
+          container.innerHTML = `
+            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-400">
+              <i class="fa-solid fa-boxes-stacked text-3xl mb-2 opacity-50"></i>
+              <p class="text-xs font-bold">ไม่พบข้อมูลรายการชิ้นงานตัวอย่างในหลักสูตรนี้</p>
+            </div>
+          `;
+          const summaryEl = document.getElementById('review-modal-score-summary');
+          if (summaryEl) summaryEl.textContent = `คะแนนภาคปฏิบัติ: ${p.postScore || 0}%`;
+          return;
+        }
+
+        let correctCount = 0;
+        let totalCriteria = 0;
+
+        const checkMethod = course.evalCriteria === 'both' || course.evalCriteria === 'method_only';
+        const checkJudge = course.evalCriteria === 'both' || course.evalCriteria === 'judgement_only';
+
+        const rowsHtml = samples.map((s, idx) => {
+          const ans = practicalAns[idx] || {};
+          
+          // ตรวจสอบวิธีปฏิบัติ
+          const isMethodMatch = !checkMethod || (ans.method === s.expectedMethod);
+          // ตรวจสอบการตัดสิน OK / NG
+          const isJudgeMatch = !checkJudge || (ans.judgement === s.expectedJudgement);
+          
+          if (checkMethod) {
+            totalCriteria++;
+            if (ans.method === s.expectedMethod) correctCount++;
+          }
+          if (checkJudge) {
+            totalCriteria++;
+            if (ans.judgement === s.expectedJudgement) correctCount++;
+          }
+
+          const isItemAllCorrect = isMethodMatch && isJudgeMatch;
+
+          // แปลงค่าคำตอบเป็นข้อความอ่านง่าย
+          const methodUserText = ans.method === 'correct' ? 'ถูกต้อง' : (ans.method === 'incorrect' ? 'ไม่ถูกต้อง' : '(ไม่ระบุ)');
+          const methodExpText = s.expectedMethod === 'correct' ? 'ถูกต้อง' : 'ไม่ถูกต้อง';
+          
+          const judgeUserText = ans.judgement || '(ไม่ระบุ)';
+          const judgeExpText = s.expectedJudgement || 'OK';
+
+          return `
+            <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100 ${!isItemAllCorrect ? 'bg-rose-50/30' : ''}">
+              <td class="p-3.5 text-center font-bold text-slate-400">${idx + 1}</td>
+              <td class="p-3.5">
+                <span class="font-bold text-xs text-slate-900 block">${s.name || `ชิ้นงาน #${idx + 1}`}</span>
+                ${s.id ? `<span class="text-[10px] text-slate-400 font-mono">ID: ${s.id}</span>` : ''}
+              </td>
+              
+              <!-- คอลัมน์วิธีตรวจ -->
+              ${checkMethod ? `
+                <td class="p-3.5 text-center">
+                  <div class="inline-flex flex-col items-center">
+                    <span class="text-xs font-semibold ${isMethodMatch ? 'text-emerald-700' : 'text-rose-600 font-bold'}">
+                      ${methodUserText}${isMethodMatch ? '✓' : '✗'}
+                    </span>
+                    <span class="text-[10px] text-slate-400 mt-0.5">(เกณฑ์: ${methodExpText})</span>
+                  </div>
+                </td>
+              ` : ''}
+
+              <!-- คอลัมน์ผลการตัดสิน OK/NG -->
+              ${checkJudge ? `
+                <td class="p-3.5 text-center">
+                  <div class="inline-flex flex-col items-center">
+                    <span class="px-2.5 py-0.5 rounded text-xs font-black ${
+                      ans.judgement === 'OK' ? 'bg-emerald-100 text-emerald-800' : (ans.judgement === 'NG' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600')
+                    }">
+                      ${judgeUserText}
+                    </span>
+                    <span class="text-[10px] ${isJudgeMatch ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'} mt-0.5">
+                      ${isJudgeMatch ? '✓ ถูกต้อง' : `✗ เฉลย: ${judgeExpText}`}
+                    </span>
+                  </div>
+                </td>
+              ` : ''}
+
+              <!-- คอลัมน์สถานะชิ้นนี้ -->
+              <td class="p-3.5 text-center">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold inline-flex items-center gap-1 ${
+                  isItemAllCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200'
+                }">
+                  <i class="fa-solid ${isItemAllCorrect ? 'fa-check' : 'fa-xmark'}"></i>
+                  <span>${isItemAllCorrect ? 'ผ่าน' : 'ไม่ถูกต้อง'}</span>
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        const finalPct = totalCriteria > 0 ? Math.round((correctCount / totalCriteria) * 100) : (p.postScore || 0);
+
+        container.innerHTML = `
+          <div class="space-y-4">
+            <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-200/80 p-3.5 rounded-2xl flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs shadow-2xs">
+                  <i class="fa-solid fa-wrench"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-xs text-amber-950">ผลการตรวจสอบชิ้นงานจริงรายชิ้น (Practical Inspection Log)</h4>
+                  <p class="text-[11px] text-amber-800/80">เปรียบเทียบผลการประเมินของพนักงานกับค่ามาตรฐานที่กำหนดไว้</p>
+                </div>
+              </div>
+              <span class="px-3 py-1 rounded-xl text-xs font-black ${finalPct >= (course.passingScore || 80) ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}">
+                ความแม่นยำ: ${finalPct}%
+              </span>
+            </div>
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 shadow-2xs bg-white">
+              <table class="w-full text-left text-xs min-w-[500px]">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-[11px] uppercase">
+                  <tr>
+                    <th class="p-3 text-center w-12">#</th>
+                    <th class="p-3">ชิ้นงานตัวอย่าง</th>
+                    ${checkMethod ? '<th class="p-3 text-center">วิธีตรวจสอบ (Method)</th>' : ''}
+                    ${checkJudge ? '<th class="p-3 text-center">ผลการตัดสิน (Judgement)</th>' : ''}
+                    <th class="p-3 text-center">ผลประเมิน</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        const summaryEl = document.getElementById('review-modal-score-summary');
+        if (summaryEl) {
+          summaryEl.textContent = `คะแนนความแม่นยำภาคปฏิบัติ: ${correctCount}/${totalCriteria} (${finalPct}%)`;
+        }
+        return;
+      }
+
+      // ==============================================================
+      // 🔵 กรณีที่ 2: หลักสูตรภาคทฤษฎี (THEORY EXAM REVIEW - ข้อกา/ข้อเขียน)
+      // ==============================================================
       const qList = currentReviewTab === 'pre' ? (course.preQuestions || []) : (course.postQuestions || []);
       const userAnswers = currentReviewTab === 'pre' ? (p.preAnswers || {}) : (p.postAnswers || {});
 
       let earnedPoints = 0;
       let totalPoints = 0;
+
+      if (qList.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-400">
+            <i class="fa-solid fa-file-lines text-3xl mb-2 opacity-50"></i>
+            <p class="text-xs font-bold">ไม่มีรายการคำถามในชุดนี้</p>
+          </div>
+        `;
+        const summaryEl = document.getElementById('review-modal-score-summary');
+        if (summaryEl) summaryEl.textContent = `คะแนนข้อกา: 0/0`;
+        return;
+      }
 
       container.innerHTML = qList.map((q, idx) => {
         const uAns = userAnswers[idx];
@@ -3609,8 +3776,7 @@ function renderProgressView() {
                 return `
                   <div class="p-2 rounded-xl border ${border} text-xs flex items-center gap-1.5">
                     <span class="w-4 font-bold text-slate-400">${String.fromCharCode(65 + cIdx)}.</span>
-                    <span>${ch}</span>
-                    ${badge}
+                    <span>${ch}</span>${badge}
                   </div>
                 `;
               }).join('')}
@@ -3622,7 +3788,10 @@ function renderProgressView() {
         `;
       }).join('');
 
-      document.getElementById('review-modal-score-summary').textContent = `คะแนนข้อกา: ${earnedPoints}/${totalPoints}`;
+      const summaryEl = document.getElementById('review-modal-score-summary');
+      if (summaryEl) {
+        summaryEl.textContent = `คะแนนข้อกา: ${earnedPoints}/${totalPoints}`;
+      }
     }
 
     function autoCompileFeedback() {
