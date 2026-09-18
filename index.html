@@ -2685,7 +2685,7 @@ function showTheoryStep(stepNumber, course) {
     // ----------------------------------------------------
     // ฟังก์ชันสิ้นสุดและตัดสินผลการทดสอบภาคปฏิบัติ
     // ----------------------------------------------------
-    function finishPracticalSession(isTimeout = false) {
+function finishPracticalSession(isTimeout = false) {
       if (typeof practicalTimerInterval !== 'undefined' && practicalTimerInterval) {
         clearInterval(practicalTimerInterval);
       }
@@ -2758,7 +2758,7 @@ function showTheoryStep(stepNumber, course) {
       const maxMissAllowed = course.maxMissRate !== undefined ? course.maxMissRate : 0;
       const maxFalseAlarmAllowed = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
 
-      // 🟢 เงื่อนไขตัดสินผ่าน: ต้องผ่านทั้ง % รวม และไม่เกินเกณฑ์ความเสี่ยง Gauge Attribute
+      // เงื่อนไขตัดสินผ่าน
       const passAccuracy = !isTimeout && pct >= passPct;
       const passMiss = !isGaugeMode || (missRate <= maxMissAllowed);
       const passFalseAlarm = !isGaugeMode || (falseAlarm <= maxFalseAlarmAllowed);
@@ -2884,127 +2884,6 @@ function showTheoryStep(stepNumber, course) {
         }
         meta.innerHTML = metaText;
       }
-    }
-
-      const pct = isTimeout ? 0 : (totalCriteria > 0 ? Math.round((correctMatches / totalCriteria) * 100) : 0);
-      const passPct = course.passingScore !== undefined ? course.passingScore : 80;
-
-      // คำนวณ Miss Rate & False Alarm
-      const isGaugeMode = course.practicalEvalMode === 'gauge';
-      const missRate = totalExpectedNG > 0 ? Math.round((ngJudgedAsOK / totalExpectedNG) * 100) : 0;
-      const falseAlarm = totalExpectedOK > 0 ? Math.round((okJudgedAsNG / totalExpectedOK) * 100) : 0;
-
-      const maxMissAllowed = course.maxMissRate !== undefined ? course.maxMissRate : 0;
-      const maxFalseAlarmAllowed = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
-
-      // 🟢 เงื่อนไขตัดสินผ่าน: ต้องผ่านทั้ง % รวม และไม่เกินเกณฑ์ความเสี่ยง Gauge Attribute
-      const passAccuracy = !isTimeout && pct >= passPct;
-      const passMiss = !isGaugeMode || (missRate <= maxMissAllowed);
-      const passFalseAlarm = !isGaugeMode || (falseAlarm <= maxFalseAlarmAllowed);
-
-      let passed = passAccuracy && passMiss && passFalseAlarm;
-      let failReason = '';
-
-      if (!passAccuracy) {
-        failReason = `ความแม่นยำรวม (${pct}%) ต่ำกว่าเกณฑ์ (${passPct}%)`;
-      } else if (!passMiss) {
-        failReason = `Miss Rate (${missRate}%) เกินเกณฑ์ (${maxMissAllowed}%) เสี่ยงของเสียหลุด`;
-      } else if (!passFalseAlarm) {
-        failReason = `False Alarm (${falseAlarm}%) เกินเกณฑ์ (${maxFalseAlarmAllowed}%) ของดีถูกคัดทิ้ง`;
-      }
-
-      const isPre = (currentPracticalTestType === 'pre');
-      const progressKey = `${currentUser.id}_${course.id}`;
-      const prevProgress = learningProgress[progressKey] || {};
-
-      const finalStatus = isPre 
-        ? (prevProgress.status || 'In Progress') 
-        : (passed ? 'Passed' : 'Retrain');
-
-      learningProgress[progressKey] = {
-        ...prevProgress,
-        step: isPre ? Math.max(prevProgress.step || 0, 1) : 3,
-        preScore: isPre ? pct : (prevProgress.preScore !== undefined ? prevProgress.preScore : null),
-        postScore: !isPre ? pct : (prevProgress.postScore !== undefined ? prevProgress.postScore : null),
-        status: finalStatus,
-        timeSpentSeconds: spentSec,
-        timeSpentStr: timeSpentStr,
-        practicalPreAnswers: isPre ? practicalUserAnswers : (prevProgress.practicalPreAnswers || null),
-        practicalAnswers: !isPre ? practicalUserAnswers : (prevProgress.practicalAnswers || null),
-        practicalEvalMode: course.practicalEvalMode || 'standard',
-        missRate: missRate,
-        falseAlarm: falseAlarm,
-        totalExpectedNG: totalExpectedNG,
-        ngJudgedAsOK: ngJudgedAsOK,
-        totalExpectedOK: totalExpectedOK,
-        okJudgedAsNG: okJudgedAsNG,
-        failReason: failReason
-      };
-
-      const resultLog = {
-        id: 'res_' + Date.now(),
-        userId: currentUser.id,
-        userName: `${currentUser.firstName} ${currentUser.lastName}`,
-        department: currentUser.department,
-        division: currentUser.division || '-',
-        courseId: course.id,
-        courseTitle: course.title,
-        skillTopic: course.skillTopic,
-        type: 'practical',
-        examPhase: currentPracticalTestType,
-        preScore: isPre ? pct : (prevProgress.preScore !== undefined ? prevProgress.preScore : null),
-        postScore: !isPre ? pct : null,
-        score: pct,
-        status: isPre ? 'Pre-tested' : (passed ? 'Passed' : 'Retrain'),
-        timeSpentSeconds: spentSec,
-        timeSpentStr: timeSpentStr,
-        practicalAnswers: practicalUserAnswers,
-        practicalEvalMode: course.practicalEvalMode || 'standard',
-        missRate: missRate,
-        falseAlarm: falseAlarm,
-        totalExpectedNG: totalExpectedNG,
-        ngJudgedAsOK: ngJudgedAsOK,
-        totalExpectedOK: totalExpectedOK,
-        okJudgedAsNG: okJudgedAsNG,
-        failReason: failReason,
-        completedAt: new Date().toISOString()
-      };
-
-      testResults.unshift(resultLog);
-      saveState(true);
-
-      document.getElementById('practical-inspection-screen').classList.add('hidden');
-      document.getElementById('practical-result-screen').classList.remove('hidden');
-
-      const iconBox = document.getElementById('practical-result-icon-box');
-      const title = document.getElementById('practical-result-title');
-      const meta = document.getElementById('practical-result-meta');
-
-      if (isPre) {
-        iconBox.className = 'w-16 h-16 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
-        iconBox.innerHTML = '<i class="fa-solid fa-flag-checkered"></i>';
-        title.textContent = 'บันทึกคะแนน Pre-test ภาคปฏิบัติเรียบร้อย';
-        title.className = 'text-2xl font-black text-blue-700';
-      } else if (passed) {
-        iconBox.className = 'w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
-        iconBox.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-        title.textContent = 'ผ่านการทดสอบภาคปฏิบัติ (Passed)';
-        title.className = 'text-2xl font-black text-emerald-700';
-      } else {
-        iconBox.className = 'w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
-        iconBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-        title.textContent = isTimeout ? 'หมดเวลาการทดสอบ (Time\'s Up)' : 'ไม่ผ่านการทดสอบ (Retrain)';
-        title.className = 'text-2xl font-black text-rose-700';
-      }
-
-      let metaText = `รอบการสอบ: <strong class="text-blue-700">${isPre ? 'Pre-test (ก่อนเรียน)' : 'Post-test (หลังเรียน)'}</strong> | ความแม่นยำ: ${pct}% | เวลาที่ใช้: ${timeSpentStr}`;
-      if (isGaugeMode) {
-        metaText += `<br><span class="text-xs font-semibold mt-1 inline-block text-slate-600">Miss Rate: <strong>${missRate}%</strong> (เกณฑ์ &le; ${maxMissAllowed}%) | False Alarm: <strong>${falseAlarm}%</strong> (เกณฑ์ &le; ${maxFalseAlarmAllowed}%)</span>`;
-        if (failReason && !isPre) {
-          metaText += `<br><span class="text-xs font-bold text-rose-600">(${failReason})</span>`;
-        }
-      }
-      meta.innerHTML = metaText;
     }
     
     // ----------------------------------------------------
