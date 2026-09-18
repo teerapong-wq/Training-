@@ -790,7 +790,7 @@
           </div>
         </div>
 
-        <!-- PRACTICAL BUILDER SECTION -->
+<!-- PRACTICAL BUILDER SECTION -->
         <div id="cb-practical-section" class="hidden p-4 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4">
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
@@ -809,7 +809,7 @@
             </div>
           </div>
 
-          <!-- Evaluation Criteria Selector -->
+          <!-- Evaluation Criteria Selector & Gauge Attribute Mode -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block text-[11px] font-bold text-amber-900 mb-1">รูปแบบการตัดสินผลของชิ้นงานตัวอย่าง</label>
@@ -819,12 +819,66 @@
                 <option value="judgement_only">เฉพาะการตัดสินชิ้นงาน (OK / NG)</option>
               </select>
             </div>
-            <div class="flex items-end justify-between sm:justify-end gap-2">
-              <button type="button" onclick="addSampleRow()" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5">
-                <i class="fa-solid fa-plus"></i>
-                <span>เพิ่มตัวอย่างชิ้นงาน (+1)</span>
-              </button>
+            
+            <!-- 🟢 ตัวเลือก: ประเมินแบบธรรมดา vs Gauge Attribute -->
+            <div>
+              <label class="block text-[11px] font-bold text-amber-900 mb-1">โมเดลการประเมินผลภาคปฏิบัติ</label>
+              <select id="cb-practical-eval-mode" onchange="toggleGaugeAttributeSettings()" class="w-full p-2 rounded-xl border border-amber-200 text-xs font-bold bg-white text-slate-800">
+                <option value="standard">แบบธรรมดา (Standard Accuracy %)</option>
+                <option value="gauge">แบบ Gauge Attribute (Accuracy + Miss Rate + False Alarm)</option>
+              </select>
             </div>
+          </div>
+
+          <!-- 🟢 กล่องตั้งค่าเกณฑ์ Miss Rate และ False Alarm (แสดงเมื่อเลือก Gauge Attribute) -->
+          <div id="cb-gauge-attribute-box" class="bg-white p-3.5 rounded-xl border border-amber-200 space-y-2.5 hidden">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders text-indigo-600"></i>
+                <span>เกณฑ์การตัดสินผ่านสำหรับ Gauge Attribute (MSA Acceptance Criteria)</span>
+              </span>
+              <span class="text-[10px] font-bold text-slate-400">กำหนดได้อิสระ</span>
+            </div>
+            <p class="text-[10px] text-slate-500">ผู้รับการประเมินจะต้องผ่านทั้งเกณฑ์ % รวม และความเสี่ยงทั้ง 2 ด้านต้องไม่เกินเกณฑ์ที่กำหนด</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <!-- Miss Rate Criteria -->
+              <div class="p-2.5 rounded-lg bg-rose-50/60 border border-rose-200">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[11px] font-extrabold text-rose-900">Miss Rate สูงสุด:</span>
+                  <span class="text-[10px] text-rose-600 font-semibold">(NG ตอบเป็น OK)</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-500">&le;</span>
+                  <input type="number" id="cb-max-miss-rate" value="0" min="0" max="100" class="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white border border-rose-300 text-rose-900 text-center focus:outline-none">
+                  <span class="text-xs font-bold text-slate-500">%</span>
+                </div>
+                <span class="text-[9px] text-rose-700 mt-1 block">*ของเสียหลุดไปหาลูกค้า (แนะนำ: &le; 0% หรือ &le; 2%)</span>
+              </div>
+
+              <!-- False Alarm Criteria -->
+              <div class="p-2.5 rounded-lg bg-amber-50/60 border border-amber-200">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[11px] font-extrabold text-amber-900">False Alarm สูงสุด:</span>
+                  <span class="text-[10px] text-amber-600 font-semibold">(OK ตอบเป็น NG)</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-500">&le;</span>
+                  <input type="number" id="cb-max-false-alarm" value="5" min="0" max="100" class="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white border border-amber-300 text-amber-900 text-center focus:outline-none">
+                  <span class="text-xs font-bold text-slate-500">%</span>
+                </div>
+                <span class="text-[9px] text-amber-700 mt-1 block">*ของดีถูกคัดทิ้งสูญเปล่า (แนะนำ: &le; 5% หรือ &le; 10%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ปุ่มเพิ่มตัวอย่างชิ้นงาน -->
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-xs font-bold text-amber-950">รายการชิ้นงานตัวอย่าง (Sample Workpieces)</span>
+            <button type="button" onclick="addSampleRow()" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 active:scale-95">
+              <i class="fa-solid fa-plus"></i>
+              <span>เพิ่มตัวอย่างชิ้นงาน (+1)</span>
+            </button>
           </div>
 
           <!-- Samples List (Up to 100 samples) -->
@@ -2560,7 +2614,7 @@ function finishPracticalSession(isTimeout = false) {
       if (!course) return;
 
       // ⏱️ คำนวณเวลาที่ใช้ไปจริง (วินาที และ นาที:วินาที)
-      const totalAllocatedSec = ((course.practicalDuration || course.pracDuration || 10) * 60);
+      const totalAllocatedSec = ((course.practicalDuration || course.pracDuration || (course.timerSeconds ? Math.round(course.timerSeconds / 60) : 10)) * 60);
       let remainingSec = 0;
       if (typeof practicalSecondsLeft !== 'undefined') {
         remainingSec = practicalSecondsLeft;
@@ -2577,25 +2631,77 @@ function finishPracticalSession(isTimeout = false) {
       let correctMatches = 0;
       let totalCriteria = 0;
 
+      // 🟢 ตัวแปรสำหรับคำนวณ Gauge Attribute (Miss Rate & False Alarm)
+      let totalExpectedNG = 0;
+      let ngJudgedAsOK = 0; // Miss: ชิ้นงานจริงเป็น NG แต่ตอบ OK (ของเสียหลุด)
+      let totalExpectedOK = 0;
+      let okJudgedAsNG = 0; // False Alarm: ชิ้นงานจริงเป็น OK แต่ตอบ NG (ของดีถูกทิ้ง)
+
       samples.forEach((s, idx) => {
         const ans = practicalUserAnswers[idx] || {};
+
+        // 1. ตรวจสอบวิธีปฏิบัติ
         if (course.evalCriteria === 'both' || course.evalCriteria === 'method_only') {
           totalCriteria++;
           if (ans.method === s.expectedMethod) correctMatches++;
         }
+
+        // 2. ตรวจสอบการตัดสิน OK / NG
         if (course.evalCriteria === 'both' || course.evalCriteria === 'judgement_only') {
           totalCriteria++;
           if (ans.judgement === s.expectedJudgement) correctMatches++;
+
+          // นับสถิติสำหรับ Gauge Attribute (อ้างอิงจากเฉลยของชิ้นงาน)
+          const expected = (s.expectedJudgement || 'OK').toUpperCase();
+          const userJudge = (ans.judgement || '').toUpperCase();
+
+          if (expected === 'NG') {
+            totalExpectedNG++;
+            if (userJudge === 'OK') {
+              ngJudgedAsOK++; // ตัดสิน NG เป็น OK (Miss)
+            }
+          } else if (expected === 'OK') {
+            totalExpectedOK++;
+            if (userJudge === 'NG') {
+              okJudgedAsNG++; // ตัดสิน OK เป็น NG (False Alarm)
+            }
+          }
         }
       });
 
+      // คำนวณความแม่นยำรวม (Accuracy %)
       const pct = isTimeout ? 0 : (totalCriteria > 0 ? Math.round((correctMatches / totalCriteria) * 100) : 0);
       const passPct = course.passingScore || 80;
-      const passed = !isTimeout && pct >= passPct;
+
+      // 🟢 คำนวณ Miss Rate & False Alarm
+      const isGaugeMode = course.practicalEvalMode === 'gauge';
+      const missRate = totalExpectedNG > 0 ? Math.round((ngJudgedAsOK / totalExpectedNG) * 100) : 0;
+      const falseAlarm = totalExpectedOK > 0 ? Math.round((okJudgedAsNG / totalExpectedOK) * 100) : 0;
+
+      const maxMissAllowed = course.maxMissRate !== undefined ? course.maxMissRate : 0;
+      const maxFalseAlarmAllowed = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
+
+      // ตรวจสอบเงื่อนไขผ่าน
+      let passed = !isTimeout && pct >= passPct;
+      let failReason = '';
+
+      if (isGaugeMode && passed) {
+        const passMiss = missRate <= maxMissAllowed;
+        const passFalseAlarm = falseAlarm <= maxFalseAlarmAllowed;
+
+        if (!passMiss || !passFalseAlarm) {
+          passed = false;
+          const reasons = [];
+          if (!passMiss) reasons.push(`Miss Rate (${missRate}%) เกินเกณฑ์ (${maxMissAllowed}%)`);
+          if (!passFalseAlarm) reasons.push(`False Alarm (${falseAlarm}%) เกินเกณฑ์ (${maxFalseAlarmAllowed}%)`);
+          failReason = reasons.join(', ');
+        }
+      }
+
       const status = passed ? 'Passed' : 'Retrain';
 
       const progressKey = `${currentUser.id}_${course.id}`;
-      // 🟢 บันทึก timeSpentSeconds และ timeSpentStr ลงใน learningProgress
+      // 🟢 บันทึกข้อมูลลงใน learningProgress
       learningProgress[progressKey] = {
         step: 3,
         preScore: 100,
@@ -2603,10 +2709,19 @@ function finishPracticalSession(isTimeout = false) {
         status: status,
         timeSpentSeconds: spentSec,
         timeSpentStr: timeSpentStr,
-        practicalAnswers: practicalUserAnswers
+        practicalAnswers: practicalUserAnswers,
+        // เก็บสถิติ Gauge Attribute
+        practicalEvalMode: course.practicalEvalMode || 'standard',
+        missRate: missRate,
+        falseAlarm: falseAlarm,
+        totalExpectedNG: totalExpectedNG,
+        ngJudgedAsOK: ngJudgedAsOK,
+        totalExpectedOK: totalExpectedOK,
+        okJudgedAsNG: okJudgedAsNG,
+        failReason: failReason
       };
 
-      // 🟢 บันทึก timeSpentSeconds, timeSpentStr และ practicalAnswers ลงใน resultLog (testResults)
+      // 🟢 บันทึกข้อมูลลงใน testResults (Exam Logs)
       const resultLog = {
         id: 'res_' + Date.now(),
         userId: currentUser.id,
@@ -2622,6 +2737,14 @@ function finishPracticalSession(isTimeout = false) {
         timeSpentSeconds: spentSec,
         timeSpentStr: timeSpentStr,
         practicalAnswers: practicalUserAnswers,
+        practicalEvalMode: course.practicalEvalMode || 'standard',
+        missRate: missRate,
+        falseAlarm: falseAlarm,
+        totalExpectedNG: totalExpectedNG,
+        ngJudgedAsOK: ngJudgedAsOK,
+        totalExpectedOK: totalExpectedOK,
+        okJudgedAsNG: okJudgedAsNG,
+        failReason: failReason,
         completedAt: new Date().toISOString()
       };
 
@@ -2647,9 +2770,17 @@ function finishPracticalSession(isTimeout = false) {
         title.className = 'text-2xl font-black text-rose-700';
       }
 
-      meta.textContent = `คะแนนความแม่นยำ: ${pct}% (เกณฑ์ผ่าน ${passPct}%) | เวลาที่ใช้: ${timeSpentStr}`;
+      // แสดงสรุปผลลัพธ์
+      let metaText = `ความแม่นยำรวม: ${pct}% (เกณฑ์ผ่าน ${passPct}%) | เวลาที่ใช้: ${timeSpentStr}`;
+      if (isGaugeMode) {
+        metaText += `<br><span class="text-xs font-semibold mt-1 inline-block text-slate-600">Miss Rate: <strong>${missRate}%</strong> (เกณฑ์ &le; ${maxMissAllowed}%) | False Alarm: <strong>${falseAlarm}%</strong> (เกณฑ์ &le; ${maxFalseAlarmAllowed}%)</span>`;
+        if (failReason) {
+          metaText += `<br><span class="text-xs font-bold text-rose-600">(${failReason})</span>`;
+        }
+      }
+      meta.innerHTML = metaText;
     }
-
+    
     // ----------------------------------------------------
     // 9. PROGRESS TRACKING & CSV
     // ----------------------------------------------------
@@ -3128,7 +3259,7 @@ function renderProgressView() {
     }
 
     // ----------------------------------------------------
-    // 12. COURSE BUILDER (CREATION, EDITING, UNLIMITED MATERIALS & PRACTICAL)
+   // 12. COURSE BUILDER (CREATION, EDITING, UNLIMITED MATERIALS & PRACTICAL)
     // ----------------------------------------------------
     let tempBuilderSamples = [];
     let tempBuilderMaterials = [];
@@ -3145,7 +3276,17 @@ function renderProgressView() {
       document.getElementById('cb-type').value = 'theory';
       document.getElementById('cb-budget-year').value = new Date().getFullYear();
       document.getElementById('cb-budget-month').value = new Date().getMonth() + 1;
-      passingScore: parseInt(document.getElementById('cb-passing-score').value) || 80;
+      const passScoreEl = document.getElementById('cb-passing-score');
+      if (passScoreEl) passScoreEl.value = 80;
+
+      // 🟢 รีเซ็ตค่า Gauge Attribute สำหรับหลักสูตรใหม่
+      const evalModeEl = document.getElementById('cb-practical-eval-mode');
+      if (evalModeEl) evalModeEl.value = 'standard';
+      const missEl = document.getElementById('cb-max-miss-rate');
+      if (missEl) missEl.value = 0;
+      const falseAlarmEl = document.getElementById('cb-max-false-alarm');
+      if (falseAlarmEl) falseAlarmEl.value = 5;
+      toggleGaugeAttributeSettings();
 
       tempBuilderMaterials = [];
       tempBuilderSamples = [
@@ -3191,6 +3332,15 @@ function renderProgressView() {
       if (course.evalCriteria) {
         document.getElementById('cb-eval-criteria').value = course.evalCriteria;
       }
+
+      // 🟢 ดึงค่า Gauge Attribute ของหลักสูตรเดิมขึ้นมาแสดง
+      const evalModeEl = document.getElementById('cb-practical-eval-mode');
+      if (evalModeEl) evalModeEl.value = course.practicalEvalMode || 'standard';
+      const missEl = document.getElementById('cb-max-miss-rate');
+      if (missEl) missEl.value = course.maxMissRate !== undefined ? course.maxMissRate : 0;
+      const falseAlarmEl = document.getElementById('cb-max-false-alarm');
+      if (falseAlarmEl) falseAlarmEl.value = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
+      toggleGaugeAttributeSettings();
 
       // Deep copy questions
       tempBuilderPreQ = (course.preQuestions || []).map(q => ({ ...q, choices: q.choices ? [...q.choices] : [] }));
@@ -3247,6 +3397,14 @@ function renderProgressView() {
       const wrapper = document.getElementById('cb-timer-input-wrapper');
       if (checked) wrapper.classList.remove('hidden');
       else wrapper.classList.add('hidden');
+    }
+    
+    function toggleGaugeAttributeSettings() {
+      const mode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
+      const box = document.getElementById('cb-gauge-attribute-box');
+      if (box) {
+        box.classList.toggle('hidden', mode !== 'gauge');
+      }
     }
 
     // Dynamic Learning Materials Builder (Unlimited Links)
@@ -3464,6 +3622,11 @@ function renderProgressView() {
 
       const validMaterials = tempBuilderMaterials.filter(m => m.url && m.url.trim() !== '');
 
+      // 🟢 ดึงค่าการตั้งค่า Gauge Attribute จากหน้าจอ
+      const practicalEvalMode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
+      const maxMissRate = parseFloat(document.getElementById('cb-max-miss-rate')?.value) || 0;
+      const maxFalseAlarm = parseFloat(document.getElementById('cb-max-false-alarm')?.value) || 5;
+
       if (courseId) {
         // Edit existing course
         const idx = courses.findIndex(c => c.id === courseId);
@@ -3482,6 +3645,10 @@ function renderProgressView() {
             courses[idx].timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 120;
             courses[idx].evalCriteria = document.getElementById('cb-eval-criteria').value;
             courses[idx].samples = tempBuilderSamples;
+            // 🟢 บันทึกค่า Gauge Attribute ในการแก้ไข
+            courses[idx].practicalEvalMode = practicalEvalMode;
+            courses[idx].maxMissRate = maxMissRate;
+            courses[idx].maxFalseAlarm = maxFalseAlarm;
           } else {
             courses[idx].preQuestions = tempBuilderPreQ;
             courses[idx].postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
@@ -3509,6 +3676,10 @@ function renderProgressView() {
           newCourse.timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 120;
           newCourse.evalCriteria = document.getElementById('cb-eval-criteria').value;
           newCourse.samples = tempBuilderSamples;
+          // 🟢 บันทึกค่า Gauge Attribute ในการสร้างใหม่
+          newCourse.practicalEvalMode = practicalEvalMode;
+          newCourse.maxMissRate = maxMissRate;
+          newCourse.maxFalseAlarm = maxFalseAlarm;
         } else {
           newCourse.preQuestions = tempBuilderPreQ;
           newCourse.postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
@@ -3523,7 +3694,7 @@ function renderProgressView() {
       renderCatalogView();
       renderAdminHub();
     }
-
+    
     // ----------------------------------------------------
     // 13. MASTER ADMIN REVIEW & SCORE EDITING MODALS
     // ----------------------------------------------------
