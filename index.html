@@ -2495,84 +2495,17 @@ function showTheoryStep(stepNumber, course) {
     }
 
     // ⭐️ ฟังก์ชันใหม่สำหรับกดสลับ Step ได้ปลอดภัย ไม่กระทบคะแนน
-function showTheoryStep(stepNumber, courseObj) {
-      // ดึงข้อมูลวิชาอัตโนมัติ ป้องกันปัญหา course เป็น undefined
-      const course = courseObj || courses.find(c => c.id === currentCourseId);
-      if (!course) return;
-
-      const s1 = document.getElementById('cr-content-step1');
-      const s2 = document.getElementById('cr-content-step2');
-      const s3 = document.getElementById('cr-content-step3');
-
-      if (!s1 || !s2 || !s3) return;
-
-      // อัปเดตสีและสถานะปุ่ม Stepper ด้านบน
-      [1, 2, 3].forEach(i => {
-        const pill = document.getElementById(`step-pill-${i}`);
-        if (pill) {
-          pill.onclick = () => goToTheoryStep(i);
-          pill.classList.add('cursor-pointer');
-
-          if (i === stepNumber) {
-            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white flex items-center gap-1.5 shadow-xs cursor-pointer';
-          } else if (i < stepNumber) {
-            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1.5 cursor-pointer';
-          } else {
-            pill.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-500 flex items-center gap-1.5 cursor-pointer';
-          }
-        }
-      });
-
-      // ซ่อนทุก Step ก่อน แล้วค่อยเปิดเฉพาะ Step ที่เลือก
-      s1.classList.add('hidden');
-      s2.classList.add('hidden');
-      s3.classList.add('hidden');
-
-      if (stepNumber === 1) {
-        s1.classList.remove('hidden');
-        renderQuestionsList('pre', course.preQuestions || []);
-      } else if (stepNumber === 2) {
-        s2.classList.remove('hidden');
-        renderMaterialsList(course);
-      } else if (stepNumber === 3) {
-        s3.classList.remove('hidden');
-        renderQuestionsList('post', course.postQuestions || []);
-      }
-    }
-
-    // ฟังก์ชันจัดการการคลิกสลับ Step อย่างปลอดภัย
-    function goToTheoryStep(targetStep) {
-      const course = courses.find(c => c.id === currentCourseId);
-      if (!course || !currentUser) return;
-
-      const progressKey = `${currentUser.id}_${course.id}`;
-      const p = learningProgress[progressKey] || { step: 0 };
-
-      // Step 1 กดดูได้เสมอ
-      if (targetStep === 1) {
-        showTheoryStep(1, course);
-        return;
-      }
-
-      // Step 2 และ Step 3 สลับไป-มาได้ตลอดเมื่อผ่าน Pre-test แล้ว
-      if (targetStep === 2 || targetStep === 3) {
-        if (p.step >= 1 || p.preScore !== undefined) {
-          showTheoryStep(targetStep, course);
-        } else {
-          showToast('กรุณาทำแบบทดสอบก่อนเรียน (Pre-test) ให้เสร็จสิ้นก่อนครับ', 'warning');
-        }
-      }
-    }
-    
-    // Practical Handlers
-function renderPracticalWorkspace(course) {
+// Practical Handlers
+    function renderPracticalWorkspace(course) {
       currentCourseId = course.id;
       practicalUserAnswers = {};
-      currentPracticalTestType = 'post'; // ค่าเริ่มต้นรอบสอบ
+      currentPracticalTestType = 'post';
       setPracticalTestType('post');
 
       // เคลียร์เวลานับถอยหลังเดิม (ถ้ามี)
-      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+      if (typeof practicalTimerInterval !== 'undefined' && practicalTimerInterval) {
+        clearInterval(practicalTimerInterval);
+      }
 
       // ซ่อนกล่องนาฬิกาไว้ก่อน (จะแสดงเมื่อกดเริ่มสอบ)
       const timerBox = document.getElementById('practical-timer-box');
@@ -2597,7 +2530,7 @@ function renderPracticalWorkspace(course) {
         return;
       }
 
-      // 🟢 อัปเดตจำนวนชิ้นงานให้ตรงกับ ID ใน HTML (practical-sample-count-text)
+      // 🟢 อัปเดตจำนวนชิ้นงานจริงลงในหน้าเริ่มสอบ (ID: practical-sample-count-text)
       const samples = course.samples || [];
       const sampleCountEl = document.getElementById('practical-sample-count-text');
       if (sampleCountEl) {
@@ -2605,41 +2538,15 @@ function renderPracticalWorkspace(course) {
       }
     }
 
-      // แสดงข้อมูลสรุปในหน้าเริ่มสอบ
-      const durationSec = course.timerSeconds || ((course.practicalDuration || course.pracDuration || 10) * 60);
-      const durationMin = Math.round(durationSec / 60);
-      
-      const durationEl = document.getElementById('practical-start-duration');
-      if (durationEl) durationEl.textContent = `${durationMin} นาที`;
-
-      const samplesEl = document.getElementById('practical-start-sample-count');
-      if (samplesEl) samplesEl.textContent = `${(course.samples || []).length} ชิ้นงาน`;
-
-      const passEl = document.getElementById('practical-start-pass-score');
-      if (passEl) passEl.textContent = `${course.passingScore !== undefined ? course.passingScore : 80}%`;
-  
     // ----------------------------------------------------
     // ฟังก์ชันอัปเดตตัวเลขเวลานับถอยหลัง (ID: practical-timer-display)
     // ----------------------------------------------------
     function updatePracticalTimerDisplay() {
       const display = document.getElementById('practical-timer-display');
       if (!display) return;
-      const m = Math.floor(Math.max(0, practicalSecondsLeft) / 60).toString().padStart(2, '0');
-      const s = (Math.max(0, practicalSecondsLeft) % 60).toString().padStart(2, '0');
-      display.textContent = `${m}:${s}`;
-    }
-
-    // ----------------------------------------------------
-    // ฟังก์ชันเริ่มการทดสอบภาคปฏิบัติ (Start Session)
-    // ----------------------------------------------------
-    // ----------------------------------------------------
-    // ฟังก์ชันอัปเดตตัวเลขเวลานับถอยหลัง (ID: practical-timer-display)
-    // ----------------------------------------------------
-    function updatePracticalTimerDisplay() {
-      const display = document.getElementById('practical-timer-display');
-      if (!display) return;
-      const m = Math.floor(Math.max(0, practicalSecondsLeft) / 60).toString().padStart(2, '0');
-      const s = (Math.max(0, practicalSecondsLeft) % 60).toString().padStart(2, '0');
+      const secLeft = typeof practicalSecondsLeft !== 'undefined' ? practicalSecondsLeft : 0;
+      const m = Math.floor(Math.max(0, secLeft) / 60).toString().padStart(2, '0');
+      const s = (Math.max(0, secLeft) % 60).toString().padStart(2, '0');
       display.textContent = `${m}:${s}`;
     }
 
@@ -2715,10 +2622,11 @@ function renderPracticalWorkspace(course) {
       }
 
       // 5. 🟢 เปิดและนับเวลาถอยหลังบนกล่อง ID: practical-timer-box
-      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+      if (typeof practicalTimerInterval !== 'undefined' && practicalTimerInterval) {
+        clearInterval(practicalTimerInterval);
+      }
       const timerBox = document.getElementById('practical-timer-box');
 
-      // ดึงเวลาที่ตั้งไว้
       let durationSec = 600;
       if (course.timerSeconds && Number(course.timerSeconds) > 0) {
         durationSec = Number(course.timerSeconds);
@@ -2752,59 +2660,42 @@ function renderPracticalWorkspace(course) {
       }
     }
 
-      // 5. 🟢 เปิดและนับเวลาถอยหลังบนกล่อง ID: practical-timer-box
-      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
-      const timerBox = document.getElementById('practical-timer-box');
-
-      // ดึงเวลาที่ตั้งไว้
-      let durationSec = 600;
-      if (course.timerSeconds && Number(course.timerSeconds) > 0) {
-        durationSec = Number(course.timerSeconds);
-      } else if (course.practicalDuration || course.pracDuration) {
-        durationSec = Number(course.practicalDuration || course.pracDuration) * 60;
-      }
-
-      const isTimerActive = (course.timerEnabled !== false && course.practicalTimerEnabled !== false);
-
-      if (isTimerActive && durationSec > 0) {
-        practicalSecondsLeft = durationSec;
-        if (timerBox) {
-          timerBox.classList.remove('hidden');
-          timerBox.classList.add('flex');
-        }
-        updatePracticalTimerDisplay();
-
-        practicalTimerInterval = setInterval(() => {
-          practicalSecondsLeft--;
-          updatePracticalTimerDisplay();
-          if (practicalSecondsLeft <= 0) {
-            clearInterval(practicalTimerInterval);
-            finishPracticalSession(true);
-          }
-        }, 1000);
-      } else {
-        if (timerBox) {
-          timerBox.classList.add('hidden');
-          timerBox.classList.remove('flex');
-        }
-      }
+    // ----------------------------------------------------
+    // ฟังก์ชันบันทึกคำตอบรายชิ้น
+    // ----------------------------------------------------
+    function setPracticalAnswer(idx, field, value) {
+      if (!practicalUserAnswers[idx]) practicalUserAnswers[idx] = {};
+      practicalUserAnswers[idx][field] = value;
     }
 
     function recordPracticalAns(idx, key, val) {
-      if (!practicalUserAnswers[idx]) practicalUserAnswers[idx] = {};
-      practicalUserAnswers[idx][key] = val;
+      setPracticalAnswer(idx, key, val);
     }
 
-    function updateTimerDisplay() {
-      const min = Math.floor(practicalSecondsLeft / 60);
-      const sec = practicalSecondsLeft % 60;
-      const display = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
-      const el = document.getElementById('practical-timer-display');
-      if (el) el.textContent = display;
+    // ----------------------------------------------------
+    // ฟังก์ชันสอบใหม่อีกครั้ง (Retake)
+    // ----------------------------------------------------
+    function retakePracticalSession() {
+      const course = courses.find(c => c.id === currentCourseId);
+      if (course) {
+        renderPracticalWorkspace(course);
+      }
     }
 
-function finishPracticalSession(isTimeout = false) {
-      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+    // ----------------------------------------------------
+    // ฟังก์ชันสิ้นสุดและตัดสินผลการทดสอบภาคปฏิบัติ
+    // ----------------------------------------------------
+    function finishPracticalSession(isTimeout = false) {
+      if (typeof practicalTimerInterval !== 'undefined' && practicalTimerInterval) {
+        clearInterval(practicalTimerInterval);
+      }
+
+      // ซ่อนกล่องนาฬิกาเมื่อสอบเสร็จ
+      const timerBox = document.getElementById('practical-timer-box');
+      if (timerBox) {
+        timerBox.classList.add('hidden');
+        timerBox.classList.remove('flex');
+      }
 
       const course = courses.find(c => c.id === currentCourseId);
       if (!course) return;
@@ -2855,6 +2746,145 @@ function finishPracticalSession(isTimeout = false) {
           }
         }
       });
+
+      const pct = isTimeout ? 0 : (totalCriteria > 0 ? Math.round((correctMatches / totalCriteria) * 100) : 0);
+      const passPct = course.passingScore !== undefined ? course.passingScore : 80;
+
+      // คำนวณ Miss Rate & False Alarm
+      const isGaugeMode = course.practicalEvalMode === 'gauge';
+      const missRate = totalExpectedNG > 0 ? Math.round((ngJudgedAsOK / totalExpectedNG) * 100) : 0;
+      const falseAlarm = totalExpectedOK > 0 ? Math.round((okJudgedAsNG / totalExpectedOK) * 100) : 0;
+
+      const maxMissAllowed = course.maxMissRate !== undefined ? course.maxMissRate : 0;
+      const maxFalseAlarmAllowed = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
+
+      // 🟢 เงื่อนไขตัดสินผ่าน: ต้องผ่านทั้ง % รวม และไม่เกินเกณฑ์ความเสี่ยง Gauge Attribute
+      const passAccuracy = !isTimeout && pct >= passPct;
+      const passMiss = !isGaugeMode || (missRate <= maxMissAllowed);
+      const passFalseAlarm = !isGaugeMode || (falseAlarm <= maxFalseAlarmAllowed);
+
+      let passed = passAccuracy && passMiss && passFalseAlarm;
+      let failReason = '';
+
+      if (!passAccuracy) {
+        failReason = `ความแม่นยำรวม (${pct}%) ต่ำกว่าเกณฑ์ (${passPct}%)`;
+      } else if (!passMiss) {
+        failReason = `Miss Rate (${missRate}%) เกินเกณฑ์ (${maxMissAllowed}%) เสี่ยงของเสียหลุด`;
+      } else if (!passFalseAlarm) {
+        failReason = `False Alarm (${falseAlarm}%) เกินเกณฑ์ (${maxFalseAlarmAllowed}%) ของดีถูกคัดทิ้ง`;
+      }
+
+      const isPre = (currentPracticalTestType === 'pre');
+      const progressKey = `${currentUser.id}_${course.id}`;
+      const prevProgress = learningProgress[progressKey] || {};
+
+      const finalStatus = isPre 
+        ? (prevProgress.status || 'In Progress') 
+        : (passed ? 'Passed' : 'Retrain');
+
+      learningProgress[progressKey] = {
+        ...prevProgress,
+        step: isPre ? Math.max(prevProgress.step || 0, 1) : 3,
+        preScore: isPre ? pct : (prevProgress.preScore !== undefined ? prevProgress.preScore : null),
+        postScore: !isPre ? pct : (prevProgress.postScore !== undefined ? prevProgress.postScore : null),
+        status: finalStatus,
+        timeSpentSeconds: spentSec,
+        timeSpentStr: timeSpentStr,
+        practicalPreAnswers: isPre ? practicalUserAnswers : (prevProgress.practicalPreAnswers || null),
+        practicalAnswers: !isPre ? practicalUserAnswers : (prevProgress.practicalAnswers || null),
+        practicalEvalMode: course.practicalEvalMode || 'standard',
+        missRate: missRate,
+        falseAlarm: falseAlarm,
+        totalExpectedNG: totalExpectedNG,
+        ngJudgedAsOK: ngJudgedAsOK,
+        totalExpectedOK: totalExpectedOK,
+        okJudgedAsNG: okJudgedAsNG,
+        failReason: failReason
+      };
+
+      const resultLog = {
+        id: 'res_' + Date.now(),
+        userId: currentUser.id,
+        userName: `${currentUser.firstName} ${currentUser.lastName}`,
+        department: currentUser.department,
+        division: currentUser.division || '-',
+        courseId: course.id,
+        courseTitle: course.title,
+        skillTopic: course.skillTopic,
+        type: 'practical',
+        examPhase: currentPracticalTestType,
+        preScore: isPre ? pct : (prevProgress.preScore !== undefined ? prevProgress.preScore : null),
+        postScore: !isPre ? pct : null,
+        score: pct,
+        status: isPre ? 'Pre-tested' : (passed ? 'Passed' : 'Retrain'),
+        timeSpentSeconds: spentSec,
+        timeSpentStr: timeSpentStr,
+        practicalAnswers: practicalUserAnswers,
+        practicalEvalMode: course.practicalEvalMode || 'standard',
+        missRate: missRate,
+        falseAlarm: falseAlarm,
+        totalExpectedNG: totalExpectedNG,
+        ngJudgedAsOK: ngJudgedAsOK,
+        totalExpectedOK: totalExpectedOK,
+        okJudgedAsNG: okJudgedAsNG,
+        failReason: failReason,
+        completedAt: new Date().toISOString()
+      };
+
+      if (typeof testResults !== 'undefined') {
+        testResults.unshift(resultLog);
+      }
+      if (typeof saveState === 'function') {
+        saveState(true);
+      }
+
+      document.getElementById('practical-inspection-screen').classList.add('hidden');
+      document.getElementById('practical-result-screen').classList.remove('hidden');
+
+      const iconBox = document.getElementById('practical-result-icon-box');
+      const title = document.getElementById('practical-result-title');
+      const meta = document.getElementById('practical-result-meta');
+
+      if (isPre) {
+        if (iconBox) {
+          iconBox.className = 'w-16 h-16 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
+          iconBox.innerHTML = '<i class="fa-solid fa-flag-checkered"></i>';
+        }
+        if (title) {
+          title.textContent = 'บันทึกคะแนน Pre-test ภาคปฏิบัติเรียบร้อย';
+          title.className = 'text-2xl font-black text-blue-700';
+        }
+      } else if (passed) {
+        if (iconBox) {
+          iconBox.className = 'w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
+          iconBox.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        }
+        if (title) {
+          title.textContent = 'ผ่านการทดสอบภาคปฏิบัติ (Passed)';
+          title.className = 'text-2xl font-black text-emerald-700';
+        }
+      } else {
+        if (iconBox) {
+          iconBox.className = 'w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
+          iconBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+        }
+        if (title) {
+          title.textContent = isTimeout ? 'หมดเวลาการทดสอบ (Time\'s Up)' : 'ไม่ผ่านการทดสอบ (Retrain)';
+          title.className = 'text-2xl font-black text-rose-700';
+        }
+      }
+
+      if (meta) {
+        let metaText = `รอบการสอบ: <strong class="text-blue-700">${isPre ? 'Pre-test (ก่อนเรียน)' : 'Post-test (หลังเรียน)'}</strong> | ความแม่นยำ: ${pct}% | เวลาที่ใช้: ${timeSpentStr}`;
+        if (isGaugeMode) {
+          metaText += `<br><span class="text-xs font-semibold mt-1 inline-block text-slate-600">Miss Rate: <strong>${missRate}%</strong> (เกณฑ์ &le; ${maxMissAllowed}%) | False Alarm: <strong>${falseAlarm}%</strong> (เกณฑ์ &le; ${maxFalseAlarmAllowed}%)</span>`;
+          if (failReason && !isPre) {
+            metaText += `<br><span class="text-xs font-bold text-rose-600">(${failReason})</span>`;
+          }
+        }
+        meta.innerHTML = metaText;
+      }
+    }
 
       const pct = isTimeout ? 0 : (totalCriteria > 0 ? Math.round((correctMatches / totalCriteria) * 100) : 0);
       const passPct = course.passingScore !== undefined ? course.passingScore : 80;
