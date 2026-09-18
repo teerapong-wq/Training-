@@ -2553,11 +2553,25 @@ function showTheoryStep(stepNumber, courseObj) {
       if (el) el.textContent = display;
     }
 
-    function finishPracticalSession(isTimeout = false) {
+function finishPracticalSession(isTimeout = false) {
       if (practicalTimerInterval) clearInterval(practicalTimerInterval);
 
       const course = courses.find(c => c.id === currentCourseId);
       if (!course) return;
+
+      // ⏱️ คำนวณเวลาที่ใช้ไปจริง (วินาที และ นาที:วินาที)
+      const totalAllocatedSec = ((course.practicalDuration || course.pracDuration || 10) * 60);
+      let remainingSec = 0;
+      if (typeof practicalSecondsLeft !== 'undefined') {
+        remainingSec = practicalSecondsLeft;
+      } else if (typeof practicalTimeRemaining !== 'undefined') {
+        remainingSec = practicalTimeRemaining;
+      }
+
+      const spentSec = isTimeout ? totalAllocatedSec : Math.max(1, totalAllocatedSec - remainingSec);
+      const spentMin = Math.floor(spentSec / 60).toString().padStart(2, '0');
+      const spentRemainderSec = (spentSec % 60).toString().padStart(2, '0');
+      const timeSpentStr = `${spentMin}:${spentRemainderSec} นาที`;
 
       const samples = course.samples || [];
       let correctMatches = 0;
@@ -2581,14 +2595,18 @@ function showTheoryStep(stepNumber, courseObj) {
       const status = passed ? 'Passed' : 'Retrain';
 
       const progressKey = `${currentUser.id}_${course.id}`;
+      // 🟢 บันทึก timeSpentSeconds และ timeSpentStr ลงใน learningProgress
       learningProgress[progressKey] = {
         step: 3,
         preScore: 100,
         postScore: pct,
         status: status,
+        timeSpentSeconds: spentSec,
+        timeSpentStr: timeSpentStr,
         practicalAnswers: practicalUserAnswers
       };
 
+      // 🟢 บันทึก timeSpentSeconds, timeSpentStr และ practicalAnswers ลงใน resultLog (testResults)
       const resultLog = {
         id: 'res_' + Date.now(),
         userId: currentUser.id,
@@ -2601,6 +2619,9 @@ function showTheoryStep(stepNumber, courseObj) {
         type: 'practical',
         postScore: pct,
         status: status,
+        timeSpentSeconds: spentSec,
+        timeSpentStr: timeSpentStr,
+        practicalAnswers: practicalUserAnswers,
         completedAt: new Date().toISOString()
       };
 
@@ -2626,12 +2647,7 @@ function showTheoryStep(stepNumber, courseObj) {
         title.className = 'text-2xl font-black text-rose-700';
       }
 
-      meta.textContent = `คะแนนความแม่นยำ: ${pct}% (เกณฑ์ผ่าน ${passPct}%)`;
-    }
-
-    function retakePracticalSession() {
-      const course = courses.find(c => c.id === currentCourseId);
-      if (course) renderPracticalWorkspace(course);
+      meta.textContent = `คะแนนความแม่นยำ: ${pct}% (เกณฑ์ผ่าน ${passPct}%) | เวลาที่ใช้: ${timeSpentStr}`;
     }
 
     // ----------------------------------------------------
