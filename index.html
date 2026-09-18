@@ -2632,6 +2632,20 @@ function renderPracticalWorkspace(course) {
     // ----------------------------------------------------
     // ฟังก์ชันเริ่มการทดสอบภาคปฏิบัติ (Start Session)
     // ----------------------------------------------------
+    // ----------------------------------------------------
+    // ฟังก์ชันอัปเดตตัวเลขเวลานับถอยหลัง (ID: practical-timer-display)
+    // ----------------------------------------------------
+    function updatePracticalTimerDisplay() {
+      const display = document.getElementById('practical-timer-display');
+      if (!display) return;
+      const m = Math.floor(Math.max(0, practicalSecondsLeft) / 60).toString().padStart(2, '0');
+      const s = (Math.max(0, practicalSecondsLeft) % 60).toString().padStart(2, '0');
+      display.textContent = `${m}:${s}`;
+    }
+
+    // ----------------------------------------------------
+    // ฟังก์ชันเริ่มการทดสอบภาคปฏิบัติ (Start Session)
+    // ----------------------------------------------------
     function startPracticalSession() {
       const course = courses.find(c => c.id === currentCourseId);
       if (!course) return;
@@ -2699,6 +2713,44 @@ function renderPracticalWorkspace(course) {
           </tr>
         `).join('');
       }
+
+      // 5. 🟢 เปิดและนับเวลาถอยหลังบนกล่อง ID: practical-timer-box
+      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+      const timerBox = document.getElementById('practical-timer-box');
+
+      // ดึงเวลาที่ตั้งไว้
+      let durationSec = 600;
+      if (course.timerSeconds && Number(course.timerSeconds) > 0) {
+        durationSec = Number(course.timerSeconds);
+      } else if (course.practicalDuration || course.pracDuration) {
+        durationSec = Number(course.practicalDuration || course.pracDuration) * 60;
+      }
+
+      const isTimerActive = (course.timerEnabled !== false && course.practicalTimerEnabled !== false);
+
+      if (isTimerActive && durationSec > 0) {
+        practicalSecondsLeft = durationSec;
+        if (timerBox) {
+          timerBox.classList.remove('hidden');
+          timerBox.classList.add('flex');
+        }
+        updatePracticalTimerDisplay();
+
+        practicalTimerInterval = setInterval(() => {
+          practicalSecondsLeft--;
+          updatePracticalTimerDisplay();
+          if (practicalSecondsLeft <= 0) {
+            clearInterval(practicalTimerInterval);
+            finishPracticalSession(true);
+          }
+        }, 1000);
+      } else {
+        if (timerBox) {
+          timerBox.classList.add('hidden');
+          timerBox.classList.remove('flex');
+        }
+      }
+    }
 
       // 5. 🟢 เปิดและนับเวลาถอยหลังบนกล่อง ID: practical-timer-box
       if (practicalTimerInterval) clearInterval(practicalTimerInterval);
