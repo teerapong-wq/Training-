@@ -2666,18 +2666,18 @@ function showTheoryStep(stepNumber, courseObj) {
       const samples = course.samples || [];
       const tableBody = document.getElementById('practical-samples-table-body');
 
-      // 🟢 ตรวจสอบเงื่อนไขว่าหลักสูตรเปิดตรวจวิธีปฏิบัติ หรือตัดสินเฉพาะ OK/NG
+      // ตรวจสอบเงื่อนไขการประเมิน
       const evalCrit = course.evalCriteria || 'both';
       const checkMethod = (evalCrit === 'both' || evalCrit === 'method_only');
       const checkJudge = (evalCrit === 'both' || evalCrit === 'judgement_only');
 
-      // 🟢 ซ่อน/แสดงหัวตาราง <th> ให้ตรงกัน
+      // ซ่อน/แสดงหัวตาราง <th>
       const thMethod = document.getElementById('th-practical-method');
       const thJudge = document.getElementById('th-practical-judgement');
       if (thMethod) thMethod.style.display = checkMethod ? '' : 'none';
       if (thJudge) thJudge.style.display = checkJudge ? '' : 'none';
 
-      // 🟢 วาดเนื้อหาตารางโดยซ่อนคอลัมน์วิธีปฏิบัติทันทีถ้าไม่ได้เปิดใช้งาน
+      // วาดแถวชิ้นงาน
       if (tableBody) {
         tableBody.innerHTML = samples.map((s, idx) => `
           <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
@@ -2718,18 +2718,29 @@ function showTheoryStep(stepNumber, courseObj) {
         `).join('');
       }
 
-      // ระบบจับเวลานับถอยหลัง
+      // 🟢 ระบบนับเวลาถอยหลัง (รองรับทั้ง timerSeconds, practicalDuration และ timerEnabled ทุกรูปแบบ)
       if (practicalTimerInterval) clearInterval(practicalTimerInterval);
       const timerWrapper = document.getElementById('practical-timer-badge');
-      const durationSec = course.timerSeconds || ((course.practicalDuration || course.pracDuration || 10) * 60);
       
-      if (course.timerEnabled && durationSec > 0) {
+      const isTimerOn = course.timerEnabled === true || course.timerEnabled === 'true' || course.practicalTimerEnabled === true || course.practicalTimerEnabled === 'true' || (course.timerSeconds && Number(course.timerSeconds) > 0);
+
+      let durationSec = 0;
+      if (course.timerSeconds && Number(course.timerSeconds) > 0) {
+        durationSec = Number(course.timerSeconds);
+      } else if (course.practicalDuration || course.pracDuration) {
+        durationSec = Number(course.practicalDuration || course.pracDuration) * 60;
+      } else {
+        durationSec = 600; // ค่าเริ่มต้น 10 นาที (600 วินาที) ตามในรูปหน้าจอตั้งค่า
+      }
+
+      if (isTimerOn && durationSec > 0) {
         practicalSecondsLeft = durationSec;
         if (timerWrapper) timerWrapper.classList.remove('hidden');
-        updatePracticalTimerDisplay();
+        if (typeof updatePracticalTimerDisplay === 'function') updatePracticalTimerDisplay();
+        
         practicalTimerInterval = setInterval(() => {
           practicalSecondsLeft--;
-          updatePracticalTimerDisplay();
+          if (typeof updatePracticalTimerDisplay === 'function') updatePracticalTimerDisplay();
           if (practicalSecondsLeft <= 0) {
             clearInterval(practicalTimerInterval);
             finishPracticalSession(true);
