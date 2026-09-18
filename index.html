@@ -3608,13 +3608,28 @@ function renderReviewModalContent() {
       if (course.type === 'practical') {
         // ดึงรายการชิ้นงานตัวอย่าง และคำตอบที่พนักงานกดไว้
         const samples = course.samples || [];
-        // ค้นหาคำตอบจาก learningProgress หรือใน testResults ล่าสุด
-        let practicalAns = p.practicalAnswers;
-        if (!practicalAns && typeof testResults !== 'undefined') {
-          const matchLog = testResults.find(r => r.userId === activeReviewUser && r.courseId === activeReviewCourse && r.practicalAnswers);
-          if (matchLog) practicalAns = matchLog.practicalAnswers;
+        
+        // ค้นหาข้อมูลผลสอบล่าสุดจาก testResults เพื่อดึงคำตอบและเวลาที่ใช้
+        let matchLog = null;
+        if (typeof testResults !== 'undefined') {
+          matchLog = testResults.find(r => r.userId === activeReviewUser && r.courseId === activeReviewCourse);
         }
-        practicalAns = practicalAns || {};
+
+        let practicalAns = p.practicalAnswers || (matchLog ? matchLog.practicalAnswers : null) || {};
+
+        // ⏱️ คำนวณและจัดรูปแบบเวลาที่ใช้ในการทดสอบ
+        let timeSpentDisplay = '-';
+        const rawTimeSec = p.timeSpentSeconds || p.practicalTimeSpent || (matchLog ? (matchLog.timeSpentSeconds || matchLog.practicalTimeSpent) : null);
+        
+        if (typeof rawTimeSec === 'number' && rawTimeSec > 0) {
+          const m = Math.floor(rawTimeSec / 60).toString().padStart(2, '0');
+          const s = (rawTimeSec % 60).toString().padStart(2, '0');
+          timeSpentDisplay = `${m}:${s} นาที`;
+        } else if (p.timeSpentStr || (matchLog && matchLog.timeSpentStr)) {
+          timeSpentDisplay = p.timeSpentStr || matchLog.timeSpentStr;
+        } else if (course.practicalDuration || course.pracDuration) {
+          timeSpentDisplay = `ไม่เกิน ${course.practicalDuration || course.pracDuration} นาที`;
+        }
 
         if (samples.length === 0) {
           container.innerHTML = `
@@ -3713,9 +3728,10 @@ function renderReviewModalContent() {
 
         container.innerHTML = `
           <div class="space-y-4">
-            <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-200/80 p-3.5 rounded-2xl flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs shadow-2xs">
+            <!-- กล่องหัวข้อการ์ดสีส้ม พร้อมป้ายเวลาและคะแนน -->
+            <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-200/80 p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs shadow-2xs shrink-0">
                   <i class="fa-solid fa-wrench"></i>
                 </div>
                 <div>
@@ -3723,9 +3739,17 @@ function renderReviewModalContent() {
                   <p class="text-[11px] text-amber-800/80">เปรียบเทียบผลการประเมินของพนักงานกับค่ามาตรฐานที่กำหนดไว้</p>
                 </div>
               </div>
-              <span class="px-3 py-1 rounded-xl text-xs font-black ${finalPct >= (course.passingScore || 80) ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}">
-                ความแม่นยำ: ${finalPct}%
-              </span>
+
+              <!-- 🟢 ส่วนแสดงผลเวลาที่ใช้ และ ความแม่นยำ -->
+              <div class="flex items-center gap-2 self-end sm:self-auto">
+                <span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 border border-amber-200 flex items-center gap-1.5 shadow-2xs">
+                  <i class="fa-solid fa-stopwatch text-amber-600"></i>
+                  <span>เวลาที่ใช้: <strong class="text-slate-900 font-mono">${timeSpentDisplay}</strong></span>
+                </span>
+                <span class="px-3 py-1 rounded-xl text-xs font-black shadow-2xs ${finalPct >= (course.passingScore || 80) ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}">
+                  ความแม่นยำ: ${finalPct}%
+                </span>
+              </div>
             </div>
 
             <div class="overflow-x-auto rounded-2xl border border-slate-200 shadow-2xs bg-white">
@@ -3749,7 +3773,7 @@ function renderReviewModalContent() {
 
         const summaryEl = document.getElementById('review-modal-score-summary');
         if (summaryEl) {
-          summaryEl.textContent = `คะแนนความแม่นยำภาคปฏิบัติ: ${correctCount}/${totalCriteria} (${finalPct}%)`;
+          summaryEl.textContent = `คะแนนความแม่นยำภาคปฏิบัติ: ${correctCount}/${totalCriteria} (${finalPct}%) | เวลาที่ใช้: ${timeSpentDisplay}`;
         }
         return;
       }
@@ -3847,27 +3871,6 @@ function renderReviewModalContent() {
       const summaryEl = document.getElementById('review-modal-score-summary');
       if (summaryEl) {
         summaryEl.textContent = `คะแนนข้อกา: ${earnedPoints}/${totalPoints}`;
-      }
-    }
-
-    function autoCompileFeedback() {
-      const course = courses.find(c => c.id === activeReviewCourse);
-      if (!course) return;
-      const qList = currentReviewTab === 'pre' ? (course.preQuestions || []) : (course.postQuestions || []);
-
-      let compiled = [];
-      qList.forEach((q, idx) => {
-        const cmt = document.getElementById(`review_cmt_${idx}`)?.value.trim();
-        if (cmt) {
-          compiled.push(`[ข้อที่ ${idx + 1}]: ${cmt}`);
-        }
-      });
-
-      const feedbackEl = document.getElementById('review-overall-feedback');
-      if (compiled.length > 0) {
-        feedbackEl.value = compiled.join('\n');
-      } else {
-        showToast('ยังไม่มีการพิมพ์ความคิดเห็นในข้อใด', 'info');
       }
     }
 
