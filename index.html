@@ -2565,28 +2565,45 @@ function showTheoryStep(stepNumber, courseObj) {
     }
     
     // Practical Handlers
-    function renderPracticalWorkspace(course) {
+function renderPracticalWorkspace(course) {
       currentCourseId = course.id;
       practicalUserAnswers = {};
       currentPracticalTestType = 'post'; // ค่าเริ่มต้นรอบสอบ
       setPracticalTestType('post');
 
-      // 🟢 1. เคลียร์สถานะหน้าจอ: ปิดหน้าจอผลสอบ และหน้าจอตรวจชิ้นงาน
+      // เคลียร์เวลานับถอยหลังเดิม (ถ้ามี)
+      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+
+      // ซ่อนกล่องนาฬิกาไว้ก่อน (จะแสดงเมื่อกดเริ่มสอบ)
+      const timerBox = document.getElementById('practical-timer-box');
+      if (timerBox) {
+        timerBox.classList.add('hidden');
+        timerBox.classList.remove('flex');
+      }
+
+      // ปิดหน้าตรวจชิ้นงาน และหน้าผลลัพธ์
       const resultScreen = document.getElementById('practical-result-screen');
       if (resultScreen) resultScreen.classList.add('hidden');
 
       const inspectScreen = document.getElementById('practical-inspection-screen');
       if (inspectScreen) inspectScreen.classList.add('hidden');
 
-      // 🟢 2. เปิดหน้าจอกดเริ่มสอบ (Start Screen) ตาม Flow ปกติ
+      // เปิดหน้าเริ่มสอบ (Start Screen)
       const startScreen = document.getElementById('practical-start-screen');
       if (startScreen) {
         startScreen.classList.remove('hidden');
       } else if (inspectScreen) {
-        // Fallback กรณีไม่มีหน้า start ให้เริ่มเลย
         startPracticalSession();
         return;
       }
+
+      // 🟢 อัปเดตจำนวนชิ้นงานให้ตรงกับ ID ใน HTML (practical-sample-count-text)
+      const samples = course.samples || [];
+      const sampleCountEl = document.getElementById('practical-sample-count-text');
+      if (sampleCountEl) {
+        sampleCountEl.textContent = samples.length;
+      }
+    }
 
       // แสดงข้อมูลสรุปในหน้าเริ่มสอบ
       const durationSec = course.timerSeconds || ((course.practicalDuration || course.pracDuration || 10) * 60);
@@ -2601,32 +2618,48 @@ function showTheoryStep(stepNumber, courseObj) {
       const passEl = document.getElementById('practical-start-pass-score');
       if (passEl) passEl.textContent = `${course.passingScore !== undefined ? course.passingScore : 80}%`;
     }
+    // ----------------------------------------------------
+    // ฟังก์ชันอัปเดตตัวเลขเวลานับถอยหลัง (ID: practical-timer-display)
+    // ----------------------------------------------------
+    function updatePracticalTimerDisplay() {
+      const display = document.getElementById('practical-timer-display');
+      if (!display) return;
+      const m = Math.floor(Math.max(0, practicalSecondsLeft) / 60).toString().padStart(2, '0');
+      const s = (Math.max(0, practicalSecondsLeft) % 60).toString().padStart(2, '0');
+      display.textContent = `${m}:${s}`;
+    }
+
+    // ----------------------------------------------------
+    // ฟังก์ชันเริ่มการทดสอบภาคปฏิบัติ (Start Session)
+    // ----------------------------------------------------
     function startPracticalSession() {
       const course = courses.find(c => c.id === currentCourseId);
       if (!course) return;
 
       practicalUserAnswers = {};
-      const startScr = document.getElementById('practical-start-screen');
-      if (startScr) startScr.classList.add('hidden');
-      
-      const inspectScr = document.getElementById('practical-inspection-screen');
-      if (inspectScr) inspectScr.classList.remove('hidden');
+
+      // 1. ปิดหน้าจอเริ่มสอบ แล้วเปิดหน้าจอตรวจชิ้นงาน
+      const startScreen = document.getElementById('practical-start-screen');
+      if (startScreen) startScreen.classList.add('hidden');
+
+      const inspectScreen = document.getElementById('practical-inspection-screen');
+      if (inspectScreen) inspectScreen.classList.remove('hidden');
 
       const samples = course.samples || [];
       const tableBody = document.getElementById('practical-samples-table-body');
 
-      // ตรวจสอบเงื่อนไขการประเมิน
+      // 2. ตรวจสอบเงื่อนไขว่าหลักสูตรเปิดตรวจวิธีปฏิบัติ หรือตัดสินเฉพาะ OK/NG
       const evalCrit = course.evalCriteria || 'both';
       const checkMethod = (evalCrit === 'both' || evalCrit === 'method_only');
       const checkJudge = (evalCrit === 'both' || evalCrit === 'judgement_only');
 
-      // ซ่อน/แสดงหัวตาราง <th>
+      // 3. ซ่อน/แสดงหัวตาราง <th> ให้ตรงกัน
       const thMethod = document.getElementById('th-practical-method');
       const thJudge = document.getElementById('th-practical-judgement');
       if (thMethod) thMethod.style.display = checkMethod ? '' : 'none';
       if (thJudge) thJudge.style.display = checkJudge ? '' : 'none';
 
-      // วาดแถวชิ้นงาน
+      // 4. วาดรายการชิ้นงานในตาราง
       if (tableBody) {
         tableBody.innerHTML = samples.map((s, idx) => `
           <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
@@ -2667,36 +2700,41 @@ function showTheoryStep(stepNumber, courseObj) {
         `).join('');
       }
 
-      // 🟢 ระบบนับเวลาถอยหลัง (รองรับทั้ง timerSeconds, practicalDuration และ timerEnabled ทุกรูปแบบ)
+      // 5. 🟢 เปิดและนับเวลาถอยหลังบนกล่อง ID: practical-timer-box
       if (practicalTimerInterval) clearInterval(practicalTimerInterval);
-      const timerWrapper = document.getElementById('practical-timer-badge');
-      
-      const isTimerOn = course.timerEnabled === true || course.timerEnabled === 'true' || course.practicalTimerEnabled === true || course.practicalTimerEnabled === 'true' || (course.timerSeconds && Number(course.timerSeconds) > 0);
+      const timerBox = document.getElementById('practical-timer-box');
 
-      let durationSec = 0;
+      // ดึงเวลาที่ตั้งไว้
+      let durationSec = 600;
       if (course.timerSeconds && Number(course.timerSeconds) > 0) {
         durationSec = Number(course.timerSeconds);
       } else if (course.practicalDuration || course.pracDuration) {
         durationSec = Number(course.practicalDuration || course.pracDuration) * 60;
-      } else {
-        durationSec = 600; // ค่าเริ่มต้น 10 นาที (600 วินาที) ตามในรูปหน้าจอตั้งค่า
       }
 
-      if (isTimerOn && durationSec > 0) {
+      const isTimerActive = (course.timerEnabled !== false && course.practicalTimerEnabled !== false);
+
+      if (isTimerActive && durationSec > 0) {
         practicalSecondsLeft = durationSec;
-        if (timerWrapper) timerWrapper.classList.remove('hidden');
-        if (typeof updatePracticalTimerDisplay === 'function') updatePracticalTimerDisplay();
-        
+        if (timerBox) {
+          timerBox.classList.remove('hidden');
+          timerBox.classList.add('flex');
+        }
+        updatePracticalTimerDisplay();
+
         practicalTimerInterval = setInterval(() => {
           practicalSecondsLeft--;
-          if (typeof updatePracticalTimerDisplay === 'function') updatePracticalTimerDisplay();
+          updatePracticalTimerDisplay();
           if (practicalSecondsLeft <= 0) {
             clearInterval(practicalTimerInterval);
             finishPracticalSession(true);
           }
         }, 1000);
       } else {
-        if (timerWrapper) timerWrapper.classList.add('hidden');
+        if (timerBox) {
+          timerBox.classList.add('hidden');
+          timerBox.classList.remove('flex');
+        }
       }
     }
 
