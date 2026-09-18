@@ -2657,61 +2657,86 @@ function showTheoryStep(stepNumber, courseObj) {
       if (!course) return;
 
       practicalUserAnswers = {};
-      document.getElementById('practical-start-screen').classList.add('hidden');
-      document.getElementById('practical-inspection-screen').classList.remove('hidden');
+      const startScr = document.getElementById('practical-start-screen');
+      if (startScr) startScr.classList.add('hidden');
+      
+      const inspectScr = document.getElementById('practical-inspection-screen');
+      if (inspectScr) inspectScr.classList.remove('hidden');
 
-      const tableBody = document.getElementById('practical-samples-table-body');
       const samples = course.samples || [];
+      const tableBody = document.getElementById('practical-samples-table-body');
 
-      tableBody.innerHTML = samples.map((s, idx) => `
-        <tr class="hover:bg-slate-50/80">
-          <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
-          <td class="p-3">
-            <span class="font-bold text-slate-900">${s.name}</span>
-            <span class="text-[10px] text-slate-400 block">ID: ${s.id}</span>
-          </td>
-          <td class="p-3 text-center">
-            <div class="inline-flex items-center gap-2">
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="p_method_${idx}" value="correct" onchange="recordPracticalAns(${idx}, 'method', 'correct')" class="text-blue-600 focus:ring-blue-500">
-                <span class="text-emerald-700 font-bold">ถูกต้อง</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="p_method_${idx}" value="incorrect" onchange="recordPracticalAns(${idx}, 'method', 'incorrect')" class="text-rose-600 focus:ring-rose-500">
-                <span class="text-rose-700 font-bold">ไม่ถูกต้อง</span>
-              </label>
-            </div>
-          </td>
-          <td class="p-3 text-center">
-            <div class="inline-flex items-center gap-2">
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="p_judge_${idx}" value="OK" onchange="recordPracticalAns(${idx}, 'judgement', 'OK')" class="text-emerald-600 focus:ring-emerald-500">
-                <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-black">OK</span>
-              </label>
-              <label class="flex items-center gap-1 cursor-pointer">
-                <input type="radio" name="p_judge_${idx}" value="NG" onchange="recordPracticalAns(${idx}, 'judgement', 'NG')" class="text-rose-600 focus:ring-rose-500">
-                <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-black">NG</span>
-              </label>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+      // 🟢 ตรวจสอบเงื่อนไขว่าหลักสูตรเปิดตรวจวิธีปฏิบัติ หรือตัดสินเฉพาะ OK/NG
+      const evalCrit = course.evalCriteria || 'both';
+      const checkMethod = (evalCrit === 'both' || evalCrit === 'method_only');
+      const checkJudge = (evalCrit === 'both' || evalCrit === 'judgement_only');
 
-      if (course.timerEnabled && course.timerSeconds > 0) {
-        practicalSecondsLeft = course.timerSeconds;
-        practicalStartTime = Date.now();
-        document.getElementById('practical-timer-box').classList.remove('hidden');
-        updateTimerDisplay();
+      // 🟢 ซ่อน/แสดงหัวตาราง <th> ให้ตรงกัน
+      const thMethod = document.getElementById('th-practical-method');
+      const thJudge = document.getElementById('th-practical-judgement');
+      if (thMethod) thMethod.style.display = checkMethod ? '' : 'none';
+      if (thJudge) thJudge.style.display = checkJudge ? '' : 'none';
 
-        if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+      // 🟢 วาดเนื้อหาตารางโดยซ่อนคอลัมน์วิธีปฏิบัติทันทีถ้าไม่ได้เปิดใช้งาน
+      if (tableBody) {
+        tableBody.innerHTML = samples.map((s, idx) => `
+          <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
+            <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+            <td class="p-3">
+              <span class="font-bold text-xs text-slate-800 block">${s.name || `ชิ้นงาน #${idx + 1}`}</span>
+              ${s.id ? `<span class="text-[10px] text-slate-400 font-mono">ID: ${s.id}</span>` : ''}
+            </td>
+            ${checkMethod ? `
+              <td class="p-3 text-center">
+                <div class="inline-flex items-center gap-3">
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-emerald-700">
+                    <input type="radio" name="prac_method_${idx}" value="correct" onchange="setPracticalAnswer(${idx}, 'method', 'correct')" class="text-emerald-600 focus:ring-emerald-500">
+                    <span>ถูกต้อง</span>
+                  </label>
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-rose-700">
+                    <input type="radio" name="prac_method_${idx}" value="incorrect" onchange="setPracticalAnswer(${idx}, 'method', 'incorrect')" class="text-rose-600 focus:ring-rose-500">
+                    <span>ไม่ถูกต้อง</span>
+                  </label>
+                </div>
+              </td>
+            ` : ''}
+            ${checkJudge ? `
+              <td class="p-3 text-center">
+                <div class="inline-flex items-center gap-3">
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-black text-emerald-700">
+                    <input type="radio" name="prac_judge_${idx}" value="OK" onchange="setPracticalAnswer(${idx}, 'judgement', 'OK')" class="text-emerald-600 focus:ring-emerald-500">
+                    <span>OK</span>
+                  </label>
+                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-black text-rose-700">
+                    <input type="radio" name="prac_judge_${idx}" value="NG" onchange="setPracticalAnswer(${idx}, 'judgement', 'NG')" class="text-rose-600 focus:ring-rose-500">
+                    <span>NG</span>
+                  </label>
+                </div>
+              </td>
+            ` : ''}
+          </tr>
+        `).join('');
+      }
+
+      // ระบบจับเวลานับถอยหลัง
+      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+      const timerWrapper = document.getElementById('practical-timer-badge');
+      const durationSec = course.timerSeconds || ((course.practicalDuration || course.pracDuration || 10) * 60);
+      
+      if (course.timerEnabled && durationSec > 0) {
+        practicalSecondsLeft = durationSec;
+        if (timerWrapper) timerWrapper.classList.remove('hidden');
+        updatePracticalTimerDisplay();
         practicalTimerInterval = setInterval(() => {
           practicalSecondsLeft--;
-          updateTimerDisplay();
+          updatePracticalTimerDisplay();
           if (practicalSecondsLeft <= 0) {
             clearInterval(practicalTimerInterval);
             finishPracticalSession(true);
           }
         }, 1000);
+      } else {
+        if (timerWrapper) timerWrapper.classList.add('hidden');
       }
     }
 
