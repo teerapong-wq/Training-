@@ -2571,87 +2571,36 @@ function showTheoryStep(stepNumber, courseObj) {
       currentPracticalTestType = 'post'; // ค่าเริ่มต้นรอบสอบ
       setPracticalTestType('post');
 
-      const screen = document.getElementById('practical-inspection-screen');
+      // 🟢 1. เคลียร์สถานะหน้าจอ: ปิดหน้าจอผลสอบ และหน้าจอตรวจชิ้นงาน
       const resultScreen = document.getElementById('practical-result-screen');
       if (resultScreen) resultScreen.classList.add('hidden');
-      if (!screen) return;
-      screen.classList.remove('hidden');
 
-      const samples = course.samples || [];
-      const tableBody = document.getElementById('practical-samples-table-body');
+      const inspectScreen = document.getElementById('practical-inspection-screen');
+      if (inspectScreen) inspectScreen.classList.add('hidden');
+
+      // 🟢 2. เปิดหน้าจอกดเริ่มสอบ (Start Screen) ตาม Flow ปกติ
+      const startScreen = document.getElementById('practical-start-screen');
+      if (startScreen) {
+        startScreen.classList.remove('hidden');
+      } else if (inspectScreen) {
+        // Fallback กรณีไม่มีหน้า start ให้เริ่มเลย
+        startPracticalSession();
+        return;
+      }
+
+      // แสดงข้อมูลสรุปในหน้าเริ่มสอบ
+      const durationSec = course.timerSeconds || ((course.practicalDuration || course.pracDuration || 10) * 60);
+      const durationMin = Math.round(durationSec / 60);
       
-      // 🟢 ตรวจสอบเงื่อนไขว่าหลักสูตรเปิดตรวจวิธีปฏิบัติ หรือตัดสิน OK/NG
-      const evalCrit = course.evalCriteria || 'both';
-      const checkMethod = (evalCrit === 'both' || evalCrit === 'method_only');
-      const checkJudge = (evalCrit === 'both' || evalCrit === 'judgement_only');
+      const durationEl = document.getElementById('practical-start-duration');
+      if (durationEl) durationEl.textContent = `${durationMin} นาที`;
 
-      // 🟢 ซ่อน/แสดงหัวตาราง <th> ของวิธีปฏิบัติการวัด และการตัดสิน OK/NG
-      const thMethod = document.getElementById('th-practical-method');
-      const thJudge = document.getElementById('th-practical-judgement');
-      if (thMethod) thMethod.style.display = checkMethod ? '' : 'none';
-      if (thJudge) thJudge.style.display = checkJudge ? '' : 'none';
+      const samplesEl = document.getElementById('practical-start-sample-count');
+      if (samplesEl) samplesEl.textContent = `${(course.samples || []).length} ชิ้นงาน`;
 
-      // 🟢 วาดตารางชิ้นงาน โดยจะซ่อนคอลัมน์วิธีปฏิบัติทันทีถ้าไม่ได้เปิดใช้งาน
-      if (tableBody) {
-        tableBody.innerHTML = samples.map((s, idx) => `
-          <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
-            <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
-            <td class="p-3">
-              <span class="font-bold text-xs text-slate-800 block">${s.name || `ชิ้นงาน #${idx + 1}`}</span>
-              ${s.id ? `<span class="text-[10px] text-slate-400 font-mono">ID: ${s.id}</span>` : ''}
-            </td>
-            ${checkMethod ? `
-              <td class="p-3 text-center">
-                <div class="inline-flex items-center gap-3">
-                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-emerald-700">
-                    <input type="radio" name="prac_method_${idx}" value="correct" onchange="setPracticalAnswer(${idx}, 'method', 'correct')" class="text-emerald-600 focus:ring-emerald-500">
-                    <span>ถูกต้อง</span>
-                  </label>
-                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-rose-700">
-                    <input type="radio" name="prac_method_${idx}" value="incorrect" onchange="setPracticalAnswer(${idx}, 'method', 'incorrect')" class="text-rose-600 focus:ring-rose-500">
-                    <span>ไม่ถูกต้อง</span>
-                  </label>
-                </div>
-              </td>
-            ` : ''}
-            ${checkJudge ? `
-              <td class="p-3 text-center">
-                <div class="inline-flex items-center gap-3">
-                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-black text-emerald-700">
-                    <input type="radio" name="prac_judge_${idx}" value="OK" onchange="setPracticalAnswer(${idx}, 'judgement', 'OK')" class="text-emerald-600 focus:ring-emerald-500">
-                    <span>OK</span>
-                  </label>
-                  <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-black text-rose-700">
-                    <input type="radio" name="prac_judge_${idx}" value="NG" onchange="setPracticalAnswer(${idx}, 'judgement', 'NG')" class="text-rose-600 focus:ring-rose-500">
-                    <span>NG</span>
-                  </label>
-                </div>
-              </td>
-            ` : ''}
-          </tr>
-        `).join('');
-      }
-
-      // ตั้งค่าตัวนับเวลา (Timer Setup)
-      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
-      const timerWrapper = document.getElementById('practical-timer-badge');
-      if (course.timerEnabled && course.timerSeconds > 0) {
-        practicalSecondsLeft = course.timerSeconds;
-        if (timerWrapper) timerWrapper.classList.remove('hidden');
-        updatePracticalTimerDisplay();
-        practicalTimerInterval = setInterval(() => {
-          practicalSecondsLeft--;
-          updatePracticalTimerDisplay();
-          if (practicalSecondsLeft <= 0) {
-            clearInterval(practicalTimerInterval);
-            finishPracticalSession(true);
-          }
-        }, 1000);
-      } else {
-        if (timerWrapper) timerWrapper.classList.add('hidden');
-      }
+      const passEl = document.getElementById('practical-start-pass-score');
+      if (passEl) passEl.textContent = `${course.passingScore !== undefined ? course.passingScore : 80}%`;
     }
-
     function startPracticalSession() {
       const course = courses.find(c => c.id === currentCourseId);
       if (!course) return;
