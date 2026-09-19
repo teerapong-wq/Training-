@@ -2860,6 +2860,7 @@
       const isMasterAdmin = currentUser && currentUser.role === "Master Admin";
       const isAdmin = currentUser && (currentUser.role === "Admin" || isMasterAdmin);
 
+      // 1. จัดการตัวเลือกพนักงาน
       if (isAdmin && wrapperEl && userFilterEl) {
         wrapperEl.classList.remove("hidden");
         const currentVal = userFilterEl.value || "";
@@ -2871,6 +2872,7 @@
         wrapperEl.classList.add("hidden");
       }
 
+      // 2. เติมหลักสูตรลงใน Dropdown
       if (courseFilterEl) {
         const currentCourseVal = courseFilterEl.value || "";
         courseFilterEl.innerHTML = `
@@ -2879,6 +2881,7 @@
         `;
       }
 
+      // 3. กรองรายชื่อพนักงาน
       let userList = [];
       if (isAdmin) {
         const selectedUser = userFilterEl ? userFilterEl.value : "";
@@ -2887,6 +2890,7 @@
         userList = currentUser ? users.filter(u => u.id === currentUser.id) : [];
       }
 
+      // 4. กรองหลักสูตร
       const selectedCourse = courseFilterEl ? courseFilterEl.value : "";
       const courseList = selectedCourse ? courses.filter(c => c.id === selectedCourse) : courses;
 
@@ -2903,19 +2907,48 @@
         courseList.forEach(c => {
           const key = `${u.id}_${c.id}`;
           const p = learningProgress[key] || { step: 0 };
-          const passCriteria = c.passingScore !== undefined ? c.passingScore : 80;
+          const passCriteria = c.passingScore !== undefined ? Number(c.passingScore) : 70;
 
+          // 🟢 คำนวณสถานะสดใหม่ทุกครั้ง โดยอิงจาก Log ล่าสุดหรือคำตอบของพนักงานคนนั้น
           let currentStatus = p.status || "รอเรียน";
+
           if (p.step === 3 && p.postScore !== undefined) {
             const isGauge = (c.type === 'practical' && c.practicalEvalMode === 'gauge');
-            const maxMiss = c.maxMissRate !== undefined ? c.maxMissRate : 0;
-            const maxFalse = c.maxFalseAlarm !== undefined ? c.maxFalseAlarm : 5;
+            const maxMiss = c.maxMissRate !== undefined ? Number(c.maxMissRate) : 0;
+            const maxFalse = c.maxFalseAlarm !== undefined ? Number(c.maxFalseAlarm) : 5;
 
-            const passAccuracy = p.postScore >= passCriteria;
-            const passMiss = !isGauge || (p.missRate === undefined || p.missRate <= maxMiss);
-            const passFalse = !isGauge || (p.falseAlarm === undefined || p.falseAlarm <= maxFalse);
+            // ค้นหาผลสอบล่าสุดใน testResults เพื่อเอาค่า Miss Rate ที่แม่นยำที่สุด
+            const latestLog = (typeof testResults !== 'undefined' ? testResults : []).find(r => r.userId === u.id && r.courseId === c.id && r.examPhase !== 'pre');
+            
+            let missRate = p.missRate;
+            let falseAlarm = p.falseAlarm;
+
+            if (latestLog) {
+              if (latestLog.missRate !== undefined) missRate = latestLog.missRate;
+              if (latestLog.falseAlarm !== undefined) falseAlarm = latestLog.falseAlarm;
+            }
+
+            // ถ้ายังไม่มี ให้คำนวณสดจาก practicalAnswers
+            const ansSource = p.practicalAnswers || (latestLog ? latestLog.practicalAnswers : null);
+            if (missRate === undefined && ansSource && c.samples) {
+              let tNG = 0, ngOK = 0, tOK = 0, okNG = 0;
+              c.samples.forEach((s, idx) => {
+                const ans = ansSource[idx] || {};
+                const exp = (s.expectedJudgement || 'OK').toUpperCase();
+                const usr = (ans.judgement || '').toUpperCase();
+                if (exp === 'NG') { tNG++; if (usr === 'OK') ngOK++; }
+                else if (exp === 'OK') { tOK++; if (usr === 'NG') okNG++; }
+              });
+              missRate = tNG > 0 ? Math.round((ngOK / tNG) * 100) : 0;
+              falseAlarm = tOK > 0 ? Math.round((okNG / tOK) * 100) : 0;
+            }
+
+            const passAccuracy = Number(p.postScore) >= passCriteria;
+            const passMiss = !isGauge || (missRate === undefined || Number(missRate) <= maxMiss);
+            const passFalse = !isGauge || (falseAlarm === undefined || Number(falseAlarm) <= maxFalse);
 
             currentStatus = (passAccuracy && passMiss && passFalse) ? "Passed" : "Retrain";
+            p.status = currentStatus; // อัปเดตซิงค์กลับ
           }
 
           if (p.step > 0) enrolledCount++;
@@ -2994,6 +3027,7 @@
         </tr>
       `;
 
+      // อัปเดตตัวเลขการ์ดสรุปด้านบน
       const statEnrolled = document.getElementById("stat-progress-enrolled");
       const statLearning = document.getElementById("stat-progress-learning");
       const statPassed = document.getElementById("stat-progress-passed");
@@ -3278,60 +3312,78 @@
       } else {
         resultsBody.innerHTML = filteredResults.map(r => {
           const relCourse = courses.find(c => c.id === r.courseId);
-          let displayStatus = r.status;
+          let displayStatus = r.status || 'Retrain';
 
-          // 🟢 ตรวจสอบความถูกต้องของสถานะแบบเรียลไทม์
+          // 🟢 คำนวณสถานะตัดสินสดใหม่ 100% สำหรับข้อสอบภาคปฏิบัติ
           if (r.type === 'practical' && r.examPhase !== 'pre') {
             const isGauge = (r.practicalEvalMode === 'gauge') || (relCourse && relCourse.practicalEvalMode === 'gauge');
-            const passCriteria = (relCourse && relCourse.passingScore !== undefined) ? relCourse.passingScore : 80;
+            const passScore = (relCourse && relCourse.passingScore !== undefined) ? Number(relCourse.passingScore) : 70;
             const maxMiss = (relCourse && relCourse.maxMissRate !== undefined) ? Number(relCourse.maxMissRate) : (r.maxMissRate !== undefined ? Number(r.maxMissRate) : 0);
             const maxFalse = (relCourse && relCourse.maxFalseAlarm !== undefined) ? Number(relCourse.maxFalseAlarm) : (r.maxFalseAlarm !== undefined ? Number(r.maxFalseAlarm) : 5);
 
-            const score = r.postScore !== undefined && r.postScore !== null ? r.postScore : (r.score !== undefined ? r.score : 0);
-            const passAcc = score >= passCriteria;
-            const passMiss = !isGauge || (r.missRate === undefined || r.missRate <= maxMiss);
-            const passFalse = !isGauge || (r.falseAlarm === undefined || r.falseAlarm <= maxFalse);
+            const score = r.postScore !== undefined && r.postScore !== null ? Number(r.postScore) : (r.score !== undefined ? Number(r.score) : 0);
+            
+            // ตรวจสอบจาก Miss Rate จริง
+            let calculatedMissRate = r.missRate;
+            let calculatedFalseAlarm = r.falseAlarm;
 
-            displayStatus = (passAcc && passMiss && passFalse) ? 'Passed' : 'Retrain';
-            if (r.status !== displayStatus) {
-              r.status = displayStatus;
+            // ถ้าไม่มีค่า missRate บันทึกไว้ ให้คำนวณสดจากชุดคำตอบ (practicalAnswers)
+            if (calculatedMissRate === undefined && r.practicalAnswers && relCourse && relCourse.samples) {
+              let tNG = 0, ngOK = 0, tOK = 0, okNG = 0;
+              relCourse.samples.forEach((s, idx) => {
+                const ans = r.practicalAnswers[idx] || {};
+                const exp = (s.expectedJudgement || 'OK').toUpperCase();
+                const usr = (ans.judgement || '').toUpperCase();
+                if (exp === 'NG') { tNG++; if (usr === 'OK') ngOK++; }
+                else if (exp === 'OK') { tOK++; if (usr === 'NG') okNG++; }
+              });
+              calculatedMissRate = tNG > 0 ? Math.round((ngOK / tNG) * 100) : 0;
+              calculatedFalseAlarm = tOK > 0 ? Math.round((okNG / tOK) * 100) : 0;
             }
+
+            const passAccuracy = score >= passScore;
+            const passMiss = !isGauge || (calculatedMissRate === undefined || calculatedMissRate <= maxMiss);
+            const passFalse = !isGauge || (calculatedFalseAlarm === undefined || calculatedFalseAlarm <= maxFalse);
+
+            displayStatus = (passAccuracy && passMiss && passFalse) ? 'Passed' : 'Retrain';
+            
+            // อัปเดตค่ากลับเข้าไปในตัวแปรเพื่อไม่ให้ขัดแย้ง
+            r.status = displayStatus;
           }
 
           return `
-          <tr class="hover:bg-slate-50/80 transition-colors">
-            <td class="p-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">${r.completedAt ? r.completedAt.replace('T', ' ').slice(0, 16) : '-'}</td>
-            <td class="p-3 font-bold text-slate-900">${r.userName}</td>
-            <td class="p-3">
-              <span class="font-semibold text-slate-800 block line-clamp-1">${r.courseTitle}</span>
-              <span class="text-[10px] text-slate-400">${r.skillTopic || ''}</span>
-            </td>
-            <td class="p-3">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.type === 'practical' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">
-                ${r.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}
-              </span>
-            </td>
-            <td class="p-3 text-center font-bold">${r.preScore !== undefined && r.preScore !== null ? r.preScore + '%' : '-'}</td>
-            <td class="p-3 text-center font-bold">${r.postScore !== undefined && r.postScore !== null ? r.postScore + '%' : (r.score !== undefined ? r.score + '%' : '-')}</td>
-            <td class="p-3 text-center">
-              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${displayStatus === 'Passed' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                ${displayStatus}
-              </span>
-            </td>
-            <td class="p-3 text-center">
-              ${isMasterAdmin ? `
-                <button onclick="openReviewModalForResult('${r.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 mx-auto transition-all shadow-2xs active:scale-95">
-                  <i class="fa-solid fa-clipboard-check text-xs"></i>
-                  <span>ตรวจคำตอบ</span>
-                </button>
-              ` : '-'}
-            </td>
-          </tr>
-        `;
+            <tr class="hover:bg-slate-50/80 transition-colors">
+              <td class="p-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">${r.completedAt ? r.completedAt.replace('T', ' ').slice(0, 16) : '-'}</td>
+              <td class="p-3 font-bold text-slate-900">${r.userName}</td>
+              <td class="p-3">
+                <span class="font-semibold text-slate-800 block line-clamp-1">${r.courseTitle}</span>
+                <span class="text-[10px] text-slate-400">${r.skillTopic || ''}</span>
+              </td>
+              <td class="p-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.type === 'practical' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">
+                  ${r.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}
+                </span>
+              </td>
+              <td class="p-3 text-center font-bold">${r.preScore !== undefined && r.preScore !== null ? r.preScore + '%' : '-'}</td>
+              <td class="p-3 text-center font-bold">${r.postScore !== undefined && r.postScore !== null ? r.postScore + '%' : (r.score !== undefined ? r.score + '%' : '-')}</td>
+              <td class="p-3 text-center">
+                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${displayStatus === 'Passed' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+                  ${displayStatus}
+                </span>
+              </td>
+              <td class="p-3 text-center">
+                ${isMasterAdmin ? `
+                  <button onclick="openReviewModalForResult('${r.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 mx-auto transition-all shadow-2xs active:scale-95">
+                    <i class="fa-solid fa-clipboard-check text-xs"></i>
+                    <span>ตรวจคำตอบ</span>
+                  </button>
+                ` : '-'}
+              </td>
+            </tr>
+          `;
         }).join('');
       }
     }
-
     function exportLogsCSV() {
       const selectedUserId = document.getElementById('admin-logs-user-filter')?.value || '';
       const selectedCourseId = document.getElementById('admin-logs-course-filter')?.value || '';
