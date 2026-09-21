@@ -3696,7 +3696,416 @@ function openAddCourseModal() {
       else wrapper.classList.add('hidden');
     }
     
-function toggleGaugeAttributeSettings() {
+<!-- ... existing code ... -->
+            <div>
+              <label class="block text-[11px] font-bold text-amber-900 mb-1">โมเดลการประเมินผลภาคปฏิบัติ</label>
+              <select id="cb-practical-eval-mode" onchange="toggleGaugeAttributeSettings()" class="w-full p-2 rounded-xl border border-amber-200 text-xs font-bold bg-white text-slate-800">
+                <option value="standard">แบบธรรมดา (Standard Accuracy %)</option>
+                <option value="gauge">แบบ Gauge Attribute (Accuracy + Miss Rate + False Alarm)</option>
+                <option value="measurement_master">แบบวัดค่าเทียบชิ้นงาน Master (Variable Measurement & Tool Study)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Gauge Attribute Box -->
+          <div id="cb-gauge-attribute-box" class="bg-white p-3.5 rounded-xl border border-amber-200 space-y-2.5 hidden">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+              <span class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders text-indigo-600"></i>
+                <span>เกณฑ์การตัดสินผ่านสำหรับ Gauge Attribute (MSA Acceptance Criteria)</span>
+              </span>
+              <span class="text-[10px] font-bold text-slate-400">กำหนดได้อิสระ</span>
+            </div>
+            <p class="text-[10px] text-slate-500">ผู้รับการประเมินจะต้องผ่านทั้งเกณฑ์ % รวม และความเสี่ยงทั้ง 2 ด้านต้องไม่เกินเกณฑ์ที่กำหนด</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div class="p-2.5 rounded-lg bg-rose-50/60 border border-rose-200">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[11px] font-extrabold text-rose-900">Miss Rate สูงสุด:</span>
+                  <span class="text-[10px] text-rose-600 font-semibold">(NG ตอบเป็น OK)</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-500">&le;</span>
+                  <input type="number" id="cb-max-miss-rate" value="0" min="0" max="100" class="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white border border-rose-300 text-rose-900 text-center focus:outline-none">
+                  <span class="text-xs font-bold text-slate-500">%</span>
+                </div>
+                <span class="text-[9px] text-rose-700 mt-1 block">*ของเสียหลุดไปหาลูกค้า (แนะนำ: &le; 0%)</span>
+              </div>
+
+              <div class="p-2.5 rounded-lg bg-amber-50/60 border border-amber-200">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-[11px] font-extrabold text-amber-900">False Alarm สูงสุด:</span>
+                  <span class="text-[10px] text-amber-600 font-semibold">(OK ตอบเป็น NG)</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold text-slate-500">&le;</span>
+                  <input type="number" id="cb-max-false-alarm" value="5" min="0" max="100" class="w-full px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white border border-amber-300 text-amber-900 text-center focus:outline-none">
+                  <span class="text-xs font-bold text-slate-500">%</span>
+                </div>
+                <span class="text-[9px] text-amber-700 mt-1 block">*ของดีถูกคัดทิ้งสูญเปล่า (แนะนำ: &le; 5%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🟢 Measurement Master Tool & Precision Settings Box -->
+          <div id="cb-measurement-master-box" class="bg-white p-4 rounded-2xl border border-blue-200 space-y-4 hidden">
+            <div class="flex items-center justify-between border-b border-blue-100 pb-2">
+              <span class="text-xs font-black text-blue-900 flex items-center gap-2">
+                <i class="fa-solid fa-ruler-combined text-blue-600"></i>
+                <span>ข้อมูลเครื่องมือวัดและเกณฑ์เทียบชิ้นงาน Master (Measurement Tool & Master Setup)</span>
+              </span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">บันทึก 3 ครั้ง/ชิ้นงาน</span>
+            </div>
+
+            <!-- Tool Specific Details -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">เครื่องมือวัดที่ใช้ <span class="text-rose-500">*</span></label>
+                <input type="text" id="cb-mm-tool-name" placeholder="เช่น Vernier Caliper, Micrometer" value="Digital Vernier Caliper" class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white font-semibold">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">หมายเลขเครื่องมือ (Tool ID) <span class="text-rose-500">*</span></label>
+                <input type="text" id="cb-mm-tool-id" placeholder="เช่น QC-CAL-001" value="QC-CAL-042" class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white font-mono font-bold">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">ความละเอียดเครื่องมือ (Resolution)</label>
+                <input type="text" id="cb-mm-tool-res" placeholder="เช่น 0.01 mm, 0.001 mm" value="0.01" class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white font-semibold">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">วันหมดอายุสอบเทียบ (Cal Due Date) <span class="text-rose-500">*</span></label>
+                <input type="date" id="cb-mm-cal-expiry" class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white font-bold">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">หน่วยการวัด (Unit) <span class="text-rose-500">*</span></label>
+                <input type="text" id="cb-mm-unit" placeholder="เช่น mm, µm, g, kg, N" value="mm" class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white font-bold text-blue-700">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">รูปแบบเกณฑ์มาตรฐานชิ้นงาน</label>
+                <select id="cb-mm-std-type" onchange="renderBuilderSamplesTable()" class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-bold">
+                  <option value="standard_only">ระบุค่า Master มาตรฐาน (Standard Target)</option>
+                  <option value="min_max">ระบุเป็นช่วงมาตรฐาน (Min - Max Range)</option>
+                  <option value="both">ระบุทั้งค่า Master และช่วง Min - Max</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Evaluation Criteria Tiers (4 Levels) -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h5 class="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                    <i class="fa-solid fa-ranking-star text-amber-500"></i>
+                    <span>กำหนดเกณฑ์ระดับความแม่นยำของการวัด (Precision Grading Tiers)</span>
+                  </h5>
+                  <p class="text-[10px] text-slate-500">ระบบจะคำนวณส่วนเบี่ยงเบนจาก Master และวัดค่า Repeatability (Min, Max, Avg, SD) ของการวัด 3 ครั้ง</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[11px] font-bold text-slate-600">คำนวณเบี่ยงเบนด้วย:</span>
+                  <select id="cb-mm-tier-mode" onchange="updateTierLabels()" class="p-1.5 rounded-lg border border-slate-300 text-xs bg-white font-bold text-blue-700">
+                    <option value="percent">เปอร์เซ็นต์เบี่ยงเบน (% Deviation)</option>
+                    <option value="absolute">ค่าเบี่ยงเบนจริง (Absolute Unit Offset)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-[11px] font-black text-emerald-900">ระดับ 1: แม่นยำมาก</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-800 font-bold">Excellent</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs text-slate-500 font-bold">&le;</span>
+                    <input type="number" id="cb-mm-tier-prec" value="5" step="0.001" class="w-full p-1.5 rounded-lg border border-emerald-300 text-center font-bold text-xs bg-white">
+                    <span class="text-xs font-bold text-slate-500 tier-unit-label">%</span>
+                  </div>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-blue-50 border border-blue-200">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-[11px] font-black text-blue-900">ระดับ 2: แม่นยำ</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-200 text-blue-800 font-bold">Good</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs text-slate-500 font-bold">&le;</span>
+                    <input type="number" id="cb-mm-tier-good" value="10" step="0.001" class="w-full p-1.5 rounded-lg border border-blue-300 text-center font-bold text-xs bg-white">
+                    <span class="text-xs font-bold text-slate-500 tier-unit-label">%</span>
+                  </div>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-amber-50 border border-amber-200">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-[11px] font-black text-amber-900">ระดับ 3: พอใช้</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-200 text-amber-800 font-bold">Fair</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs text-slate-500 font-bold">&le;</span>
+                    <input type="number" id="cb-mm-tier-fair" value="15" step="0.001" class="w-full p-1.5 rounded-lg border border-amber-300 text-center font-bold text-xs bg-white">
+                    <span class="text-xs font-bold text-slate-500 tier-unit-label">%</span>
+                  </div>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-rose-50 border border-rose-200">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-[11px] font-black text-rose-900">ระดับ 4: ต้องปรับปรุง</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-200 text-rose-800 font-bold">Failed</span>
+                  </div>
+                  <div class="text-[10px] text-rose-700 pt-2 font-bold text-center">
+                    เกินกว่าระดับพอใช้ (Retrain)
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-1 text-xs">
+                <span class="font-bold text-slate-700">เกณฑ์ตัดสินผ่านขั้นต่ำ (Minimum Passing Tier):</span>
+                <select id="cb-mm-min-tier" class="p-1.5 rounded-xl border border-slate-300 font-bold text-xs bg-white text-emerald-800">
+                  <option value="good">ต้องได้อย่างน้อยระดับ "แม่นยำ" (Good) ขึ้นไป</option>
+                  <option value="fair" selected>ต้องได้อย่างน้อยระดับ "พอใช้" (Fair) ขึ้นไป</option>
+                  <option value="prec">ต้องได้ระดับ "แม่นยำมาก" (Excellent) เท่านั้น</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-xs font-bold text-amber-950">รายการชิ้นงานตัวอย่าง (Sample Workpieces)</span>
+            <button type="button" onclick="addSampleRow()" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-xs flex items-center gap-1.5 active:scale-95">
+              <i class="fa-solid fa-plus"></i>
+              <span>เพิ่มตัวอย่างชิ้นงาน (+1)</span>
+            </button>
+          </div>
+<!-- ... existing code ... -->
+```
+
+```html:KNT-QC Training App:training_app.html
+<!-- ... existing code ... -->
+      practicalEvalMode: 'gauge',
+      maxMissRate: 0,
+      maxFalseAlarm: 5,
+      materials: [
+        { type: 'video', title: 'วิดีโอเทคนิคการใช้ Micrometer อย่างถูกต้อง', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
+      ],
+      samples: [
+        { id: 's1', name: 'ตัวอย่างชิ้นงาน #01', expectedMethod: 'correct', expectedJudgement: 'OK' },
+        { id: 's2', name: 'ตัวอย่างชิ้นงาน #02', expectedMethod: 'correct', expectedJudgement: 'NG' },
+        { id: 's3', name: 'ตัวอย่างชิ้นงาน #03', expectedMethod: 'correct', expectedJudgement: 'OK' }
+      ]
+    },
+    {
+      id: 'crs_master_measurement_vernier',
+      title: 'การวัดขนาดละเอียดและควบคุมความสามารถเครื่องมือวัดเทียบ Master',
+      skillTopic: 'Vernier Variable Measurement Study',
+      department: 'QC',
+      type: 'practical',
+      budgetYear: 2026,
+      budgetMonth: 9,
+      createdAt: '2026-09-15T10:00:00.000Z',
+      passingScore: 80,
+      timerEnabled: true,
+      timerSeconds: 900,
+      practicalEvalMode: 'measurement_master',
+      toolName: 'Digital Vernier Caliper (Mitutoyo)',
+      toolId: 'QC-CAL-015',
+      toolResolution: '0.01',
+      toolCalExpiry: '2027-06-30',
+      measurementUnit: 'mm',
+      stdType: 'both',
+      tierMode: 'percent',
+      tierPrecision: 3,
+      tierGood: 6,
+      tierFair: 10,
+      minPassingTier: 'good',
+      materials: [
+        { type: 'video', title: 'วิธีอ่านค่าและป้องกัน Parallax Error ในการวัด', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' }
+      ],
+      samples: [
+        { id: 'm1', name: 'Master Block Pin A', standardValue: 15.00, minValue: 14.95, maxValue: 15.05 },
+        { id: 'm2', name: 'Master Ring Gauge B', standardValue: 25.40, minValue: 25.35, maxValue: 25.45 },
+        { id: 'm3', name: 'Master Step Block C', standardValue: 50.00, minValue: 49.90, maxValue: 50.10 }
+      ]
+    }
+  ];
+
+  let users = [...defaultUsers];
+<!-- ... existing code ... -->
+```
+
+```html:KNT-QC Training App:training_app.html
+<!-- ... existing code ... -->
+    // ----------------------------------------------------
+    // 12. COURSE BUILDER (CREATION, EDITING, UNLIMITED MATERIALS & PRACTICAL)
+    // ----------------------------------------------------
+    let tempBuilderSamples = [];
+    let tempBuilderMaterials = [];
+    let tempBuilderPreQ = [];
+    let tempBuilderPostQ = [];
+
+    function openAddCourseModal() {
+      const modal = document.getElementById('modal-course-builder');
+      document.getElementById('cb-modal-title').textContent = 'สร้างหลักสูตรใหม่ (New QC Course)';
+      document.getElementById('cb-course-id').value = '';
+      document.getElementById('cb-title').value = '';
+      document.getElementById('cb-topic').value = '';
+      document.getElementById('cb-department').value = 'QC';
+      document.getElementById('cb-type').value = 'theory';
+      document.getElementById('cb-budget-year').value = new Date().getFullYear();
+      document.getElementById('cb-budget-month').value = new Date().getMonth() + 1;
+      const passScoreEl = document.getElementById('cb-passing-score');
+      if (passScoreEl) passScoreEl.value = 80;
+
+      // รีเซ็ตค่าโมเดลการประเมิน
+      const evalModeEl = document.getElementById('cb-practical-eval-mode');
+      if (evalModeEl) evalModeEl.value = 'standard';
+      const missEl = document.getElementById('cb-max-miss-rate');
+      if (missEl) missEl.value = 0;
+      const falseAlarmEl = document.getElementById('cb-max-false-alarm');
+      if (falseAlarmEl) falseAlarmEl.value = 5;
+
+      // รีเซ็ตค่าเริ่มต้นสำหรับเครื่องมือวัด Master (Measurement Master)
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      setVal('cb-mm-tool-name', 'Digital Vernier Caliper');
+      setVal('cb-mm-tool-id', 'QC-CAL-042');
+      setVal('cb-mm-tool-res', '0.01');
+      setVal('cb-mm-cal-expiry', '2027-12-31');
+      setVal('cb-mm-unit', 'mm');
+      setVal('cb-mm-std-type', 'standard_only');
+      setVal('cb-mm-tier-mode', 'percent');
+      setVal('cb-mm-tier-prec', 5);
+      setVal('cb-mm-tier-good', 10);
+      setVal('cb-mm-tier-fair', 15);
+      setVal('cb-mm-min-tier', 'fair');
+
+      if (typeof updateTierLabels === 'function') updateTierLabels();
+      if (typeof toggleGaugeAttributeSettings === 'function') toggleGaugeAttributeSettings();
+
+      tempBuilderMaterials = [];
+      tempBuilderSamples = [
+        { id: 's1', name: 'ตัวอย่างชิ้นงาน #01', expectedMethod: 'correct', expectedJudgement: 'OK', standardValue: 10.00, minValue: 9.90, maxValue: 10.10 }
+      ];
+      tempBuilderPreQ = [
+        { id: 'q1', type: 'choice', prompt: 'คำถามข้อที่ 1', choices: ['ตัวเลือก A', 'ตัวเลือก B', 'ตัวเลือก C', 'ตัวเลือก D'], correctIndex: 0, points: 10 }
+      ];
+      tempBuilderPostQ = [];
+
+      toggleCourseBuilderMode();
+      renderBuilderMaterialsList();
+      renderBuilderSamplesTable();
+      renderBuilderQuestions('pre');
+      renderBuilderQuestions('post');
+
+      modal.classList.remove('hidden');
+    }
+
+    function openEditCourseModal(courseId) {
+      const course = courses.find(c => c.id === courseId);
+      if (!course) return;
+
+      const modal = document.getElementById('modal-course-builder');
+      document.getElementById('cb-modal-title').textContent = 'แก้ไขหลักสูตร (Edit QC Course)';
+      document.getElementById('cb-course-id').value = course.id;
+      document.getElementById('cb-title').value = course.title || '';
+      document.getElementById('cb-topic').value = course.skillTopic || '';
+      document.getElementById('cb-department').value = course.department || 'QC';
+      document.getElementById('cb-type').value = course.type || 'theory';
+      document.getElementById('cb-budget-year').value = course.budgetYear || new Date().getFullYear();
+      document.getElementById('cb-budget-month').value = course.budgetMonth || (new Date().getMonth() + 1);
+      document.getElementById('cb-passing-score').value = course.passingScore !== undefined ? course.passingScore : 80;
+
+      tempBuilderMaterials = (course.materials || []).map(m => ({ ...m }));
+      tempBuilderSamples = (course.samples || []).map(s => ({ ...s }));
+
+      const timerCheck = document.getElementById('cb-timer-enabled');
+      if (timerCheck) timerCheck.checked = !!course.timerEnabled;
+      const timerSec = document.getElementById('cb-timer-seconds');
+      if (timerSec) timerSec.value = course.timerSeconds || 120;
+      if (typeof toggleTimerSettings === 'function') toggleTimerSettings();
+
+      if (course.evalCriteria) {
+        const evalEl = document.getElementById('cb-eval-criteria');
+        if (evalEl) evalEl.value = course.evalCriteria;
+      }
+
+      const evalModeEl = document.getElementById('cb-practical-eval-mode');
+      if (evalModeEl) evalModeEl.value = course.practicalEvalMode || 'standard';
+      const missEl = document.getElementById('cb-max-miss-rate');
+      if (missEl) missEl.value = course.maxMissRate !== undefined ? course.maxMissRate : 0;
+      const falseAlarmEl = document.getElementById('cb-max-false-alarm');
+      if (falseAlarmEl) falseAlarmEl.value = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
+
+      // ดึงข้อมูลเครื่องมือวัด Master ของหลักสูตรเดิมขึ้นมาแสดง
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val !== undefined && val !== null) ? val : ''; };
+      setVal('cb-mm-tool-name', course.toolName || 'Digital Vernier Caliper');
+      setVal('cb-mm-tool-id', course.toolId || 'QC-CAL-042');
+      setVal('cb-mm-tool-res', course.toolResolution || '0.01');
+      setVal('cb-mm-cal-expiry', course.toolCalExpiry || '');
+      setVal('cb-mm-unit', course.measurementUnit || 'mm');
+      setVal('cb-mm-std-type', course.stdType || 'standard_only');
+      setVal('cb-mm-tier-mode', course.tierMode || 'percent');
+      setVal('cb-mm-tier-prec', course.tierPrecision !== undefined ? course.tierPrecision : 5);
+      setVal('cb-mm-tier-good', course.tierGood !== undefined ? course.tierGood : 10);
+      setVal('cb-mm-tier-fair', course.tierFair !== undefined ? course.tierFair : 15);
+      setVal('cb-mm-min-tier', course.minPassingTier || 'fair');
+
+      if (typeof updateTierLabels === 'function') updateTierLabels();
+      if (typeof toggleGaugeAttributeSettings === 'function') toggleGaugeAttributeSettings();
+
+      tempBuilderPreQ = (course.preQuestions || []).map(q => ({ ...q, choices: q.choices ? [...q.choices] : [] }));
+      tempBuilderPostQ = (course.postQuestions || []).map(q => ({ ...q, choices: q.choices ? [...q.choices] : [] }));
+
+      toggleCourseBuilderMode();
+      renderBuilderMaterialsList();
+      renderBuilderSamplesTable();
+      renderBuilderQuestions('pre');
+      renderBuilderQuestions('post');
+
+      modal.classList.remove('hidden');
+    }
+
+    function deleteCourse(courseId) {
+      if (!currentUser || (currentUser.role !== 'Master Admin' && currentUser.role !== 'Admin')) {
+        showToast('เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถลบหลักสูตรได้', 'error');
+        return;
+      }
+
+      const course = courses.find(c => c.id === courseId);
+      if (!confirm(`ยืนยันที่จะลบหลักสูตร "${course ? course.title : courseId}" หรือไม่?\n(ข้อมูลความคืบหน้าจะยังคงอยู่ในระบบ)`)) {
+        return;
+      }
+
+      courses = courses.filter(c => c.id !== courseId);
+      saveState(true);
+      renderCatalogView();
+      renderAdminHub();
+      showToast('ลบหลักสูตรเรียบร้อยแล้ว', 'info');
+    }
+
+    function closeCourseBuilderModal() {
+      const modal = document.getElementById('modal-course-builder');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function toggleCourseBuilderMode() {
+      const mode = document.getElementById('cb-type').value;
+      const practicalSec = document.getElementById('cb-practical-section');
+      const theorySec = document.getElementById('cb-theory-section');
+
+      if (mode === 'practical') {
+        if (practicalSec) practicalSec.classList.remove('hidden');
+        if (theorySec) theorySec.classList.add('hidden');
+      } else {
+        if (practicalSec) practicalSec.classList.add('hidden');
+        if (theorySec) theorySec.classList.remove('hidden');
+      }
+    }
+
+    function toggleTimerSettings() {
+      const checked = document.getElementById('cb-timer-enabled').checked;
+      const wrapper = document.getElementById('cb-timer-input-wrapper');
+      if (checked) wrapper.classList.remove('hidden');
+      else wrapper.classList.add('hidden');
+    }
+
+    function toggleGaugeAttributeSettings() {
       const mode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
       const gaugeBox = document.getElementById('cb-gauge-attribute-box');
       const mmBox = document.getElementById('cb-measurement-master-box');
@@ -3719,7 +4128,6 @@ function toggleGaugeAttributeSettings() {
       renderBuilderSamplesTable();
     }
 
-    // ฟังก์ชันอัปเดตหน่วย % หรือ หน่วยจริง (mm, g, etc.) ในการ์ด 4 ระดับ
     function updateTierLabels() {
       const mode = document.getElementById('cb-mm-tier-mode')?.value || 'percent';
       const unit = document.getElementById('cb-mm-unit')?.value || 'mm';
@@ -3729,7 +4137,51 @@ function toggleGaugeAttributeSettings() {
       });
     }
 
-    // ฟังก์ชันเพิ่มแถวชิ้นงานตัวอย่าง (รองรับทั้งโหมดปกติ และโหมด Master)
+    // 🟢 กลุ่มฟังก์ชันจัดการสื่อการสอน (Materials Builder) ที่ขาดหายไป
+    function addMaterialRow() {
+      tempBuilderMaterials.push({
+        type: 'video',
+        title: `สื่อการเรียนรู้ #${tempBuilderMaterials.length + 1}`,
+        url: ''
+      });
+      renderBuilderMaterialsList();
+    }
+
+    function removeMaterialRow(idx) {
+      tempBuilderMaterials.splice(idx, 1);
+      renderBuilderMaterialsList();
+    }
+
+    function renderBuilderMaterialsList() {
+      const container = document.getElementById('cb-materials-list-container');
+      if (!container) return;
+
+      if (tempBuilderMaterials.length === 0) {
+        container.innerHTML = `
+          <div class="p-3 text-center bg-white rounded-xl border border-dashed border-indigo-300">
+            <p class="text-xs text-indigo-700">ยังไม่มีสื่อการสอนแนบไว้ (กดปุ่ม <b>"+ เพิ่มสื่อการสอน"</b> ด้านบนหากต้องการแนบลิงก์ หรือปล่อยว่างไว้ได้)</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = tempBuilderMaterials.map((m, idx) => `
+        <div class="p-2.5 rounded-xl bg-white border border-indigo-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <select onchange="tempBuilderMaterials[${idx}].type = this.value" class="p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 font-bold">
+            <option value="video" ${m.type === 'video' ? 'selected' : ''}>🎬 วิดีโอ (YouTube / MP4)</option>
+            <option value="pdf" ${m.type === 'pdf' ? 'selected' : ''}>📄 เอกสารคู่มือ (PDF / SOP)</option>
+            <option value="link" ${m.type === 'link' ? 'selected' : ''}>🔗 เว็บไซต์ / สไลด์ (Link)</option>
+          </select>
+          <input type="text" value="${m.title || ''}" placeholder="ชื่อสื่อ เช่น วิดีโอสาธิต 01" onchange="tempBuilderMaterials[${idx}].title = this.value" class="sm:w-48 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
+          <input type="text" value="${m.url || ''}" placeholder="URL เช่น https://www.youtube.com/embed/... หรือ https://..." onchange="tempBuilderMaterials[${idx}].url = this.value" class="flex-1 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
+          <button type="button" onclick="removeMaterialRow(${idx})" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // ฟังก์ชันจัดการชิ้นงานตัวอย่าง (Samples)
     function addSampleRow() {
       if (tempBuilderSamples.length >= 100) {
         showToast('เพิ่มชิ้นงานตัวอย่างได้สูงสุด 100 ชิ้น', 'warning');
@@ -3753,7 +4205,6 @@ function toggleGaugeAttributeSettings() {
       renderBuilderSamplesTable();
     }
 
-    // ฟังก์ชันวาดตารางชิ้นงานตัวอย่างใน Course Builder
     function renderBuilderSamplesTable() {
       const body = document.getElementById('cb-samples-table-body');
       if (!body) return;
@@ -3761,7 +4212,7 @@ function toggleGaugeAttributeSettings() {
       const evalMode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
       const thead = body.closest('table')?.querySelector('thead');
 
-      // 🟢 กรณีที่ 1: โหมดวัดค่าเทียบชิ้นงาน Master (Measurement Master)
+      // กรณีที่ 1: โหมดวัดค่าเทียบชิ้นงาน Master (Measurement Master)
       if (evalMode === 'measurement_master') {
         const stdType = document.getElementById('cb-mm-std-type')?.value || 'standard_only';
         const unit = document.getElementById('cb-mm-unit')?.value || 'mm';
@@ -3807,7 +4258,1299 @@ function toggleGaugeAttributeSettings() {
           </tr>
         `).join('');
       } else {
-        // 🔵 กรณีที่ 2: โหมดธรรมดา หรือ Gauge Attribute
+        // กรณีที่ 2: โหมดธรรมดา หรือ Gauge Attribute
+        const evalCriteria = document.getElementById('cb-eval-criteria')?.value || 'both';
+        const showMethod = (evalCriteria === 'both' || evalCriteria === 'method_only');
+        const showJudge = (evalCriteria === 'both' || evalCriteria === 'judgement_only');
+
+        if (thead) {
+          thead.innerHTML = `
+            <tr class="bg-amber-100/70 text-amber-900 border-b border-amber-200">
+              <th class="p-2.5 w-12 text-center">#</th>
+              <th class="p-2.5">รหัส / ชื่อชิ้นงานตัวอย่าง</th>
+              ${showMethod ? '<th class="p-2.5 text-center">เฉลยวิธีปฏิบัติ</th>' : ''}
+              ${showJudge ? '<th class="p-2.5 text-center">เฉลยการตัดสิน</th>' : ''}
+              <th class="p-2.5 text-center w-12">ลบ</th>
+            </tr>
+          `;
+        }
+
+        body.innerHTML = tempBuilderSamples.map((s, idx) => `
+          <tr class="hover:bg-amber-100/30 border-b border-amber-50">
+            <td class="p-2 text-center font-bold text-amber-900">${idx + 1}</td>
+            <td class="p-2">
+              <input type="text" value="${s.name}" onchange="tempBuilderSamples[${idx}].name = this.value" class="w-full p-1.5 rounded-lg border border-amber-200 text-xs bg-white">
+            </td>
+            ${showMethod ? `
+              <td class="p-2 text-center">
+                <select onchange="tempBuilderSamples[${idx}].expectedMethod = this.value" class="p-1 rounded-lg border border-amber-200 text-xs bg-white font-bold">
+                  <option value="correct" ${s.expectedMethod === 'correct' ? 'selected' : ''}>ถูกต้อง</option>
+                  <option value="incorrect" ${s.expectedMethod === 'incorrect' ? 'selected' : ''}>ไม่ถูกต้อง</option>
+                </select>
+              </td>
+            ` : ''}
+            ${showJudge ? `
+              <td class="p-2 text-center">
+                <select onchange="tempBuilderSamples[${idx}].expectedJudgement = this.value" class="p-1 rounded-lg border border-amber-200 text-xs bg-white font-black">
+                  <option value="OK" ${s.expectedJudgement === 'OK' ? 'selected' : ''}>OK</option>
+                  <option value="NG" ${s.expectedJudgement === 'NG' ? 'selected' : ''}>NG</option>
+                </select>
+              </td>
+            ` : ''}
+            <td class="p-2 text-center">
+              <button type="button" onclick="removeSampleRow(${idx})" class="w-7 h-7 rounded-lg hover:bg-rose-50 text-rose-500 flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function addQuestion(type) {
+      const list = type === 'pre' ? tempBuilderPreQ : tempBuilderPostQ;
+      list.push({
+        id: 'q_' + Date.now(),
+        type: 'choice',
+        prompt: `คำถามข้อที่ ${list.length + 1}`,
+        choices: ['ตัวเลือก A', 'ตัวเลือก B', 'ตัวเลือก C', 'ตัวเลือก D'],
+        correctIndex: 0,
+        points: 10
+      });
+      renderBuilderQuestions(type);
+    }
+
+    function removeQuestion(type, idx) {
+      const list = type === 'pre' ? tempBuilderPreQ : tempBuilderPostQ;
+      list.splice(idx, 1);
+      renderBuilderQuestions(type);
+    }
+
+    function renderBuilderQuestions(type) {
+      const container = document.getElementById(`cb-${type}-questions-container`);
+      if (!container) return;
+      const list = type === 'pre' ? tempBuilderPreQ : tempBuilderPostQ;
+
+      container.innerHTML = list.map((q, idx) => `
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-xs text-slate-800">ข้อที่ ${idx + 1}</span>
+              <select onchange="changeQuestionType('${type}', ${idx}, this.value)" class="p-1 rounded-lg border border-slate-200 text-[11px] bg-white">
+                <option value="choice" ${q.type === 'choice' ? 'selected' : ''}>ข้อกา (Multiple Choice)</option>
+                <option value="written" ${q.type === 'written' ? 'selected' : ''}>ข้อเขียน (Written Exam)</option>
+              </select>
+            </div>
+            <button type="button" onclick="removeQuestion('${type}', ${idx})" class="text-rose-500 text-xs hover:text-rose-700">
+              <i class="fa-solid fa-trash-can"></i> ลบข้อนี้
+            </button>
+          </div>
+
+          <input type="text" value="${q.prompt}" onchange="${type === 'pre' ? 'tempBuilderPreQ' : 'tempBuilderPostQ'}[${idx}].prompt = this.value" placeholder="พิมพ์โจทย์คำถาม..." class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-white">
+
+          ${q.type === 'written' ? `
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">แนวคำตอบมาตรฐาน (Master Answer)</label>
+              <textarea rows="2" onchange="${type === 'pre' ? 'tempBuilderPreQ' : 'tempBuilderPostQ'}[${idx}].masterAnswer = this.value" placeholder="ระบุคีย์เวิร์ดหรือคำเฉลยสำหรับใช้ตรวจ..." class="w-full p-2 rounded-xl border border-slate-200 text-xs bg-white">${q.masterAnswer || ''}</textarea>
+            </div>
+          ` : `
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-bold text-slate-600">ตัวเลือกคำตอบ (เลือกปุ่มวงกลมหน้ารายการที่เป็นเฉลยข้อถูก)</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                ${(q.choices || []).map((ch, cIdx) => `
+                  <div class="flex items-center gap-2 p-1.5 rounded-xl bg-white border border-slate-200">
+                    <input type="radio" name="correct_${type}_${idx}" value="${cIdx}" ${q.correctIndex === cIdx ? 'checked' : ''} onchange="${type === 'pre' ? 'tempBuilderPreQ' : 'tempBuilderPostQ'}[${idx}].correctIndex = ${cIdx}">
+                    <input type="text" value="${ch}" onchange="${type === 'pre' ? 'tempBuilderPreQ' : 'tempBuilderPostQ'}[${idx}].choices[${cIdx}] = this.value" class="w-full text-xs outline-none">
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `}
+        </div>
+      `).join('');
+    }
+
+    function changeQuestionType(type, idx, newType) {
+      const list = type === 'pre' ? tempBuilderPreQ : tempBuilderPostQ;
+      list[idx].type = newType;
+      renderBuilderQuestions(type);
+    }
+
+    function copyPreToPostTest() {
+      if (tempBuilderPreQ.length === 0) {
+        showToast('กรุณาเพิ่มข้อสอบใน Pre-test ก่อนทำการคัดลอก', 'warning');
+        return;
+      }
+
+      tempBuilderPostQ = tempBuilderPreQ.map(q => {
+        if (q.type === 'written') {
+          return { ...q, id: 'post_' + Date.now() + Math.random().toString(36).substring(2, 5) };
+        }
+
+        const originalChoices = [...q.choices];
+        const correctChoiceText = originalChoices[q.correctIndex];
+
+        const shuffled = [...originalChoices];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        const newCorrectIdx = shuffled.indexOf(correctChoiceText);
+
+        return {
+          ...q,
+          id: 'post_' + Date.now() + Math.random().toString(36).substring(2, 5),
+          choices: shuffled,
+          correctIndex: newCorrectIdx
+        };
+      });
+
+      renderBuilderQuestions('post');
+      showToast('คัดลอกข้อสอบลง Post-test พร้อมสลับช้อยส์เรียบร้อยแล้ว', 'success');
+    }
+
+      currentCourseId = courseId;
+      const course = courses.find(c => c.id === courseId);
+      if (!course) return;
+
+      const isPractical = course.type === 'practical';
+      const userProgress = learningProgress[`${currentUser.id}_${course.id}`] || { step: 0 };
+
+      document.getElementById('cr-course-title').textContent = course.title;
+      document.getElementById('cr-type-badge').textContent = isPractical ? 'ภาคปฏิบัติ' : 'ทฤษฎี';
+      document.getElementById('cr-type-badge').className = isPractical ? 'px-2 py-0.5 rounded-md text-xs font-extrabold bg-amber-100 text-amber-800' : 'px-2 py-0.5 rounded-md text-xs font-extrabold bg-blue-100 text-blue-800';
+      
+      let metaText = `${course.department} | หัวข้อ: ${course.skillTopic} | เกณฑ์ผ่าน: ${course.passingScore !== undefined ? course.passingScore : 80}%`;
+      if (course.practicalEvalMode === 'measurement_master') {
+        metaText += ` | เครื่องมือ: ${course.toolName || 'N/A'} (ID: ${course.toolId || '-'})`;
+      }
+      document.getElementById('cr-course-meta').textContent = metaText;
+
+      const stepper = document.getElementById('cr-theory-stepper');
+      const step1 = document.getElementById('cr-content-step1');
+      const step2 = document.getElementById('cr-content-step2');
+      const step3 = document.getElementById('cr-content-step3');
+      const practicalSec = document.getElementById('cr-content-practical');
+
+      switchView('classroom');
+
+      if (isPractical) {
+        if (stepper) stepper.classList.add('hidden');
+        if (step1) step1.classList.add('hidden');
+        if (step2) step2.classList.add('hidden');
+        if (step3) step3.classList.add('hidden');
+        if (practicalSec) practicalSec.classList.remove('hidden');
+        renderPracticalWorkspace(course);
+      } else {
+        if (stepper) stepper.classList.remove('hidden');
+        if (practicalSec) practicalSec.classList.add('hidden');
+
+        if (userProgress.step === 0) {
+          showTheoryStep(1, course);
+        } else if (userProgress.step === 1) {
+          showTheoryStep(2, course);
+        } else if (userProgress.step >= 2) {
+          showTheoryStep(3, course);
+        }
+      }
+    }
+<!-- ... existing code ... -->
+    function renderPracticalWorkspace(course) {
+      currentCourseId = course.id;
+      practicalUserAnswers = {};
+      currentPracticalTestType = 'post';
+      setPracticalTestType('post');
+
+      if (practicalTimerInterval) {
+        clearInterval(practicalTimerInterval);
+      }
+
+      const timerBox = document.getElementById('practical-timer-box');
+      if (timerBox) {
+        timerBox.classList.add('hidden');
+        timerBox.classList.remove('flex');
+      }
+
+      const resultScreen = document.getElementById('practical-result-screen');
+      if (resultScreen) resultScreen.classList.add('hidden');
+
+      const inspectScreen = document.getElementById('practical-inspection-screen');
+      if (inspectScreen) inspectScreen.classList.add('hidden');
+
+      const startScreen = document.getElementById('practical-start-screen');
+      if (startScreen) {
+        startScreen.classList.remove('hidden');
+      } else if (inspectScreen) {
+        startPracticalSession();
+        return;
+      }
+
+      const samples = course.samples || [];
+      const sampleCountEl = document.getElementById('practical-sample-count-text');
+      if (sampleCountEl) {
+        sampleCountEl.textContent = samples.length;
+      }
+
+      // Update start description if Measurement Master Mode
+      const startDesc = document.getElementById('practical-start-desc');
+      if (startDesc) {
+        if (course.practicalEvalMode === 'measurement_master') {
+          const isExpired = course.toolCalExpiry && new Date(course.toolCalExpiry) < new Date();
+          startDesc.innerHTML = `
+            การทดสอบนี้เป็นการ<strong>วัดค่าละเอียดเทียบชิ้นงาน Master</strong> ทั้งหมด <span class="font-black text-blue-700">${samples.length}</span> ชิ้นงาน<br>
+            โดยต้องวัดซ้ำ <strong>3 ครั้งต่อชิ้นงาน</strong> ด้วยเครื่องมือ: <span class="font-bold text-slate-800">${course.toolName || 'เครื่องมือวัด'}</span> (ID: ${course.toolId || '-'}) หน่วย: <span class="font-bold text-blue-700">${course.measurementUnit || 'mm'}</span><br>
+            วันหมดอายุสอบเทียบ: <span class="font-bold ${isExpired ? 'text-rose-600 font-black' : 'text-emerald-700'}">${course.toolCalExpiry || '-'} ${isExpired ? '(หมดอายุแล้ว!)' : ''}</span>
+          `;
+        } else {
+          startDesc.innerHTML = `
+            การทดสอบนี้มีชิ้นงานตัวอย่างทั้งหมด <span id="practical-sample-count-text" class="font-bold text-slate-900">${samples.length}</span> ชิ้นงาน 
+            โปรดเตรียมเครื่องมือวัดและชิ้นงานตัวอย่างให้พร้อมก่อนกดเริ่ม
+          `;
+        }
+      }
+    }
+<!-- ... existing code ... -->
+    function startPracticalSession() {
+      const course = courses.find(c => c.id === currentCourseId);
+      if (!course) return;
+
+      practicalUserAnswers = {};
+
+      const startScreen = document.getElementById('practical-start-screen');
+      if (startScreen) startScreen.classList.add('hidden');
+
+      const inspectScreen = document.getElementById('practical-inspection-screen');
+      if (inspectScreen) inspectScreen.classList.remove('hidden');
+
+      const samples = course.samples || [];
+      const tableBody = document.getElementById('practical-samples-table-body');
+      const tableHeader = tableBody?.closest('table')?.querySelector('thead tr');
+
+      const isMeasurementMaster = course.practicalEvalMode === 'measurement_master';
+
+      if (isMeasurementMaster) {
+        // Measurement Master Table Headers
+        const unit = course.measurementUnit || 'mm';
+        if (tableHeader) {
+          tableHeader.innerHTML = `
+            <th class="p-3 w-10 text-center">#</th>
+            <th class="p-3">ชิ้นงาน Master</th>
+            <th class="p-3 text-center">ค่า Master Target (${unit})</th>
+            <th class="p-3 text-center w-24">ครั้งที่ 1</th>
+            <th class="p-3 text-center w-24">ครั้งที่ 2</th>
+            <th class="p-3 text-center w-24">ครั้งที่ 3</th>
+            <th class="p-3 text-center bg-blue-50/50">สถิติสด (Avg / SD)</th>
+            <th class="p-3 text-center bg-emerald-50/50">ระดับความแม่นยำ</th>
+          `;
+        }
+
+        if (tableBody) {
+          tableBody.innerHTML = samples.map((s, idx) => {
+            const masterVal = s.standardValue !== undefined ? s.standardValue : ((Number(s.minValue || 0) + Number(s.maxValue || 0)) / 2).toFixed(3);
+            const rangeText = (s.minValue !== undefined && s.maxValue !== undefined) ? `[${s.minValue} - ${s.maxValue}]` : `Target: ${masterVal}`;
+
+            return `
+              <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100" id="row_sample_${idx}">
+                <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+                <td class="p-3">
+                  <span class="font-bold text-xs text-slate-900 block">${s.name || `Master #${idx + 1}`}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">ID: ${s.id || `m${idx + 1}`}</span>
+                </td>
+                <td class="p-3 text-center">
+                  <span class="font-black text-xs text-blue-700 font-mono">${masterVal}</span>
+                  <span class="text-[10px] text-slate-400 block">${rangeText}</span>
+                </td>
+                <td class="p-2 text-center">
+                  <input type="number" step="any" placeholder="0.00" id="mm_t1_${idx}" oninput="calcLiveMeasurement(${idx})" class="w-full p-2 rounded-xl border border-slate-200 text-center font-mono font-bold text-xs bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </td>
+                <td class="p-2 text-center">
+                  <input type="number" step="any" placeholder="0.00" id="mm_t2_${idx}" oninput="calcLiveMeasurement(${idx})" class="w-full p-2 rounded-xl border border-slate-200 text-center font-mono font-bold text-xs bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </td>
+                <td class="p-2 text-center">
+                  <input type="number" step="any" placeholder="0.00" id="mm_t3_${idx}" oninput="calcLiveMeasurement(${idx})" class="w-full p-2 rounded-xl border border-slate-200 text-center font-mono font-bold text-xs bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                </td>
+                <td class="p-2 text-center bg-blue-50/30">
+                  <div class="text-[11px] font-mono">
+                    <span class="font-bold text-slate-800" id="mm_avg_${idx}">Avg: -</span>
+                    <span class="text-slate-400 block text-[10px]" id="mm_sd_${idx}">SD: - | R: -</span>
+                  </div>
+                </td>
+                <td class="p-2 text-center bg-emerald-50/30">
+                  <span id="mm_badge_${idx}" class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-400 inline-block">
+                    รอกรอกครบ 3 ครั้ง
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } else {
+        // Standard / Gauge Attribute Table Headers
+        const evalCrit = course.evalCriteria || 'both';
+        const checkMethod = (evalCrit === 'both' || evalCrit === 'method_only');
+        const checkJudge = (evalCrit === 'both' || evalCrit === 'judgement_only');
+
+        if (tableHeader) {
+          tableHeader.innerHTML = `
+            <th class="p-3 w-12 text-center">ลำดับ</th>
+            <th class="p-3">รหัส / ชิ้นงานตัวอย่าง</th>
+            ${checkMethod ? '<th class="p-3 text-center" id="th-practical-method">วิธีปฏิบัติการวัด</th>' : ''}
+            ${checkJudge ? '<th class="p-3 text-center" id="th-practical-judgement">การตัดสินชิ้นงาน</th>' : ''}
+          `;
+        }
+
+        if (tableBody) {
+          tableBody.innerHTML = samples.map((s, idx) => `
+            <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
+              <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+              <td class="p-3">
+                <span class="font-bold text-xs text-slate-800 block">${s.name || `ชิ้นงาน #${idx + 1}`}</span>
+                ${s.id ? `<span class="text-[10px] text-slate-400 font-mono">ID: ${s.id}</span>` : ''}
+              </td>
+              ${checkMethod ? `
+                <td class="p-3 text-center">
+                  <div class="inline-flex items-center gap-3">
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-emerald-700">
+                      <input type="radio" name="prac_method_${idx}" value="correct" onchange="setPracticalAnswer(${idx}, 'method', 'correct')" class="text-emerald-600 focus:ring-emerald-500">
+                      <span>ถูกต้อง</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-rose-700">
+                      <input type="radio" name="prac_method_${idx}" value="incorrect" onchange="setPracticalAnswer(${idx}, 'method', 'incorrect')" class="text-rose-600 focus:ring-rose-500">
+                      <span>ไม่ถูกต้อง</span>
+                    </label>
+                  </div>
+                </td>
+              ` : ''}
+              ${checkJudge ? `
+                <td class="p-3 text-center">
+                  <div class="inline-flex items-center gap-3">
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-black text-emerald-700">
+                      <input type="radio" name="prac_judge_${idx}" value="OK" onchange="setPracticalAnswer(${idx}, 'judgement', 'OK')" class="text-emerald-600 focus:ring-emerald-500">
+                      <span>OK</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-black text-rose-700">
+                      <input type="radio" name="prac_judge_${idx}" value="NG" onchange="setPracticalAnswer(${idx}, 'judgement', 'NG')" class="text-rose-600 focus:ring-rose-500">
+                      <span>NG</span>
+                    </label>
+                  </div>
+                </td>
+              ` : ''}
+            </tr>
+          `).join('');
+        }
+      }
+
+      // Timer setup
+      if (practicalTimerInterval) clearInterval(practicalTimerInterval);
+      const timerBox = document.getElementById('practical-timer-box');
+
+      let durationSec = 600;
+      if (course.timerSeconds && Number(course.timerSeconds) > 0) {
+        durationSec = Number(course.timerSeconds);
+      } else if (course.practicalDuration || course.pracDuration) {
+        durationSec = Number(course.practicalDuration || course.pracDuration) * 60;
+      }
+
+      const isTimerActive = (course.timerEnabled !== false && course.practicalTimerEnabled !== false);
+
+      if (isTimerActive && durationSec > 0) {
+        practicalSecondsLeft = durationSec;
+        if (timerBox) {
+          timerBox.classList.remove('hidden');
+          timerBox.classList.add('flex');
+        }
+        updatePracticalTimerDisplay();
+
+        practicalTimerInterval = setInterval(() => {
+          practicalSecondsLeft--;
+          updatePracticalTimerDisplay();
+          if (practicalSecondsLeft <= 0) {
+            clearInterval(practicalTimerInterval);
+            finishPracticalSession(true);
+          }
+        }, 1000);
+      } else {
+        if (timerBox) {
+          timerBox.classList.add('hidden');
+          timerBox.classList.remove('flex');
+        }
+      }
+    }
+
+    // 🟢 Real-time statistical calculation during examination (Min, Max, Avg, SD)
+    function calcLiveMeasurement(idx) {
+      const course = courses.find(c => c.id === currentCourseId);
+      if (!course) return;
+
+      const t1 = parseFloat(document.getElementById(`mm_t1_${idx}`)?.value);
+      const t2 = parseFloat(document.getElementById(`mm_t2_${idx}`)?.value);
+      const t3 = parseFloat(document.getElementById(`mm_t3_${idx}`)?.value);
+
+      if (!practicalUserAnswers[idx]) practicalUserAnswers[idx] = {};
+      practicalUserAnswers[idx].trial1 = isNaN(t1) ? null : t1;
+      practicalUserAnswers[idx].trial2 = isNaN(t2) ? null : t2;
+      practicalUserAnswers[idx].trial3 = isNaN(t3) ? null : t3;
+
+      const avgEl = document.getElementById(`mm_avg_${idx}`);
+      const sdEl = document.getElementById(`mm_sd_${idx}`);
+      const badgeEl = document.getElementById(`mm_badge_${idx}`);
+
+      if (!isNaN(t1) && !isNaN(t2) && !isNaN(t3)) {
+        const vals = [t1, t2, t3];
+        const min = Math.min(...vals);
+        const max = Math.max(...vals);
+        const range = max - min;
+        const avg = vals.reduce((a, b) => a + b, 0) / 3;
+
+        // Sample Standard Deviation (s) for n=3
+        const variance = vals.reduce((acc, v) => acc + Math.pow(v - avg, 2), 0) / 2;
+        const sd = Math.sqrt(variance);
+
+        const sample = course.samples[idx] || {};
+        const masterVal = sample.standardValue !== undefined ? Number(sample.standardValue) : ((Number(sample.minValue || 0) + Number(sample.maxValue || 0)) / 2);
+        const bias = Math.abs(avg - masterVal);
+        const pctDev = masterVal !== 0 ? (bias / masterVal) * 100 : 0;
+
+        practicalUserAnswers[idx].min = min;
+        practicalUserAnswers[idx].max = max;
+        practicalUserAnswers[idx].range = range;
+        practicalUserAnswers[idx].average = avg;
+        practicalUserAnswers[idx].sd = sd;
+        practicalUserAnswers[idx].bias = bias;
+        practicalUserAnswers[idx].pctDev = pctDev;
+
+        if (avgEl) avgEl.textContent = `Avg: ${avg.toFixed(3)} ${course.measurementUnit || 'mm'}`;
+        if (sdEl) sdEl.textContent = `SD: ${sd.toFixed(4)} | R: ${range.toFixed(3)}`;
+
+        // Determine Precision Tier
+        const isAbsoluteMode = course.tierMode === 'absolute';
+        const compareVal = isAbsoluteMode ? bias : pctDev;
+        const precLimit = Number(course.tierPrecision || 5);
+        const goodLimit = Number(course.tierGood || 10);
+        const fairLimit = Number(course.tierFair || 15);
+
+        let tier = 'improve';
+        let tierLabel = 'ต้องปรับปรุง';
+        let tierClass = 'bg-rose-100 text-rose-800 border border-rose-200';
+
+        if (compareVal <= precLimit) {
+          tier = 'prec';
+          tierLabel = 'แม่นยำมาก (Excellent)';
+          tierClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+        } else if (compareVal <= goodLimit) {
+          tier = 'good';
+          tierLabel = 'แม่นยำ (Good)';
+          tierClass = 'bg-blue-100 text-blue-800 border border-blue-200';
+        } else if (compareVal <= fairLimit) {
+          tier = 'fair';
+          tierLabel = 'พอใช้ (Fair)';
+          tierClass = 'bg-amber-100 text-amber-800 border border-amber-200';
+        }
+
+        practicalUserAnswers[idx].tier = tier;
+        practicalUserAnswers[idx].tierLabel = tierLabel;
+
+        if (badgeEl) {
+          badgeEl.textContent = tierLabel;
+          badgeEl.className = `px-2.5 py-1 rounded-full text-[10px] font-extrabold ${tierClass} inline-block`;
+        }
+      } else {
+        if (avgEl) avgEl.textContent = 'Avg: -';
+        if (sdEl) sdEl.textContent = 'SD: - | R: -';
+        if (badgeEl) {
+          badgeEl.textContent = 'รอกรอกครบ 3 ครั้ง';
+          badgeEl.className = 'px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-400 inline-block';
+        }
+      }
+    }
+<!-- ... existing code ... -->
+    function finishPracticalSession(isTimeout = false) {
+      if (practicalTimerInterval) {
+        clearInterval(practicalTimerInterval);
+      }
+
+      const timerBox = document.getElementById('practical-timer-box');
+      if (timerBox) {
+        timerBox.classList.add('hidden');
+        timerBox.classList.remove('flex');
+      }
+
+      const course = courses.find(c => c.id === currentCourseId);
+      if (!course) return;
+
+      const totalAllocatedSec = ((course.practicalDuration || course.pracDuration || (course.timerSeconds ? Math.round(course.timerSeconds / 60) : 10)) * 60);
+      let remainingSec = 0;
+      if (typeof practicalSecondsLeft !== 'undefined') {
+        remainingSec = practicalSecondsLeft;
+      }
+
+      const spentSec = isTimeout ? totalAllocatedSec : Math.max(1, totalAllocatedSec - remainingSec);
+      const spentMin = Math.floor(spentSec / 60).toString().padStart(2, '0');
+      const spentRemainderSec = (spentSec % 60).toString().padStart(2, '0');
+      const timeSpentStr = `${spentMin}:${spentRemainderSec} นาที`;
+
+      const samples = course.samples || [];
+      const isMeasurementMaster = course.practicalEvalMode === 'measurement_master';
+
+      let pct = 0;
+      let passed = false;
+      let failReason = '';
+      let overallSD = 0;
+      let overallBias = 0;
+      let tierCounts = { prec: 0, good: 0, fair: 0, improve: 0 };
+
+      if (isMeasurementMaster) {
+        const minPassingTier = course.minPassingTier || 'fair';
+        let passingSampleCount = 0;
+        let sumSD = 0;
+        let sumBias = 0;
+
+        samples.forEach((s, idx) => {
+          calcLiveMeasurement(idx);
+          const ans = practicalUserAnswers[idx] || {};
+          const tier = ans.tier || 'improve';
+          tierCounts[tier] = (tierCounts[tier] || 0) + 1;
+
+          sumSD += (ans.sd || 0);
+          sumBias += (ans.bias || 0);
+
+          let isSamplePass = false;
+          if (minPassingTier === 'prec' && tier === 'prec') isSamplePass = true;
+          else if (minPassingTier === 'good' && (tier === 'prec' || tier === 'good')) isSamplePass = true;
+          else if (minPassingTier === 'fair' && (tier === 'prec' || tier === 'good' || tier === 'fair')) isSamplePass = true;
+
+          if (isSamplePass) passingSampleCount++;
+        });
+
+        overallSD = samples.length > 0 ? (sumSD / samples.length) : 0;
+        overallBias = samples.length > 0 ? (sumBias / samples.length) : 0;
+        pct = samples.length > 0 ? Math.round((passingSampleCount / samples.length) * 100) : 0;
+
+        const passPct = course.passingScore !== undefined ? course.passingScore : 80;
+        passed = !isTimeout && (pct >= passPct);
+
+        if (!passed) {
+          failReason = `ชิ้นงานที่ผ่านเกณฑ์ (${pct}%) ต่ำกว่าเกณฑ์ขั้นต่ำ (${passPct}%) หรือหมดเวลาก่อนบันทึก`;
+        }
+      } else {
+        // Standard / Gauge Attribute Evaluation
+        let correctMatches = 0;
+        let totalCriteria = 0;
+        let totalExpectedNG = 0;
+        let ngJudgedAsOK = 0;
+        let totalExpectedOK = 0;
+        let okJudgedAsNG = 0;
+
+        samples.forEach((s, idx) => {
+          const ans = practicalUserAnswers[idx] || {};
+
+          if (course.evalCriteria === 'both' || course.evalCriteria === 'method_only') {
+            totalCriteria++;
+            if (ans.method === s.expectedMethod) correctMatches++;
+          }
+
+          if (course.evalCriteria === 'both' || course.evalCriteria === 'judgement_only') {
+            totalCriteria++;
+            if (ans.judgement === s.expectedJudgement) correctMatches++;
+
+            const expected = (s.expectedJudgement || 'OK').toUpperCase();
+            const userJudge = (ans.judgement || '').toUpperCase();
+
+            if (expected === 'NG') {
+              totalExpectedNG++;
+              if (userJudge === 'OK') ngJudgedAsOK++;
+            } else if (expected === 'OK') {
+              totalExpectedOK++;
+              if (userJudge === 'NG') okJudgedAsNG++;
+            }
+          }
+        });
+
+        pct = isTimeout ? 0 : (totalCriteria > 0 ? Math.round((correctMatches / totalCriteria) * 100) : 0);
+        const passPct = course.passingScore !== undefined ? course.passingScore : 80;
+
+        const isGaugeMode = course.practicalEvalMode === 'gauge';
+        const missRate = totalExpectedNG > 0 ? Math.round((ngJudgedAsOK / totalExpectedNG) * 100) : 0;
+        const falseAlarm = totalExpectedOK > 0 ? Math.round((okJudgedAsNG / totalExpectedOK) * 100) : 0;
+
+        const maxMissAllowed = course.maxMissRate !== undefined ? course.maxMissRate : 0;
+        const maxFalseAlarmAllowed = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
+
+        const passAccuracy = !isTimeout && pct >= passPct;
+        const passMiss = !isGaugeMode || (missRate <= maxMissAllowed);
+        const passFalseAlarm = !isGaugeMode || (falseAlarm <= maxFalseAlarmAllowed);
+
+        passed = passAccuracy && passMiss && passFalseAlarm;
+
+        if (!passAccuracy) {
+          failReason = `ความแม่นยำรวม (${pct}%) ต่ำกว่าเกณฑ์ (${passPct}%)`;
+        } else if (!passMiss) {
+          failReason = `Miss Rate (${missRate}%) เกินเกณฑ์ (${maxMissAllowed}%) เสี่ยงของเสียหลุด`;
+        } else if (!passFalseAlarm) {
+          failReason = `False Alarm (${falseAlarm}%) เกินเกณฑ์ (${maxFalseAlarmAllowed}%) ของดีถูกคัดทิ้ง`;
+        }
+      }
+
+      const isPre = (currentPracticalTestType === 'pre');
+      const progressKey = `${currentUser.id}_${course.id}`;
+      const prevProgress = learningProgress[progressKey] || {};
+
+      const finalStatus = isPre 
+        ? (prevProgress.status || 'In Progress') 
+        : (passed ? 'Passed' : 'Retrain');
+
+      learningProgress[progressKey] = {
+        ...prevProgress,
+        step: isPre ? Math.max(prevProgress.step || 0, 1) : 3,
+        preScore: isPre ? pct : (prevProgress.preScore !== undefined ? prevProgress.preScore : null),
+        postScore: !isPre ? pct : (prevProgress.postScore !== undefined ? prevProgress.postScore : null),
+        status: finalStatus,
+        timeSpentSeconds: spentSec,
+        timeSpentStr: timeSpentStr,
+        practicalPreAnswers: isPre ? practicalUserAnswers : (prevProgress.practicalPreAnswers || null),
+        practicalAnswers: !isPre ? practicalUserAnswers : (prevProgress.practicalAnswers || null),
+        practicalEvalMode: course.practicalEvalMode || 'standard',
+        failReason: failReason,
+        overallSD: overallSD,
+        overallBias: overallBias,
+        tierCounts: tierCounts
+      };
+
+      const resultLog = {
+        id: 'res_' + Date.now(),
+        userId: currentUser.id,
+        userName: `${currentUser.firstName} ${currentUser.lastName}`,
+        department: currentUser.department,
+        division: currentUser.division || '-',
+        courseId: course.id,
+        courseTitle: course.title,
+        skillTopic: course.skillTopic,
+        type: 'practical',
+        examPhase: currentPracticalTestType,
+        preScore: isPre ? pct : (prevProgress.preScore !== undefined ? prevProgress.preScore : null),
+        postScore: !isPre ? pct : null,
+        score: pct,
+        status: isPre ? 'Pre-tested' : (passed ? 'Passed' : 'Retrain'),
+        timeSpentSeconds: spentSec,
+        timeSpentStr: timeSpentStr,
+        practicalAnswers: practicalUserAnswers,
+        practicalEvalMode: course.practicalEvalMode || 'standard',
+        failReason: failReason,
+        overallSD: overallSD,
+        overallBias: overallBias,
+        tierCounts: tierCounts,
+        completedAt: new Date().toISOString()
+      };
+
+      testResults.unshift(resultLog);
+      saveState(true);
+
+      document.getElementById('practical-inspection-screen').classList.add('hidden');
+      document.getElementById('practical-result-screen').classList.remove('hidden');
+
+      const iconBox = document.getElementById('practical-result-icon-box');
+      const title = document.getElementById('practical-result-title');
+      const meta = document.getElementById('practical-result-meta');
+
+      if (isPre) {
+        if (iconBox) {
+          iconBox.className = 'w-16 h-16 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
+          iconBox.innerHTML = '<i class="fa-solid fa-flag-checkered"></i>';
+        }
+        if (title) {
+          title.textContent = 'บันทึกคะแนน Pre-test ภาคปฏิบัติเรียบร้อย';
+          title.className = 'text-2xl font-black text-blue-700';
+        }
+      } else if (passed) {
+        if (iconBox) {
+          iconBox.className = 'w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
+          iconBox.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        }
+        if (title) {
+          title.textContent = 'ผ่านการทดสอบภาคปฏิบัติ (Passed)';
+          title.className = 'text-2xl font-black text-emerald-700';
+        }
+      } else {
+        if (iconBox) {
+          iconBox.className = 'w-16 h-16 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-3xl mx-auto shadow-xs';
+          iconBox.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+        }
+        if (title) {
+          title.textContent = isTimeout ? 'หมดเวลาการทดสอบ (Time\'s Up)' : 'ไม่ผ่านการทดสอบ (Retrain)';
+          title.className = 'text-2xl font-black text-rose-700';
+        }
+      }
+
+      if (meta) {
+        let metaText = `รอบการสอบ: <strong class="text-blue-700">${isPre ? 'Pre-test (ก่อนเรียน)' : 'Post-test (หลังเรียน)'}</strong> | อัตราความแม่นยำ: ${pct}% | เวลาที่ใช้: ${timeSpentStr}`;
+        if (isMeasurementMaster) {
+          metaText += `<br><span class="text-xs font-semibold mt-1 inline-block text-slate-700">ค่าเฉลี่ยส่วนเบี่ยงเบน (Avg Bias): <strong>${overallBias.toFixed(4)} ${course.measurementUnit || 'mm'}</strong> | ความผันแปรซ้ำ (Mean SD): <strong>${overallSD.toFixed(4)}</strong></span>`;
+          metaText += `<br><span class="text-[11px] font-bold text-slate-500 mt-1 inline-block">ระดับการวัด: แม่นยำมาก (${tierCounts.prec || 0}), แม่นยำ (${tierCounts.good || 0}), พอใช้ (${tierCounts.fair || 0}), ปรับปรุง (${tierCounts.improve || 0})</span>`;
+          if (failReason && !isPre) {
+            metaText += `<br><span class="text-xs font-bold text-rose-600">(${failReason})</span>`;
+          }
+        }
+        meta.innerHTML = metaText;
+      }
+    }
+<!-- ... existing code ... -->
+```
+
+```html:KNT-QC Training App:training_app.html
+<!-- ... existing code ... -->
+    function renderReviewModalContent() {
+      const container = document.getElementById('review-questions-container');
+      const course = courses.find(c => c.id === activeReviewCourse);
+      const key = `${activeReviewUser}_${activeReviewCourse}`;
+      const p = learningProgress[key] || {};
+
+      if (!container || !course) return;
+
+      if (course.type === 'practical') {
+        const samples = course.samples || [];
+        const isReviewPre = (currentReviewTab === 'pre');
+        
+        let matchLog = null;
+        if (typeof testResults !== 'undefined') {
+          matchLog = testResults.find(r => 
+            r.userId === activeReviewUser && 
+            r.courseId === activeReviewCourse && 
+            (isReviewPre ? (r.examPhase === 'pre') : (r.examPhase !== 'pre'))
+          ) || testResults.find(r => r.userId === activeReviewUser && r.courseId === activeReviewCourse);
+        }
+
+        let practicalAns = isReviewPre 
+          ? (p.practicalPreAnswers || (matchLog ? (matchLog.practicalPreAnswers || matchLog.practicalAnswers) : null))
+          : (p.practicalAnswers || (matchLog ? matchLog.practicalAnswers : null));
+        
+        practicalAns = practicalAns || {};
+
+        let timeSpentDisplay = '-';
+        const rawTimeSec = p.timeSpentSeconds || (matchLog ? matchLog.timeSpentSeconds : null);
+        
+        if (typeof rawTimeSec === 'number' && rawTimeSec > 0) {
+          const m = Math.floor(rawTimeSec / 60).toString().padStart(2, '0');
+          const s = (rawTimeSec % 60).toString().padStart(2, '0');
+          timeSpentDisplay = `${m}:${s} นาที`;
+        } else if (p.timeSpentStr || (matchLog && matchLog.timeSpentStr)) {
+          timeSpentDisplay = p.timeSpentStr || matchLog.timeSpentStr;
+        }
+
+        // 🟢 REVIEW FOR MEASUREMENT MASTER MODE (3 TRIALS, STATS, TOOL INFO)
+        if (course.practicalEvalMode === 'measurement_master') {
+          const unit = course.measurementUnit || 'mm';
+          const isToolExpired = course.toolCalExpiry && new Date(course.toolCalExpiry) < new Date();
+          const minPassingTier = course.minPassingTier || 'fair';
+
+          let passingCount = 0;
+          let sumAvg = 0;
+          let sumSD = 0;
+          let sumBias = 0;
+
+          const rowsHtml = samples.map((s, idx) => {
+            const ans = practicalAns[idx] || {};
+            const t1 = ans.trial1 !== null && ans.trial1 !== undefined ? ans.trial1 : '-';
+            const t2 = ans.trial2 !== null && ans.trial2 !== undefined ? ans.trial2 : '-';
+            const t3 = ans.trial3 !== null && ans.trial3 !== undefined ? ans.trial3 : '-';
+
+            const masterVal = s.standardValue !== undefined ? Number(s.standardValue) : ((Number(s.minValue || 0) + Number(s.maxValue || 0)) / 2);
+            const avg = ans.average !== undefined ? ans.average : (ans.trial1 && ans.trial2 && ans.trial3 ? (ans.trial1 + ans.trial2 + ans.trial3) / 3 : null);
+            const sd = ans.sd !== undefined ? ans.sd : null;
+            const bias = ans.bias !== undefined ? ans.bias : (avg !== null ? Math.abs(avg - masterVal) : null);
+            const min = ans.min !== undefined ? ans.min : '-';
+            const max = ans.max !== undefined ? ans.max : '-';
+
+            const tier = ans.tier || 'improve';
+            let tierClass = 'bg-rose-100 text-rose-800 border-rose-200';
+            if (tier === 'prec') tierClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+            else if (tier === 'good') tierClass = 'bg-blue-100 text-blue-800 border-blue-200';
+            else if (tier === 'fair') tierClass = 'bg-amber-100 text-amber-800 border-amber-200';
+
+            let isPassItem = false;
+            if (minPassingTier === 'prec' && tier === 'prec') isPassItem = true;
+            else if (minPassingTier === 'good' && (tier === 'prec' || tier === 'good')) isPassItem = true;
+            else if (minPassingTier === 'fair' && (tier !== 'improve')) isPassItem = true;
+
+            if (isPassItem) passingCount++;
+            if (avg !== null) sumAvg += avg;
+            if (sd !== null) sumSD += sd;
+            if (bias !== null) sumBias += bias;
+
+            return `
+              <tr class="hover:bg-slate-50 border-b border-slate-100 text-xs">
+                <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+                <td class="p-3 font-semibold text-slate-900">
+                  ${s.name || `Master #${idx + 1}`}
+                  <span class="text-[10px] text-slate-400 font-mono block">ID: ${s.id || '-'}</span>
+                </td>
+                <td class="p-3 text-center font-mono font-bold text-blue-700">${masterVal.toFixed(3)} ${unit}</td>
+                <td class="p-2 text-center font-mono">${t1}</td>
+                <td class="p-2 text-center font-mono">${t2}</td>
+                <td class="p-2 text-center font-mono">${t3}</td>
+                <td class="p-2 text-center font-mono bg-slate-50/60">
+                  <span class="font-bold text-slate-800 block">${avg !== null ? avg.toFixed(3) : '-'}</span>
+                  <span class="text-[10px] text-slate-400">[Min: ${min} | Max: ${max}]</span>
+                </td>
+                <td class="p-2 text-center font-mono font-semibold ${bias !== null && bias > 0.05 ? 'text-amber-700' : 'text-emerald-700'}">
+                  ${bias !== null ? bias.toFixed(4) : '-'}
+                  <span class="text-[10px] text-slate-400 block">SD: ${sd !== null ? sd.toFixed(4) : '-'}</span>
+                </td>
+                <td class="p-3 text-center">
+                  <span class="px-2.5 py-1 rounded-full text-[10px] font-black border ${tierClass}">
+                    ${ans.tierLabel || (isPassItem ? 'ผ่านเกณฑ์' : 'ต้องปรับปรุง')}
+                  </span>
+                </td>
+              </tr>
+            `;
+          }).join('');
+
+          const totalScore = samples.length > 0 ? Math.round((passingCount / samples.length) * 100) : 0;
+          const passCriteria = course.passingScore !== undefined ? course.passingScore : 80;
+          const isPassedTotal = totalScore >= passCriteria;
+
+          container.innerHTML = `
+            <div class="space-y-4">
+              <!-- Tool Specs Header Card -->
+              <div class="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border border-blue-200 p-4 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs shadow-xs">
+                      <i class="fa-solid fa-ruler-combined"></i>
+                    </span>
+                    <div>
+                      <h4 class="font-black text-sm text-slate-900">${course.toolName || 'เครื่องมือวัดมาตรฐาน'}</h4>
+                      <p class="text-xs text-slate-500">Tool ID: <span class="font-mono font-bold text-slate-800">${course.toolId || '-'}</span> | ความละเอียด: <span class="font-bold">${course.toolResolution || '-'}</span> | หน่วย: <span class="font-bold text-blue-700">${unit}</span></p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="px-3 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 shadow-2xs">
+                    <i class="fa-solid fa-calendar-check mr-1 text-blue-600"></i>
+                    Cal Expiry: <strong class="${isToolExpired ? 'text-rose-600' : 'text-emerald-600'}">${course.toolCalExpiry || '-'}</strong>
+                  </span>
+                  <span class="px-3 py-1 rounded-xl text-xs font-black text-white shadow-xs ${isPassedTotal ? 'bg-emerald-600' : 'bg-rose-600'}">
+                    ${isPassedTotal ? `ผ่านเกณฑ์ (${totalScore}%)` : `ไม่ผ่านเกณฑ์ (${totalScore}%)`}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Statistical Analysis Summary Grid -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                  <span class="text-[10px] font-bold text-slate-400 block">ชิ้นงานที่ผ่านเกณฑ์</span>
+                  <span class="text-base font-black text-slate-800">${passingCount} / ${samples.length}</span>
+                </div>
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                  <span class="text-[10px] font-bold text-slate-400 block">ส่วนเบี่ยงเบนเฉลี่ย (Mean Bias)</span>
+                  <span class="text-base font-black text-blue-700 font-mono">${samples.length > 0 ? (sumBias / samples.length).toFixed(4) : '-'}</span>
+                </div>
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                  <span class="text-[10px] font-bold text-slate-400 block">ความผันแปรซ้ำเฉลี่ย (Pooled SD)</span>
+                  <span class="text-base font-black text-indigo-700 font-mono">${samples.length > 0 ? (sumSD / samples.length).toFixed(4) : '-'}</span>
+                </div>
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                  <span class="text-[10px] font-bold text-slate-400 block">เวลาที่ใช้</span>
+                  <span class="text-base font-black text-slate-800 font-mono">${timeSpentDisplay}</span>
+                </div>
+              </div>
+
+              <!-- Detailed 3-Trials Table -->
+              <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                <table class="w-full text-left text-xs min-w-[700px]">
+                  <thead class="bg-slate-100/70 text-slate-600 font-bold border-b border-slate-200">
+                    <tr>
+                      <th class="p-3 text-center w-10">#</th>
+                      <th class="p-3">ชิ้นงาน Master</th>
+                      <th class="p-3 text-center">ค่า Master Target</th>
+                      <th class="p-2 text-center w-20">ครั้งที่ 1</th>
+                      <th class="p-2 text-center w-20">ครั้งที่ 2</th>
+                      <th class="p-2 text-center w-20">ครั้งที่ 3</th>
+                      <th class="p-2 text-center">ค่าเฉลี่ย (Avg)</th>
+                      <th class="p-2 text-center">เบี่ยงเบน (Bias) / SD</th>
+                      <th class="p-3 text-center">ระดับที่ได้</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${rowsHtml}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+
+          const summaryEl = document.getElementById('review-modal-score-summary');
+          if (summaryEl) {
+            summaryEl.innerHTML = `ประเมินเทียบ Master: <strong>ผ่าน ${passingCount}/${samples.length} ชิ้น (${totalScore}%)</strong> | เกณฑ์ผ่าน: ${passCriteria}% | ผล: <span class="${isPassedTotal ? 'text-emerald-600 font-black' : 'text-rose-600 font-black'}">${isPassedTotal ? 'ผ่าน (Passed)' : 'ต้องอบรมซ้ำ (Retrain)'}</span>`;
+          }
+          return;
+        }
+
+        // Standard / Gauge Attribute Practical Review (Existing)
+        let correctCount = 0;
+        let totalCriteria = 0;
+        let totalNG = 0;
+        let ngToOK = 0;
+        let totalOK = 0;
+        let okToNG = 0;
+
+        const checkMethod = course.evalCriteria === 'both' || course.evalCriteria === 'method_only';
+        const checkJudge = course.evalCriteria === 'both' || course.evalCriteria === 'judgement_only';
+
+        const rowsHtml = samples.map((s, idx) => {
+          const ans = practicalAns[idx] || {};
+          
+          const isMethodMatch = !checkMethod || (ans.method === s.expectedMethod);
+          const isJudgeMatch = !checkJudge || (ans.judgement === s.expectedJudgement);
+          
+          if (checkMethod) {
+            totalCriteria++;
+            if (ans.method === s.expectedMethod) correctCount++;
+          }
+          if (checkJudge) {
+            totalCriteria++;
+            if (ans.judgement === s.expectedJudgement) correctCount++;
+
+            const exp = (s.expectedJudgement || 'OK').toUpperCase();
+            const usr = (ans.judgement || '').toUpperCase();
+            if (exp === 'NG') {
+              totalNG++;
+              if (usr === 'OK') ngToOK++;
+            } else if (exp === 'OK') {
+              totalOK++;
+              if (usr === 'NG') okToNG++;
+            }
+          }
+
+          const isItemAllCorrect = isMethodMatch && isJudgeMatch;
+          const methodUserText = ans.method === 'correct' ? 'ถูกต้อง' : (ans.method === 'incorrect' ? 'ไม่ถูกต้อง' : '(ไม่ระบุ)');
+          const methodExpText = s.expectedMethod === 'correct' ? 'ถูกต้อง' : 'ไม่ถูกต้อง';
+          
+          const judgeUserText = ans.judgement || '(ไม่ระบุ)';
+          const judgeExpText = s.expectedJudgement || 'OK';
+
+          return `
+            <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100 ${!isItemAllCorrect ? 'bg-rose-50/30' : ''}">
+              <td class="p-3.5 text-center font-bold text-slate-400">${idx + 1}</td>
+              <td class="p-3.5">
+                <span class="font-bold text-xs text-slate-900 block">${s.name || `ชิ้นงาน #${idx + 1}`}</span>
+                ${s.id ? `<span class="text-[10px] text-slate-400 font-mono">ID: ${s.id}</span>` : ''}
+              </td>
+              ${checkMethod ? `
+                <td class="p-3.5 text-center">
+                  <div class="inline-flex flex-col items-center">
+                    <span class="text-xs font-semibold ${isMethodMatch ? 'text-emerald-700' : 'text-rose-600 font-bold'}">
+                      ${methodUserText}${isMethodMatch ? '✓' : '✗'}
+                    </span>
+                    <span class="text-[10px] text-slate-400 mt-0.5">(เกณฑ์: ${methodExpText})</span>
+                  </div>
+                </td>
+              ` : ''}
+              ${checkJudge ? `
+                <td class="p-3.5 text-center">
+                  <div class="inline-flex flex-col items-center">
+                    <span class="px-2.5 py-0.5 rounded text-xs font-black ${
+                      ans.judgement === 'OK' ? 'bg-emerald-100 text-emerald-800' : (ans.judgement === 'NG' ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600')
+                    }">
+                      ${judgeUserText}
+                    </span>
+                    <span class="text-[10px] ${isJudgeMatch ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'} mt-0.5">
+                      ${isJudgeMatch ? '✓ ถูกต้อง' : `✗ เฉลย: ${judgeExpText}`}
+                    </span>
+                  </div>
+                </td>
+              ` : ''}
+              <td class="p-3.5 text-center">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold inline-flex items-center gap-1 ${
+                  isItemAllCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200'
+                }">
+                  <i class="fa-solid ${isItemAllCorrect ? 'fa-check' : 'fa-xmark'}"></i>
+                  <span>${isItemAllCorrect ? 'ผ่าน' : 'ไม่ถูกต้อง'}</span>
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        const currentTabScore = isReviewPre ? p.preScore : p.postScore;
+        const finalPct = totalCriteria > 0 ? Math.round((correctCount / totalCriteria) * 100) : (currentTabScore !== undefined && currentTabScore !== null ? currentTabScore : 0);
+
+        const isGaugeMode = course.practicalEvalMode === 'gauge';
+        const missRate = totalNG > 0 ? Math.round((ngToOK / totalNG) * 100) : 0;
+        const falseAlarm = totalOK > 0 ? Math.round((okToNG / totalOK) * 100) : 0;
+
+        const maxMissAllowed = course.maxMissRate !== undefined ? Number(course.maxMissRate) : 0;
+        const maxFalseAlarmAllowed = course.maxFalseAlarm !== undefined ? Number(course.maxFalseAlarm) : 5;
+
+        const isMissPass = !isGaugeMode || (missRate <= maxMissAllowed);
+        const isFalseAlarmPass = !isGaugeMode || (falseAlarm <= maxFalseAlarmAllowed);
+        const isAccuracyPass = finalPct >= (course.passingScore !== undefined ? course.passingScore : 80);
+
+        const isPassTotal = isAccuracyPass && isMissPass && isFalseAlarmPass;
+
+        container.innerHTML = `
+          <div class="space-y-4">
+            <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-200/80 p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xs shadow-2xs shrink-0">
+                  <i class="fa-solid fa-wrench"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-bold text-xs text-amber-950">ผลการตรวจสอบชิ้นงานจริง (${isReviewPre ? 'Pre-test ก่อนเรียน' : 'Post-test หลังเรียน'})</h4>
+                    <span class="px-2 py-0.2 rounded text-[10px] font-extrabold ${isGaugeMode ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' : 'bg-amber-100 text-amber-800'}">
+                      ${isGaugeMode ? 'Gauge Attribute Mode' : 'Standard Mode'}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-amber-800/80">เปรียบเทียบผลการประเมินของพนักงานกับค่ามาตรฐานที่กำหนดไว้</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 self-end sm:self-auto">
+                <span class="px-2.5 py-1 rounded-xl text-xs font-bold bg-white text-slate-700 border border-amber-200 flex items-center gap-1.5 shadow-2xs">
+                  <i class="fa-solid fa-stopwatch text-amber-600"></i>
+                  <span>เวลาที่ใช้: <strong class="text-slate-900 font-mono">${timeSpentDisplay}</strong></span>
+                </span>
+                <span class="px-3 py-1 rounded-xl text-xs font-black shadow-2xs ${isReviewPre ? 'bg-blue-600 text-white' : (isPassTotal ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white')}">
+                  ${isReviewPre ? `Pre-test: ${finalPct}%` : (isPassTotal ? `ความแม่นยำ: ${finalPct}% (ผ่าน)` : (isGaugeMode && !isMissPass ? `ตกเกณฑ์ Miss Rate (${finalPct}%)` : (isGaugeMode && !isFalseAlarmPass ? `ตกเกณฑ์ False Alarm (${finalPct}%)` : `ไม่ผ่านเกณฑ์ (${finalPct}%)`)))}
+                </span>
+              </div>
+            </div>
+
+            ${isGaugeMode ? `
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-3 rounded-2xl border ${isMissPass ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'}">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold ${isMissPass ? 'text-emerald-900' : 'text-rose-900'}">
+                      Miss Rate (NG ตอบเป็น OK)
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${isMissPass ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}">
+                      ${isMissPass ? 'ผ่านเกณฑ์' : 'ตกเกณฑ์ (เสี่ยงของเสียหลุด)'}
+                    </span>
+                  </div>
+                  <div class="mt-2 flex items-baseline gap-2">
+                    <span class="text-xl font-black ${isMissPass ? 'text-emerald-700' : 'text-rose-700'} font-mono">${missRate}%</span>
+                    <span class="text-[11px] text-slate-500">(${ngToOK}/${totalNG} ชิ้น, เกณฑ์ยอมรับ &le; ${maxMissAllowed}%)</span>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-2xl border ${isFalseAlarmPass ? 'bg-emerald-50/70 border-emerald-200' : 'bg-amber-50/70 border-amber-200'}">
+                  <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold ${isFalseAlarmPass ? 'text-emerald-900' : 'text-amber-900'}">
+                      False Alarm (OK ตอบเป็น NG)
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${isFalseAlarmPass ? 'bg-emerald-200 text-emerald-800' : 'bg-amber-200 text-amber-800'}">
+                      ${isFalseAlarmPass ? 'ผ่านเกณฑ์' : 'ตกเกณฑ์ (ของดีถูกคัดทิ้ง)'}
+                    </span>
+                  </div>
+                  <div class="mt-2 flex items-baseline gap-2">
+                    <span class="text-xl font-black ${isFalseAlarmPass ? 'text-emerald-700' : 'text-amber-700'} font-mono">${falseAlarm}%</span>
+                    <span class="text-[11px] text-slate-500">(${okToNG}/${totalOK} ชิ้น, เกณฑ์ยอมรับ &le; ${maxFalseAlarmAllowed}%)</span>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="overflow-x-auto rounded-2xl border border-slate-200 shadow-2xs bg-white">
+              <table class="w-full text-left text-xs min-w-[500px]">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 text-[11px] uppercase">
+                  <tr>
+                    <th class="p-3 text-center w-12">#</th>
+                    <th class="p-3">ชิ้นงานตัวอย่าง</th>
+                    ${checkMethod ? '<th class="p-3 text-center">วิธีตรวจสอบ (Method)</th>' : ''}
+                    ${checkJudge ? '<th class="p-3 text-center">ผลการตัดสิน (Judgement)</th>' : ''}
+                    <th class="p-3 text-center">ผลประเมิน</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+        const summaryEl = document.getElementById('review-modal-score-summary');
+        if (summaryEl) {
+          const statusText = isReviewPre ? 'Pre-test' : (isPassTotal ? 'ผ่านเกณฑ์ (Passed)' : 'ต้องอบรมซ้ำ (Retrain)');
+          const statusColor = isReviewPre ? 'text-blue-700' : (isPassTotal ? 'text-emerald-700 font-black' : 'text-rose-600 font-black');
+          summaryEl.innerHTML = `คะแนนความแม่นยำ (${isReviewPre ? 'Pre-test' : 'Post-test'}): <strong>${correctCount}/${totalCriteria} (${finalPct}%)</strong> | เวลาที่ใช้: ${timeSpentDisplay} | ผลการประเมิน: <span class="${statusColor}">${statusText}</span>`;
+        }
+        return;
+      }
+
+      // Theory Exam Review
+      const qList = currentReviewTab === 'pre' ? (course.preQuestions || []) : (course.postQuestions || []);
+<!-- ... existing code ... -->
+```
+
+---
+
+### 📋 โค้ดสำหรับ Copy ไปวางในไฟล์ของคุณโดยตรง
+
+#### 🔍 วิธีค้นหาจุดวาง:
+1. กด **Ctrl + F** ค้นหาบรรทัดนี้:
+```javascript
+function toggleGaugeAttributeSettings()
+```
+2. ลากคลุมดำตั้งแต่บรรทัด `function toggleGaugeAttributeSettings()` ลงไปจนถึง **ปีกกาปิด `}` ของ `renderBuilderSamplesTable()`**
+3. คัดลอกโค้ดข้างล่างนี้ไปวางแทนที่ได้เลยครับ:
+
+```javascript
+    function toggleGaugeAttributeSettings() {
+      const mode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
+      const gaugeBox = document.getElementById('cb-gauge-attribute-box');
+      const mmBox = document.getElementById('cb-measurement-master-box');
+      const evalCriteriaWrapper = document.getElementById('cb-eval-criteria')?.closest('div');
+      
+      // 1. เปิด-ปิดกล่อง Gauge Attribute และ กล่อง Measurement Master
+      if (gaugeBox) gaugeBox.classList.toggle('hidden', mode !== 'gauge');
+      if (mmBox) mmBox.classList.toggle('hidden', mode !== 'measurement_master');
+      
+      // 2. ถ้าเป็นโหมด Measurement Master ให้ซ่อนช่องเลือกรูปแบบการตัดสิน (ฝั่งซ้าย)
+      if (evalCriteriaWrapper) {
+        if (mode === 'measurement_master') {
+          evalCriteriaWrapper.classList.add('opacity-40', 'pointer-events-none');
+        } else {
+          evalCriteriaWrapper.classList.remove('opacity-40', 'pointer-events-none');
+        }
+      }
+
+      updateTierLabels();
+      renderBuilderSamplesTable();
+    }
+
+    function updateTierLabels() {
+      const mode = document.getElementById('cb-mm-tier-mode')?.value || 'percent';
+      const unit = document.getElementById('cb-mm-unit')?.value || 'mm';
+      const labelText = mode === 'percent' ? '%' : unit;
+      document.querySelectorAll('.tier-unit-label').forEach(el => {
+        el.textContent = labelText;
+      });
+    }
+
+    // 🟢 กู้คืนกลุ่มฟังก์ชันจัดการสื่อการสอน
+    function addMaterialRow() {
+      tempBuilderMaterials.push({
+        type: 'video',
+        title: `สื่อการเรียนรู้ #${tempBuilderMaterials.length + 1}`,
+        url: ''
+      });
+      renderBuilderMaterialsList();
+    }
+
+    function removeMaterialRow(idx) {
+      tempBuilderMaterials.splice(idx, 1);
+      renderBuilderMaterialsList();
+    }
+
+    function renderBuilderMaterialsList() {
+      const container = document.getElementById('cb-materials-list-container');
+      if (!container) return;
+
+      if (tempBuilderMaterials.length === 0) {
+        container.innerHTML = `
+          <div class="p-3 text-center bg-white rounded-xl border border-dashed border-indigo-300">
+            <p class="text-xs text-indigo-700">ยังไม่มีสื่อการสอนแนบไว้ (กดปุ่ม <b>"+ เพิ่มสื่อการสอน"</b> ด้านบนหากต้องการแนบลิงก์ หรือปล่อยว่างไว้ได้)</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = tempBuilderMaterials.map((m, idx) => `
+        <div class="p-2.5 rounded-xl bg-white border border-indigo-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <select onchange="tempBuilderMaterials[${idx}].type = this.value" class="p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 font-bold">
+            <option value="video" ${m.type === 'video' ? 'selected' : ''}>🎬 วิดีโอ (YouTube / MP4)</option>
+            <option value="pdf" ${m.type === 'pdf' ? 'selected' : ''}>📄 เอกสารคู่มือ (PDF / SOP)</option>
+            <option value="link" ${m.type === 'link' ? 'selected' : ''}>🔗 เว็บไซต์ / สไลด์ (Link)</option>
+          </select>
+          <input type="text" value="${m.title || ''}" placeholder="ชื่อสื่อ เช่น วิดีโอสาธิต 01" onchange="tempBuilderMaterials[${idx}].title = this.value" class="sm:w-48 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
+          <input type="text" value="${m.url || ''}" placeholder="URL เช่น https://www.youtube.com/embed/... หรือ https://..." onchange="tempBuilderMaterials[${idx}].url = this.value" class="flex-1 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
+          <button type="button" onclick="removeMaterialRow(${idx})" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    // ฟังก์ชันจัดการชิ้นงานตัวอย่าง (Samples)
+    function addSampleRow() {
+      if (tempBuilderSamples.length >= 100) {
+        showToast('เพิ่มชิ้นงานตัวอย่างได้สูงสุด 100 ชิ้น', 'warning');
+        return;
+      }
+      const nextNum = tempBuilderSamples.length + 1;
+      tempBuilderSamples.push({
+        id: 's' + nextNum,
+        name: `ตัวอย่างชิ้นงาน #${nextNum.toString().padStart(2, '0')}`,
+        expectedMethod: 'correct',
+        expectedJudgement: 'OK',
+        standardValue: 10.00,
+        minValue: 9.90,
+        maxValue: 10.10
+      });
+      renderBuilderSamplesTable();
+    }
+
+    function removeSampleRow(idx) {
+      tempBuilderSamples.splice(idx, 1);
+      renderBuilderSamplesTable();
+    }
+
+    function renderBuilderSamplesTable() {
+      const body = document.getElementById('cb-samples-table-body');
+      if (!body) return;
+
+      const evalMode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
+      const thead = body.closest('table')?.querySelector('thead');
+
+      // กรณีที่ 1: โหมดวัดค่าเทียบชิ้นงาน Master (Measurement Master)
+      if (evalMode === 'measurement_master') {
+        const stdType = document.getElementById('cb-mm-std-type')?.value || 'standard_only';
+        const unit = document.getElementById('cb-mm-unit')?.value || 'mm';
+        const showStd = (stdType === 'standard_only' || stdType === 'both');
+        const showRange = (stdType === 'min_max' || stdType === 'both');
+
+        if (thead) {
+          thead.innerHTML = `
+            <tr class="bg-blue-50 text-blue-900 border-b border-blue-200">
+              <th class="p-2.5 w-10 text-center">#</th>
+              <th class="p-2.5">รหัส / ชื่อชิ้นงาน Master</th>
+              ${showStd ? `<th class="p-2.5 text-center w-36">ค่า Master (${unit})</th>` : ''}
+              ${showRange ? `<th class="p-2.5 text-center w-28">ค่า Min (${unit})</th><th class="p-2.5 text-center w-28">ค่า Max (${unit})</th>` : ''}
+              <th class="p-2.5 text-center w-12">ลบ</th>
+            </tr>
+          `;
+        }
+
+        body.innerHTML = tempBuilderSamples.map((s, idx) => `
+          <tr class="hover:bg-blue-50/40 border-b border-slate-100 transition-colors">
+            <td class="p-2 text-center font-bold text-blue-900">${idx + 1}</td>
+            <td class="p-2">
+              <input type="text" value="${s.name || `Master #${idx + 1}`}" onchange="tempBuilderSamples[${idx}].name = this.value" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white font-semibold">
+            </td>
+            ${showStd ? `
+              <td class="p-2 text-center">
+                <input type="number" step="any" value="${s.standardValue !== undefined ? s.standardValue : 10.00}" onchange="tempBuilderSamples[${idx}].standardValue = parseFloat(this.value)" class="w-full p-1.5 rounded-lg border border-blue-300 text-xs bg-white font-mono font-black text-blue-700 text-center focus:ring-1 focus:ring-blue-500">
+              </td>
+            ` : ''}
+            ${showRange ? `
+              <td class="p-2 text-center">
+                <input type="number" step="any" value="${s.minValue !== undefined ? s.minValue : 9.90}" onchange="tempBuilderSamples[${idx}].minValue = parseFloat(this.value)" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white font-mono text-center">
+              </td>
+              <td class="p-2 text-center">
+                <input type="number" step="any" value="${s.maxValue !== undefined ? s.maxValue : 10.10}" onchange="tempBuilderSamples[${idx}].maxValue = parseFloat(this.value)" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white font-mono text-center">
+              </td>
+            ` : ''}
+            <td class="p-2 text-center">
+              <button type="button" onclick="removeSampleRow(${idx})" class="w-7 h-7 rounded-lg hover:bg-rose-50 text-rose-500 flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        // กรณีที่ 2: โหมดธรรมดา หรือ Gauge Attribute
         const evalCriteria = document.getElementById('cb-eval-criteria')?.value || 'both';
         const showMethod = (evalCriteria === 'both' || evalCriteria === 'method_only');
         const showJudge = (evalCriteria === 'both' || evalCriteria === 'judgement_only');
