@@ -3658,57 +3658,40 @@
       else wrapper.classList.add('hidden');
     }
     
-    function toggleGaugeAttributeSettings() {
+function toggleGaugeAttributeSettings() {
       const mode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
-      const box = document.getElementById('cb-gauge-attribute-box');
-      if (box) {
-        box.classList.toggle('hidden', mode !== 'gauge');
+      const gaugeBox = document.getElementById('cb-gauge-attribute-box');
+      const mmBox = document.getElementById('cb-measurement-master-box');
+      const evalCriteriaWrapper = document.getElementById('cb-eval-criteria')?.closest('div');
+      
+      // 1. เปิด-ปิดกล่อง Gauge Attribute และ กล่อง Measurement Master
+      if (gaugeBox) gaugeBox.classList.toggle('hidden', mode !== 'gauge');
+      if (mmBox) mmBox.classList.toggle('hidden', mode !== 'measurement_master');
+      
+      // 2. ถ้าเป็นโหมด Measurement Master ให้ซ่อนช่องเลือกรูปแบบการตัดสิน (ฝั่งซ้าย)
+      if (evalCriteriaWrapper) {
+        if (mode === 'measurement_master') {
+          evalCriteriaWrapper.classList.add('opacity-40', 'pointer-events-none');
+        } else {
+          evalCriteriaWrapper.classList.remove('opacity-40', 'pointer-events-none');
+        }
       }
+
+      updateTierLabels();
+      renderBuilderSamplesTable();
     }
 
-    function addMaterialRow() {
-      tempBuilderMaterials.push({
-        type: 'video',
-        title: `สื่อการเรียนรู้ #${tempBuilderMaterials.length + 1}`,
-        url: ''
+    // ฟังก์ชันอัปเดตหน่วย % หรือ หน่วยจริง (mm, g, etc.) ในการ์ด 4 ระดับ
+    function updateTierLabels() {
+      const mode = document.getElementById('cb-mm-tier-mode')?.value || 'percent';
+      const unit = document.getElementById('cb-mm-unit')?.value || 'mm';
+      const labelText = mode === 'percent' ? '%' : unit;
+      document.querySelectorAll('.tier-unit-label').forEach(el => {
+        el.textContent = labelText;
       });
-      renderBuilderMaterialsList();
     }
 
-    function removeMaterialRow(idx) {
-      tempBuilderMaterials.splice(idx, 1);
-      renderBuilderMaterialsList();
-    }
-
-    function renderBuilderMaterialsList() {
-      const container = document.getElementById('cb-materials-list-container');
-      if (!container) return;
-
-      if (tempBuilderMaterials.length === 0) {
-        container.innerHTML = `
-          <div class="p-3 text-center bg-white rounded-xl border border-dashed border-indigo-300">
-            <p class="text-xs text-indigo-700">ยังไม่มีสื่อการสอนแนบไว้ (กดปุ่ม <b>"+ เพิ่มสื่อการสอน"</b> ด้านบนหากต้องการแนบลิงก์ หรือปล่อยว่างไว้ได้)</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = tempBuilderMaterials.map((m, idx) => `
-        <div class="p-2.5 rounded-xl bg-white border border-indigo-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <select onchange="tempBuilderMaterials[${idx}].type = this.value" class="p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 font-bold">
-            <option value="video" ${m.type === 'video' ? 'selected' : ''}>🎬 วิดีโอ (YouTube / MP4)</option>
-            <option value="pdf" ${m.type === 'pdf' ? 'selected' : ''}>📄 เอกสารคู่มือ (PDF / SOP)</option>
-            <option value="link" ${m.type === 'link' ? 'selected' : ''}>🔗 เว็บไซต์ / สไลด์ (Link)</option>
-          </select>
-          <input type="text" value="${m.title || ''}" placeholder="ชื่อสื่อ เช่น วิดีโอสาธิต 01" onchange="tempBuilderMaterials[${idx}].title = this.value" class="sm:w-48 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
-          <input type="text" value="${m.url || ''}" placeholder="URL เช่น https://www.youtube.com/embed/..." onchange="tempBuilderMaterials[${idx}].url = this.value" class="flex-1 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
-          <button type="button" onclick="removeMaterialRow(${idx})" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
-        </div>
-      `).join('');
-    }
-
+    // ฟังก์ชันเพิ่มแถวชิ้นงานตัวอย่าง (รองรับทั้งโหมดปกติ และโหมด Master)
     function addSampleRow() {
       if (tempBuilderSamples.length >= 100) {
         showToast('เพิ่มชิ้นงานตัวอย่างได้สูงสุด 100 ชิ้น', 'warning');
@@ -3719,7 +3702,10 @@
         id: 's' + nextNum,
         name: `ตัวอย่างชิ้นงาน #${nextNum.toString().padStart(2, '0')}`,
         expectedMethod: 'correct',
-        expectedJudgement: 'OK'
+        expectedJudgement: 'OK',
+        standardValue: 10.00,
+        minValue: 9.90,
+        maxValue: 10.10
       });
       renderBuilderSamplesTable();
     }
@@ -3729,56 +3715,107 @@
       renderBuilderSamplesTable();
     }
 
+    // ฟังก์ชันวาดตารางชิ้นงานตัวอย่างใน Course Builder
     function renderBuilderSamplesTable() {
       const body = document.getElementById('cb-samples-table-body');
       if (!body) return;
 
-      const evalCriteria = document.getElementById('cb-eval-criteria')?.value || 'both';
-      const showMethod = (evalCriteria === 'both' || evalCriteria === 'method_only');
-      const showJudge = (evalCriteria === 'both' || evalCriteria === 'judgement_only');
-
+      const evalMode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
       const thead = body.closest('table')?.querySelector('thead');
-      if (thead) {
-        thead.innerHTML = `
-          <tr>
-            <th class="p-2.5 w-12 text-center">#</th>
-            <th class="p-2.5">รหัส / ชื่อชิ้นงานตัวอย่าง</th>
-            ${showMethod ? '<th class="p-2.5 text-center">เฉลยวิธีปฏิบัติ</th>' : ''}
-            ${showJudge ? '<th class="p-2.5 text-center">เฉลยการตัดสิน</th>' : ''}
-            <th class="p-2.5 text-center w-12">ลบ</th>
-          </tr>
-        `;
-      }
 
-      body.innerHTML = tempBuilderSamples.map((s, idx) => `
-        <tr class="hover:bg-amber-100/30">
-          <td class="p-2 text-center font-bold text-amber-900">${idx + 1}</td>
-          <td class="p-2">
-            <input type="text" value="${s.name}" onchange="tempBuilderSamples[${idx}].name = this.value" class="w-full p-1.5 rounded-lg border border-amber-200 text-xs bg-white">
-          </td>
-          ${showMethod ? `
-            <td class="p-2 text-center">
-              <select onchange="tempBuilderSamples[${idx}].expectedMethod = this.value" class="p-1 rounded-lg border border-amber-200 text-xs bg-white font-bold">
-                <option value="correct" ${s.expectedMethod === 'correct' ? 'selected' : ''}>ถูกต้อง</option>
-                <option value="incorrect" ${s.expectedMethod === 'incorrect' ? 'selected' : ''}>ไม่ถูกต้อง</option>
-              </select>
+      // 🟢 กรณีที่ 1: โหมดวัดค่าเทียบชิ้นงาน Master (Measurement Master)
+      if (evalMode === 'measurement_master') {
+        const stdType = document.getElementById('cb-mm-std-type')?.value || 'standard_only';
+        const unit = document.getElementById('cb-mm-unit')?.value || 'mm';
+        const showStd = (stdType === 'standard_only' || stdType === 'both');
+        const showRange = (stdType === 'min_max' || stdType === 'both');
+
+        if (thead) {
+          thead.innerHTML = `
+            <tr class="bg-blue-50 text-blue-900 border-b border-blue-200">
+              <th class="p-2.5 w-10 text-center">#</th>
+              <th class="p-2.5">รหัส / ชื่อชิ้นงาน Master</th>
+              ${showStd ? `<th class="p-2.5 text-center w-36">ค่า Master (${unit})</th>` : ''}
+              ${showRange ? `<th class="p-2.5 text-center w-28">ค่า Min (${unit})</th><th class="p-2.5 text-center w-28">ค่า Max (${unit})</th>` : ''}
+              <th class="p-2.5 text-center w-12">ลบ</th>
+            </tr>
+          `;
+        }
+
+        body.innerHTML = tempBuilderSamples.map((s, idx) => `
+          <tr class="hover:bg-blue-50/40 border-b border-slate-100 transition-colors">
+            <td class="p-2 text-center font-bold text-blue-900">${idx + 1}</td>
+            <td class="p-2">
+              <input type="text" value="${s.name || `Master #${idx + 1}`}" onchange="tempBuilderSamples[${idx}].name = this.value" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white font-semibold">
             </td>
-          ` : ''}
-          ${showJudge ? `
+            ${showStd ? `
+              <td class="p-2 text-center">
+                <input type="number" step="any" value="${s.standardValue !== undefined ? s.standardValue : 10.00}" onchange="tempBuilderSamples[${idx}].standardValue = parseFloat(this.value)" class="w-full p-1.5 rounded-lg border border-blue-300 text-xs bg-white font-mono font-black text-blue-700 text-center focus:ring-1 focus:ring-blue-500">
+              </td>
+            ` : ''}
+            ${showRange ? `
+              <td class="p-2 text-center">
+                <input type="number" step="any" value="${s.minValue !== undefined ? s.minValue : 9.90}" onchange="tempBuilderSamples[${idx}].minValue = parseFloat(this.value)" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white font-mono text-center">
+              </td>
+              <td class="p-2 text-center">
+                <input type="number" step="any" value="${s.maxValue !== undefined ? s.maxValue : 10.10}" onchange="tempBuilderSamples[${idx}].maxValue = parseFloat(this.value)" class="w-full p-1.5 rounded-lg border border-slate-200 text-xs bg-white font-mono text-center">
+              </td>
+            ` : ''}
             <td class="p-2 text-center">
-              <select onchange="tempBuilderSamples[${idx}].expectedJudgement = this.value" class="p-1 rounded-lg border border-amber-200 text-xs bg-white font-black">
-                <option value="OK" ${s.expectedJudgement === 'OK' ? 'selected' : ''}>OK</option>
-                <option value="NG" ${s.expectedJudgement === 'NG' ? 'selected' : ''}>NG</option>
-              </select>
+              <button type="button" onclick="removeSampleRow(${idx})" class="w-7 h-7 rounded-lg hover:bg-rose-50 text-rose-500 flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
             </td>
-          ` : ''}
-          <td class="p-2 text-center">
-            <button type="button" onclick="removeSampleRow(${idx})" class="text-rose-500 hover:text-rose-700">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
+          </tr>
+        `).join('');
+      } else {
+        // 🔵 กรณีที่ 2: โหมดธรรมดา หรือ Gauge Attribute
+        const evalCriteria = document.getElementById('cb-eval-criteria')?.value || 'both';
+        const showMethod = (evalCriteria === 'both' || evalCriteria === 'method_only');
+        const showJudge = (evalCriteria === 'both' || evalCriteria === 'judgement_only');
+
+        if (thead) {
+          thead.innerHTML = `
+            <tr class="bg-amber-100/70 text-amber-900 border-b border-amber-200">
+              <th class="p-2.5 w-12 text-center">#</th>
+              <th class="p-2.5">รหัส / ชื่อชิ้นงานตัวอย่าง</th>
+              ${showMethod ? '<th class="p-2.5 text-center">เฉลยวิธีปฏิบัติ</th>' : ''}
+              ${showJudge ? '<th class="p-2.5 text-center">เฉลยการตัดสิน</th>' : ''}
+              <th class="p-2.5 text-center w-12">ลบ</th>
+            </tr>
+          `;
+        }
+
+        body.innerHTML = tempBuilderSamples.map((s, idx) => `
+          <tr class="hover:bg-amber-100/30 border-b border-amber-50">
+            <td class="p-2 text-center font-bold text-amber-900">${idx + 1}</td>
+            <td class="p-2">
+              <input type="text" value="${s.name}" onchange="tempBuilderSamples[${idx}].name = this.value" class="w-full p-1.5 rounded-lg border border-amber-200 text-xs bg-white">
+            </td>
+            ${showMethod ? `
+              <td class="p-2 text-center">
+                <select onchange="tempBuilderSamples[${idx}].expectedMethod = this.value" class="p-1 rounded-lg border border-amber-200 text-xs bg-white font-bold">
+                  <option value="correct" ${s.expectedMethod === 'correct' ? 'selected' : ''}>ถูกต้อง</option>
+                  <option value="incorrect" ${s.expectedMethod === 'incorrect' ? 'selected' : ''}>ไม่ถูกต้อง</option>
+                </select>
+              </td>
+            ` : ''}
+            ${showJudge ? `
+              <td class="p-2 text-center">
+                <select onchange="tempBuilderSamples[${idx}].expectedJudgement = this.value" class="p-1 rounded-lg border border-amber-200 text-xs bg-white font-black">
+                  <option value="OK" ${s.expectedJudgement === 'OK' ? 'selected' : ''}>OK</option>
+                  <option value="NG" ${s.expectedJudgement === 'NG' ? 'selected' : ''}>NG</option>
+                </select>
+              </td>
+            ` : ''}
+            <td class="p-2 text-center">
+              <button type="button" onclick="removeSampleRow(${idx})" class="w-7 h-7 rounded-lg hover:bg-rose-50 text-rose-500 flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      }
     }
 
     function addQuestion(type) {
