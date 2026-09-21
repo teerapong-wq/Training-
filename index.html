@@ -3657,6 +3657,50 @@
       if (checked) wrapper.classList.remove('hidden');
       else wrapper.classList.add('hidden');
     }
+
+// ฟังก์ชันจัดการสื่อการสอนใน Course Builder
+    function addMaterialRow() {
+      tempBuilderMaterials.push({
+        type: 'video',
+        title: `สื่อการเรียนรู้ #${tempBuilderMaterials.length + 1}`,
+        url: ''
+      });
+      renderBuilderMaterialsList();
+    }
+
+    function removeMaterialRow(idx) {
+      tempBuilderMaterials.splice(idx, 1);
+      renderBuilderMaterialsList();
+    }
+
+    function renderBuilderMaterialsList() {
+      const container = document.getElementById('cb-materials-list-container');
+      if (!container) return;
+
+      if (tempBuilderMaterials.length === 0) {
+        container.innerHTML = `
+          <div class="p-3 text-center bg-white rounded-xl border border-dashed border-indigo-300">
+            <p class="text-xs text-indigo-700">ยังไม่มีสื่อการสอนแนบไว้ (กดปุ่ม <b>"+ เพิ่มสื่อการสอน"</b> ด้านบนหากต้องการแนบลิงก์ หรือปล่อยว่างไว้ได้)</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = tempBuilderMaterials.map((m, idx) => `
+        <div class="p-2.5 rounded-xl bg-white border border-indigo-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <select onchange="tempBuilderMaterials[${idx}].type = this.value" class="p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50 font-bold">
+            <option value="video" ${m.type === 'video' ? 'selected' : ''}>🎬 วิดีโอ (YouTube / MP4)</option>
+            <option value="pdf" ${m.type === 'pdf' ? 'selected' : ''}>📄 เอกสารคู่มือ (PDF / SOP)</option>
+            <option value="link" ${m.type === 'link' ? 'selected' : ''}>🔗 เว็บไซต์ / สไลด์ (Link)</option>
+          </select>
+          <input type="text" value="${m.title || ''}" placeholder="ชื่อสื่อ เช่น วิดีโอสาธิต 01" onchange="tempBuilderMaterials[${idx}].title = this.value" class="sm:w-48 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
+          <input type="text" value="${m.url || ''}" placeholder="URL เช่น https://www.youtube.com/embed/... หรือ https://..." onchange="tempBuilderMaterials[${idx}].url = this.value" class="flex-1 p-1.5 rounded-lg border border-slate-200 text-xs bg-slate-50">
+          <button type="button" onclick="removeMaterialRow(${idx})" class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center text-xs">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `).join('');
+    }
     
 function toggleGaugeAttributeSettings() {
       const mode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
