@@ -3536,7 +3536,7 @@
     let tempBuilderPreQ = [];
     let tempBuilderPostQ = [];
 
-    function openAddCourseModal() {
+function openAddCourseModal() {
       const modal = document.getElementById('modal-course-builder');
       document.getElementById('cb-modal-title').textContent = 'สร้างหลักสูตรใหม่ (New QC Course)';
       document.getElementById('cb-course-id').value = '';
@@ -3549,17 +3549,34 @@
       const passScoreEl = document.getElementById('cb-passing-score');
       if (passScoreEl) passScoreEl.value = 80;
 
+      // รีเซ็ตค่าโมเดลการประเมิน
       const evalModeEl = document.getElementById('cb-practical-eval-mode');
       if (evalModeEl) evalModeEl.value = 'standard';
       const missEl = document.getElementById('cb-max-miss-rate');
       if (missEl) missEl.value = 0;
       const falseAlarmEl = document.getElementById('cb-max-false-alarm');
       if (falseAlarmEl) falseAlarmEl.value = 5;
-      toggleGaugeAttributeSettings();
+
+      // 🟢 รีเซ็ตค่าเริ่มต้นสำหรับเครื่องมือวัด Master (Measurement Master)
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+      setVal('cb-mm-tool-name', 'Digital Vernier Caliper');
+      setVal('cb-mm-tool-id', 'QC-CAL-042');
+      setVal('cb-mm-tool-res', '0.01');
+      setVal('cb-mm-cal-expiry', '2027-12-31');
+      setVal('cb-mm-unit', 'mm');
+      setVal('cb-mm-std-type', 'standard_only');
+      setVal('cb-mm-tier-mode', 'percent');
+      setVal('cb-mm-tier-prec', 5);
+      setVal('cb-mm-tier-good', 10);
+      setVal('cb-mm-tier-fair', 15);
+      setVal('cb-mm-min-tier', 'fair');
+
+      if (typeof updateTierLabels === 'function') updateTierLabels();
+      if (typeof toggleGaugeAttributeSettings === 'function') toggleGaugeAttributeSettings();
 
       tempBuilderMaterials = [];
       tempBuilderSamples = [
-        { id: 's1', name: 'ตัวอย่างชิ้นงาน #01', expectedMethod: 'correct', expectedJudgement: 'OK' }
+        { id: 's1', name: 'ตัวอย่างชิ้นงาน #01', expectedMethod: 'correct', expectedJudgement: 'OK', standardValue: 10.00, minValue: 9.90, maxValue: 10.10 }
       ];
       tempBuilderPreQ = [
         { id: 'q1', type: 'choice', prompt: 'คำถามข้อที่ 1', choices: ['ตัวเลือก A', 'ตัวเลือก B', 'ตัวเลือก C', 'ตัวเลือก D'], correctIndex: 0, points: 10 }
@@ -3582,8 +3599,8 @@
       const modal = document.getElementById('modal-course-builder');
       document.getElementById('cb-modal-title').textContent = 'แก้ไขหลักสูตร (Edit QC Course)';
       document.getElementById('cb-course-id').value = course.id;
-      document.getElementById('cb-title').value = course.title;
-      document.getElementById('cb-topic').value = course.skillTopic;
+      document.getElementById('cb-title').value = course.title || '';
+      document.getElementById('cb-topic').value = course.skillTopic || '';
       document.getElementById('cb-department').value = course.department || 'QC';
       document.getElementById('cb-type').value = course.type || 'theory';
       document.getElementById('cb-budget-year').value = course.budgetYear || new Date().getFullYear();
@@ -3592,11 +3609,16 @@
 
       tempBuilderMaterials = (course.materials || []).map(m => ({ ...m }));
       tempBuilderSamples = (course.samples || []).map(s => ({ ...s }));
-      document.getElementById('cb-timer-enabled').checked = !!course.timerEnabled;
-      document.getElementById('cb-timer-seconds').value = course.timerSeconds || 600;
-      toggleTimerSettings();
+
+      const timerCheck = document.getElementById('cb-timer-enabled');
+      if (timerCheck) timerCheck.checked = !!course.timerEnabled;
+      const timerSec = document.getElementById('cb-timer-seconds');
+      if (timerSec) timerSec.value = course.timerSeconds || 120;
+      if (typeof toggleTimerSettings === 'function') toggleTimerSettings();
+
       if (course.evalCriteria) {
-        document.getElementById('cb-eval-criteria').value = course.evalCriteria;
+        const evalEl = document.getElementById('cb-eval-criteria');
+        if (evalEl) evalEl.value = course.evalCriteria;
       }
 
       const evalModeEl = document.getElementById('cb-practical-eval-mode');
@@ -3605,7 +3627,23 @@
       if (missEl) missEl.value = course.maxMissRate !== undefined ? course.maxMissRate : 0;
       const falseAlarmEl = document.getElementById('cb-max-false-alarm');
       if (falseAlarmEl) falseAlarmEl.value = course.maxFalseAlarm !== undefined ? course.maxFalseAlarm : 5;
-      toggleGaugeAttributeSettings();
+
+      // 🟢 ดึงข้อมูลเครื่องมือวัด Master ของหลักสูตรเดิมขึ้นมาแสดง
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = (val !== undefined && val !== null) ? val : ''; };
+      setVal('cb-mm-tool-name', course.toolName || 'Digital Vernier Caliper');
+      setVal('cb-mm-tool-id', course.toolId || 'QC-CAL-042');
+      setVal('cb-mm-tool-res', course.toolResolution || '0.01');
+      setVal('cb-mm-cal-expiry', course.toolCalExpiry || '');
+      setVal('cb-mm-unit', course.measurementUnit || 'mm');
+      setVal('cb-mm-std-type', course.stdType || 'standard_only');
+      setVal('cb-mm-tier-mode', course.tierMode || 'percent');
+      setVal('cb-mm-tier-prec', course.tierPrecision !== undefined ? course.tierPrecision : 5);
+      setVal('cb-mm-tier-good', course.tierGood !== undefined ? course.tierGood : 10);
+      setVal('cb-mm-tier-fair', course.tierFair !== undefined ? course.tierFair : 15);
+      setVal('cb-mm-min-tier', course.minPassingTier || 'fair');
+
+      if (typeof updateTierLabels === 'function') updateTierLabels();
+      if (typeof toggleGaugeAttributeSettings === 'function') toggleGaugeAttributeSettings();
 
       tempBuilderPreQ = (course.preQuestions || []).map(q => ({ ...q, choices: q.choices ? [...q.choices] : [] }));
       tempBuilderPostQ = (course.postQuestions || []).map(q => ({ ...q, choices: q.choices ? [...q.choices] : [] }));
