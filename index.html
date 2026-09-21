@@ -3505,6 +3505,7 @@
         }).join('');
       }
     }
+    
     function exportLogsCSV() {
       const selectedUserId = document.getElementById('admin-logs-user-filter')?.value || '';
       const selectedCourseId = document.getElementById('admin-logs-course-filter')?.value || '';
@@ -3696,6 +3697,7 @@ function openAddCourseModal() {
       else wrapper.classList.add('hidden');
     }
     
+    <!-- ... existing code ... -->
             <div>
               <label class="block text-[11px] font-bold text-amber-900 mb-1">โมเดลการประเมินผลภาคปฏิบัติ</label>
               <select id="cb-practical-eval-mode" onchange="toggleGaugeAttributeSettings()" class="w-full p-2 rounded-xl border border-amber-200 text-xs font-bold bg-white text-slate-800">
