@@ -3577,8 +3577,12 @@ if (hasMultiple) {
         </td>
       </tr>
     `;
+      });
+    }
   });
-}    
+
+  resultsBody.innerHTML = tableHtml;
+}
 
    function exportLogsCSV() {
   // 1. ดึงค่า Filter ตาม ID ที่หน้าเว็บใช้งานอยู่จริง
