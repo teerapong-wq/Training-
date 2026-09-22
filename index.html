@@ -3405,106 +3405,181 @@
       renderAdminResultsTable();
     }
 
-    function renderAdminResultsTable() {
-      const userFilterEl = document.getElementById('admin-logs-user-filter');
-      const courseFilterEl = document.getElementById('admin-logs-course-filter');
-      const selectedUserId = userFilterEl ? userFilterEl.value : '';
-      const selectedCourseId = courseFilterEl ? courseFilterEl.value : '';
-      const isMasterAdmin = currentUser && currentUser.role === 'Master Admin';
+    function toggleExamHistory(groupId) {
+const rows = document.querySelectorAll(.history-row-${groupId});
+const icon = document.getElementById(icon-history-${groupId});
+rows.forEach(r => r.classList.toggle('hidden'));
+if (icon) {
+icon.classList.toggle('rotate-180');
+}
+}
 
-      const filteredResults = (typeof testResults !== 'undefined' ? testResults : []).filter(r => {
-        const matchUser = !selectedUserId || r.userId === selectedUserId;
-        const matchCourse = !selectedCourseId || r.courseId === selectedCourseId;
-        return matchUser && matchCourse;
-      });
+function renderAdminResultsTable() {
+const userFilterEl = document.getElementById('admin-logs-user-filter');
+const courseFilterEl = document.getElementById('admin-logs-course-filter');
+const selectedUserId = userFilterEl ? userFilterEl.value : '';
+const selectedCourseId = courseFilterEl ? courseFilterEl.value : '';
+const isMasterAdmin = currentUser && currentUser.role === 'Master Admin';
 
-      const resultsBody = document.getElementById('admin-results-table-body');
-      if (!resultsBody) return;
+const rawResults = (typeof testResults !== 'undefined' ? testResults : []);
+const filteredResults = rawResults.filter(r => {
+const matchUser = !selectedUserId || r.userId === selectedUserId;
+const matchCourse = !selectedCourseId || r.courseId === selectedCourseId;
+return matchUser && matchCourse;
+});
 
-      if (filteredResults.length === 0) {
-        resultsBody.innerHTML = `
-          <tr>
-            <td colspan="8" class="p-8 text-center text-slate-400 font-medium">
-              <i class="fa-solid fa-inbox text-3xl mb-1.5 block opacity-40"></i>
-              ไม่พบประวัติการทดสอบตามเงื่อนไขที่เลือก
-            </td>
-          </tr>
-        `;
-      } else {
-        resultsBody.innerHTML = filteredResults.map(r => {
-          const relCourse = courses.find(c => c.id === r.courseId);
-          let displayStatus = r.status || 'Retrain';
+const resultsBody = document.getElementById('admin-results-table-body');
+if (!resultsBody) return;
 
-          // 🟢 คำนวณสถานะตัดสินสดใหม่ 100% สำหรับข้อสอบภาคปฏิบัติ
-          if (r.type === 'practical' && r.examPhase !== 'pre') {
-            const isGauge = (r.practicalEvalMode === 'gauge') || (relCourse && relCourse.practicalEvalMode === 'gauge');
-            const passScore = (relCourse && relCourse.passingScore !== undefined) ? Number(relCourse.passingScore) : 70;
-            const maxMiss = (relCourse && relCourse.maxMissRate !== undefined) ? Number(relCourse.maxMissRate) : (r.maxMissRate !== undefined ? Number(r.maxMissRate) : 0);
-            const maxFalse = (relCourse && relCourse.maxFalseAlarm !== undefined) ? Number(relCourse.maxFalseAlarm) : (r.maxFalseAlarm !== undefined ? Number(r.maxFalseAlarm) : 5);
+if (filteredResults.length === 0) {
+resultsBody.innerHTML = <tr> <td colspan="8" class="p-8 text-center text-slate-400 font-medium"> <i class="fa-solid fa-inbox text-3xl mb-1.5 block opacity-40"></i> ไม่พบประวัติการทดสอบตามเงื่อนไขที่เลือก </td> </tr>;
+return;
+}
 
-            const score = r.postScore !== undefined && r.postScore !== null ? Number(r.postScore) : (r.score !== undefined ? Number(r.score) : 0);
-            
-            // ตรวจสอบจาก Miss Rate จริง
-            let calculatedMissRate = r.missRate;
-            let calculatedFalseAlarm = r.falseAlarm;
+// 1. จัดกลุ่มข้อมูลตาม User ID + Course ID
+const groupedMap = new Map();
+filteredResults.forEach(r => {
+const key = ${r.userId}_${r.courseId};
+if (!groupedMap.has(key)) {
+groupedMap.set(key, []);
+}
+groupedMap.get(key).push(r);
+});
 
-            // ถ้าไม่มีค่า missRate บันทึกไว้ ให้คำนวณสดจากชุดคำตอบ (practicalAnswers)
-            if (calculatedMissRate === undefined && r.practicalAnswers && relCourse && relCourse.samples) {
-              let tNG = 0, ngOK = 0, tOK = 0, okNG = 0;
-              relCourse.samples.forEach((s, idx) => {
-                const ans = r.practicalAnswers[idx] || {};
-                const exp = (s.expectedJudgement || 'OK').toUpperCase();
-                const usr = (ans.judgement || '').toUpperCase();
-                if (exp === 'NG') { tNG++; if (usr === 'OK') ngOK++; }
-                else if (exp === 'OK') { tOK++; if (usr === 'NG') okNG++; }
-              });
-              calculatedMissRate = tNG > 0 ? Math.round((ngOK / tNG) * 100) : 0;
-              calculatedFalseAlarm = tOK > 0 ? Math.round((okNG / tOK) * 100) : 0;
-            }
+// 2. วนลูปสร้างแถวหลัก (1 คนต่อ 1 หลักสูตร) + แถวย่อยของประวัติการสอบแต่ละรอบ
+let tableHtml = '';
+let groupIndex = 0;
 
-            const passAccuracy = score >= passScore;
-            const passMiss = !isGauge || (calculatedMissRate === undefined || calculatedMissRate <= maxMiss);
-            const passFalse = !isGauge || (calculatedFalseAlarm === undefined || calculatedFalseAlarm <= maxFalse);
+groupedMap.forEach((attempts, key) => {
+groupIndex++;
+// เรียงประวัติจากครั้งล่าสุดขึ้นก่อน
+attempts.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
 
-            displayStatus = (passAccuracy && passMiss && passFalse) ? 'Passed' : 'Retrain';
-            
-            // อัปเดตค่ากลับเข้าไปในตัวแปรเพื่อไม่ให้ขัดแย้ง
-            r.status = displayStatus;
-          }
+// เลือกรอบที่จะนำมาแสดงที่แถวหน้าสุด (ถ้ามีรอบที่ Passed ให้แสดง Passed ถ้าไม่มีให้แสดงรอบล่าสุด)
+const passedAttempt = attempts.find(a => (a.status || '').toLowerCase() === 'pass' || (a.status || '').toLowerCase() === 'passed');
+const mainLog = passedAttempt || attempts[0];
+const relCourse = courses.find(c => c.id === mainLog.courseId);
 
-          return `
-            <tr class="hover:bg-slate-50/80 transition-colors">
-              <td class="p-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">${r.completedAt ? r.completedAt.replace('T', ' ').slice(0, 16) : '-'}</td>
-              <td class="p-3 font-bold text-slate-900">${r.userName}</td>
-              <td class="p-3">
-                <span class="font-semibold text-slate-800 block line-clamp-1">${r.courseTitle}</span>
-                <span class="text-[10px] text-slate-400">${r.skillTopic || ''}</span>
-              </td>
-              <td class="p-3">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.type === 'practical' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">
-                  ${r.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}
-                </span>
-              </td>
-              <td class="p-3 text-center font-bold">${r.preScore !== undefined && r.preScore !== null ? r.preScore + '%' : '-'}</td>
-              <td class="p-3 text-center font-bold">${r.postScore !== undefined && r.postScore !== null ? r.postScore + '%' : (r.score !== undefined ? r.score + '%' : '-')}</td>
-              <td class="p-3 text-center">
-                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${displayStatus === 'Passed' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
-                  ${displayStatus}
-                </span>
-              </td>
-              <td class="p-3 text-center">
-                ${isMasterAdmin ? `
-                  <button onclick="openReviewModalForResult('${r.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 mx-auto transition-all shadow-2xs active:scale-95">
-                    <i class="fa-solid fa-clipboard-check text-xs"></i>
-                    <span>ตรวจคำตอบ</span>
-                  </button>
-                ` : '-'}
-              </td>
-            </tr>
-          `;
-        }).join('');
-      }
-    }
+// คำนวณสถานะของ mainLog
+let displayStatus = mainLog.status || 'Retrain';
+if (mainLog.type === 'practical' && mainLog.examPhase !== 'pre') {
+  const isGauge = (mainLog.practicalEvalMode === 'gauge') || (relCourse && relCourse.practicalEvalMode === 'gauge');
+  const passScore = (relCourse && relCourse.passingScore !== undefined) ? Number(relCourse.passingScore) : 70;
+  const maxMiss = (relCourse && relCourse.maxMissRate !== undefined) ? Number(relCourse.maxMissRate) : (mainLog.maxMissRate !== undefined ? Number(mainLog.maxMissRate) : 0);
+  const maxFalse = (relCourse && relCourse.maxFalseAlarm !== undefined) ? Number(relCourse.maxFalseAlarm) : (mainLog.maxFalseAlarm !== undefined ? Number(mainLog.maxFalseAlarm) : 5);
+  const score = mainLog.postScore !== undefined && mainLog.postScore !== null ? Number(mainLog.postScore) : (mainLog.score !== undefined ? Number(mainLog.score) : 0);
+
+  let calculatedMissRate = mainLog.missRate;
+  let calculatedFalseAlarm = mainLog.falseAlarm;
+  if (calculatedMissRate === undefined && mainLog.practicalAnswers && relCourse && relCourse.samples) {
+    let tNG = 0, ngOK = 0, tOK = 0, okNG = 0;
+    relCourse.samples.forEach((s, idx) => {
+      const ans = mainLog.practicalAnswers[idx] || {};
+      const exp = (s.expectedJudgement || 'OK').toUpperCase();
+      const usr = (ans.judgement || '').toUpperCase();
+      if (exp === 'NG') { tNG++; if (usr === 'OK') ngOK++; }
+      else if (exp === 'OK') { tOK++; if (usr === 'NG') okNG++; }
+    });
+    calculatedMissRate = tNG > 0 ? Math.round((ngOK / tNG) * 100) : 0;
+    calculatedFalseAlarm = tOK > 0 ? Math.round((okNG / tOK) * 100) : 0;
+  }
+
+  const passAccuracy = score >= passScore;
+  const passMiss = !isGauge || (calculatedMissRate === undefined || calculatedMissRate <= maxMiss);
+  const passFalse = !isGauge || (calculatedFalseAlarm === undefined || calculatedFalseAlarm <= maxFalse);
+  displayStatus = (passAccuracy && passMiss && passFalse) ? 'Passed' : 'Retrain';
+  mainLog.status = displayStatus;
+}
+
+const isPassed = /pass/i.test(displayStatus);
+const hasMultiple = attempts.length > 1;
+
+// --- แถวสรุปหลัก (Summary Row) ---
+tableHtml += `
+  <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
+    <td class="p-3 text-slate-400 font-mono text-[11px] whitespace-nowrap">
+      ${mainLog.completedAt ? mainLog.completedAt.replace('T', ' ').slice(0, 16) : '-'}
+    </td>
+    <td class="p-3">
+      <div class="font-bold text-slate-900">${mainLog.userName}</div>
+      ${hasMultiple ? `
+        <button type="button" onclick="toggleExamHistory(${groupIndex})" class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>สอบ ${attempts.length} รอบ</span>
+          <i id="icon-history-${groupIndex}" class="fa-solid fa-chevron-down text-[8px] transition-transform duration-200"></i>
+        </button>
+      ` : `
+        <span class="text-[10px] text-slate-400 font-medium">สอบ 1 รอบ</span>
+      `}
+    </td>
+    <td class="p-3">
+      <span class="font-semibold text-slate-800 block line-clamp-1">${mainLog.courseTitle}</span>
+      <span class="text-[10px] text-slate-400">${mainLog.skillTopic || ''}</span>
+    </td>
+    <td class="p-3">
+      <span class="px-2 py-0.5 rounded text-[10px] font-bold ${mainLog.type === 'practical' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}">
+        ${mainLog.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}
+      </span>
+    </td>
+    <td class="p-3 text-center font-bold">${mainLog.preScore !== undefined && mainLog.preScore !== null ? mainLog.preScore + '%' : '-'}</td>
+    <td class="p-3 text-center font-bold">${mainLog.postScore !== undefined && mainLog.postScore !== null ? mainLog.postScore + '%' : (mainLog.score !== undefined ? mainLog.score + '%' : '-')}</td>
+    <td class="p-3 text-center">
+      <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${isPassed ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">
+        ${displayStatus}
+      </span>
+    </td>
+    <td class="p-3 text-center">
+      ${isMasterAdmin ? `
+        <button onclick="openReviewModalForResult('${mainLog.id}')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 mx-auto transition-all shadow-2xs active:scale-95">
+          <i class="fa-solid fa-clipboard-check text-xs"></i>
+          <span>ตรวจคำตอบ</span>
+        </button>
+      ` : '-'}
+    </td>
+  </tr>
+`;
+
+// --- แถวย่อยประวัติการสอบทุกรอบ (Sub-rows for attempts) ---
+if (hasMultiple) {
+  attempts.forEach((att, attIdx) => {
+    const roundNum = attempts.length - attIdx;
+    const attStatus = att.status || 'Retrain';
+    const isAttPassed = /pass/i.test(attStatus);
+    const isSelectedMain = att.id === mainLog.id;
+
+    tableHtml += `
+      <tr class="history-row-${groupIndex} hidden bg-slate-50/70 border-b border-dashed border-slate-200">
+        <td class="p-2.5 pl-6 text-slate-400 font-mono text-[10px]">
+          <i class="fa-solid fa-arrow-turn-down-right mr-1 text-indigo-400"></i>
+          ${att.completedAt ? att.completedAt.replace('T', ' ').slice(0, 16) : '-'}
+        </td>
+        <td class="p-2.5 pl-6">
+          <span class="text-xs font-bold text-indigo-900">รอบที่ ${roundNum}</span>
+          ${isSelectedMain ? '<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700 font-bold">(รอบหลัก)</span>' : ''}
+        </td>
+        <td class="p-2.5 text-xs text-slate-500" colspan="2">
+          <span class="text-[11px]">${att.courseTitle}</span>
+        </td>
+        <td class="p-2.5 text-center text-xs font-semibold text-slate-600">${att.preScore !== undefined && att.preScore !== null ? att.preScore + '%' : '-'}</td>
+        <td class="p-2.5 text-center text-xs font-semibold text-slate-600">${att.postScore !== undefined && att.postScore !== null ? att.postScore + '%' : (att.score !== undefined ? att.score + '%' : '-')}</td>
+        <td class="p-2.5 text-center">
+          <span class="px-2 py-0.5 rounded text-[9px] font-bold ${isAttPassed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+            ${attStatus}
+          </span>
+        </td>
+        <td class="p-2.5 text-center">
+          ${isMasterAdmin ? `
+            <button onclick="openReviewModalForResult('${att.id}')" class="px-2 py-0.5 rounded-md bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-[11px] flex items-center gap-1 mx-auto transition-all shadow-2xs">
+              <i class="fa-solid fa-magnifying-glass text-[10px] text-blue-600"></i>
+              <span>ตรวจรอบนี้</span>
+            </button>
+          ` : '-'}
+        </td>
+      </tr>
+    `;
+  });
+}
+
    function exportLogsCSV() {
   // 1. ดึงค่า Filter ตาม ID ที่หน้าเว็บใช้งานอยู่จริง
   const selectedUserId = document.getElementById('admin-logs-user-filter')?.value || '';
