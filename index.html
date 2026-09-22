@@ -3506,27 +3506,227 @@
       }
     }
     function exportLogsCSV() {
-      const selectedUserId = document.getElementById('admin-logs-user-filter')?.value || '';
-      const selectedCourseId = document.getElementById('admin-logs-course-filter')?.value || '';
+  // 1. ดึงค่า Filter ตาม ID ที่หน้าเว็บใช้งานอยู่จริง
+  const selectedUserId = document.getElementById('admin-logs-user-filter')?.value || '';
+  const selectedCourseId = document.getElementById('admin-logs-course-filter')?.value || '';
 
-      const filtered = (typeof testResults !== 'undefined' ? testResults : []).filter(r => {
-        const matchUser = !selectedUserId || r.userId === selectedUserId;
-        const matchCourse = !selectedCourseId || r.courseId === selectedCourseId;
-        return matchUser && matchCourse;
-      });
+  let filtered = (typeof testResults !== 'undefined' ? [...testResults] : []).filter(r => {
+    const matchUser = !selectedUserId || selectedUserId === 'all' || r.userId === selectedUserId;
+    const matchCourse = !selectedCourseId || selectedCourseId === 'all' || r.courseId === selectedCourseId;
+    return matchUser && matchCourse;
+  });
 
-      let csv = '\uFEFFวันเวลา,พนักงาน,แผนก,ส่วนงาน,หลักสูตร,หัวข้อทักษะ,ประเภท,Pre-test,Post-test,สถานะ\n';
-      filtered.forEach(r => {
-        csv += `"${r.completedAt || ''}","${r.userName}","${r.department || '-'}","${r.division || '-'}","${r.courseTitle}","${r.skillTopic || '-'}","${r.type === 'practical' ? 'ปฏิบัติ' : 'ทฤษฎี'}","${r.preScore !== undefined ? r.preScore + '%' : '-'}","${r.postScore !== undefined ? r.postScore + '%' : '-'}","${r.status}"\n`;
-      });
+  if (filtered.length === 0) {
+    if (typeof showToast === 'function') showToast('ไม่พบข้อมูลผลการสอบตามเงื่อนไขที่เลือก', 'warning');
+    else alert('ไม่พบข้อมูลผลการสอบตามเงื่อนไขที่เลือก');
+    return;
+  }
 
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `knt_qc_exam_logs_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
+  // 2. หาจำนวนข้อสอบหรือชิ้นงานสูงสุด เพื่อสร้างหัวตาราง (ข้อ 1, ข้อ 2, ...)
+  let maxItems = 0;
+  filtered.forEach(r => {
+    const c = (typeof courses !== 'undefined') ? courses.find(item => item.id === r.courseId) : null;
+    if (c) {
+      const count = c.type === 'practical' 
+        ? (c.samples?.length || 0) 
+        : Math.max(c.preQuestions?.length || 0, c.postQuestions?.length || 0);
+      if (count > maxItems) maxItems = count;
     }
+  });
+  if (maxItems === 0) maxItems = 5;
+
+  // 3. กำหนดสไตล์สีของ Cell ตามตัวอย่าง
+  const styleTh = 'background-color:#f1f5f9; color:#1e293b; font-weight:bold; border:1px solid #cbd5e1; padding:6px; text-align:center; font-family:Tahoma,sans-serif; font-size:12px;';
+  const styleThYellow = 'background-color:#fef08a; color:#854d0e; font-weight:bold; border:1px solid #cbd5e1; padding:6px; text-align:center; font-family:Tahoma,sans-serif; font-size:12px;';
+  const styleTd = 'border:1px solid #e2e8f0; padding:5px 8px; font-family:Tahoma,sans-serif; font-size:12px; vertical-align:middle;';
+  const styleCorrect = 'background-color:#bbf7d0; color:#14532d; font-weight:bold; border:1px solid #86efac; padding:5px 8px; text-align:center; font-family:Tahoma,sans-serif; font-size:12px;';
+  const styleIncorrect = 'background-color:#fecdd3; color:#881337; font-weight:bold; border:1px solid #fda4af; padding:5px 8px; text-align:center; font-family:Tahoma,sans-serif; font-size:12px;';
+  const styleYellowTag = 'background-color:#fef08a; color:#713f12; font-weight:bold; border:1px solid #fde047; padding:5px 8px; text-align:center; font-family:Tahoma,sans-serif; font-size:12px;';
+
+  // 4. สร้างหัวตาราง (Table Header)
+  let tableHtml = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>Exam Results Detailed</x:Name>
+              <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+    </head>
+    <body>
+      <table border="1" style="border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="${styleTh}">วันเวลา</th>
+            <th style="${styleTh}">รหัสพนักงาน</th>
+            <th style="${styleTh}">พนักงาน</th>
+            <th style="${styleTh}">แผนก</th>
+            <th style="${styleTh}">ส่วนงาน</th>
+            <th style="${styleTh}">หลักสูตร</th>
+            <th style="${styleTh}">หัวข้อทักษะ</th>
+            <th style="${styleTh}">ประเภท</th>
+            <th style="${styleTh}">Pre-test</th>
+            <th style="${styleTh}">Post-test</th>
+            <th style="${styleTh}">สถานะ</th>
+            <th style="${styleThYellow}">ลำดับการสอบ</th>
+  `;
+
+  for (let i = 1; i <= maxItems; i++) {
+    tableHtml += `<th style="${styleTh}">ข้อ ${i}</th>`;
+  }
+  tableHtml += `</tr></thead><tbody>`;
+
+  // 5. วนลูปสร้างข้อมูล (แยก 2 แถว: Pre test สีเหลือง และ Post test สีเหลือง)
+  filtered.forEach(r => {
+    const c = (typeof courses !== 'undefined') ? courses.find(course => course.id === r.courseId) : {};
+    const isPractical = (r.type === 'practical' || c?.type === 'practical');
+    const typeStr = isPractical ? 'ปฏิบัติ' : 'ทฤษฎี';
+    const dateStr = r.completedAt ? new Date(r.completedAt).toLocaleString('th-TH') : '-';
+    const preScoreStr = (r.preScore !== undefined && r.preScore !== null) ? `${r.preScore}%` : '-';
+    const postScoreStr = (r.postScore !== undefined && r.postScore !== null) ? `${r.postScore}%` : ((r.score !== undefined && r.score !== null) ? `${r.score}%` : '-');
+    const statusStr = r.status || '-';
+
+    const baseCols = `
+      <td style="${styleTd}">${dateStr}</td>
+      <td style="${styleTd}">${r.userId || '-'}</td>
+      <td style="${styleTd}">${r.userName || '-'}</td>
+      <td style="${styleTd}">${r.department || '-'}</td>
+      <td style="${styleTd}">${r.division || '-'}</td>
+      <td style="${styleTd}">${r.courseTitle || c?.title || '-'}</td>
+      <td style="${styleTd}">${r.skillTopic || c?.skillTopic || '-'}</td>
+      <td style="${styleTd}; text-align:center;">${typeStr}</td>
+      <td style="${styleTd}; text-align:center;">${preScoreStr}</td>
+      <td style="${styleTd}; text-align:center;">${postScoreStr}</td>
+      <td style="${styleTd}; text-align:center; font-weight:bold;">${statusStr}</td>
+    `;
+
+    // ----------------- แถวที่ 1: Pre test -----------------
+    let preRowCols = '';
+    if (isPractical) {
+      const pracPreAns = r.practicalPreAnswers || (r.examPhase === 'pre' ? r.practicalAnswers : null) || {};
+      for (let i = 0; i < maxItems; i++) {
+        const sample = c?.samples ? c.samples[i] : null;
+        if (sample) {
+          const ans = pracPreAns[i] || {};
+          const userVal = ans.judgement || (ans.average !== undefined ? `Avg: ${ans.average}` : '-');
+          const isMatch = (ans.judgement && ans.judgement === sample.expectedJudgement) || (ans.tier && ans.tier !== 'improve');
+          const cellStyle = (userVal === '-' || !ans.judgement) ? styleTd : (isMatch ? styleCorrect : styleIncorrect);
+          preRowCols += `<td style="${cellStyle}">${userVal}</td>`;
+        } else {
+          preRowCols += `<td style="${styleTd}">-</td>`;
+        }
+      }
+    } else {
+      const preQuestions = c?.preQuestions || [];
+      const preAnswers = r.preAnswers || (r.examPhase === 'pre' ? r.answers : null) || {};
+      for (let i = 0; i < maxItems; i++) {
+        const q = preQuestions[i];
+        if (q) {
+          const userAnsIdx = preAnswers[q.id];
+          let userAnsText = '-';
+          let isCorrect = false;
+
+          if (userAnsIdx !== undefined && userAnsIdx !== null) {
+            if (q.type === 'written') {
+              userAnsText = userAnsIdx;
+              isCorrect = (r.writtenGrading && r.writtenGrading[`pre_${q.id}`]) ? r.writtenGrading[`pre_${q.id}`].isPass : false;
+            } else {
+              userAnsText = q.choices ? (q.choices[userAnsIdx] || `ตัวเลือก ${Number(userAnsIdx) + 1}`) : `ข้อ ${userAnsIdx}`;
+              isCorrect = (Number(userAnsIdx) === Number(q.correctIndex));
+            }
+          }
+          const cellStyle = (userAnsText === '-') ? styleTd : (isCorrect ? styleCorrect : styleIncorrect);
+          preRowCols += `<td style="${cellStyle}">${userAnsText}</td>`;
+        } else {
+          preRowCols += `<td style="${styleTd}">-</td>`;
+        }
+      }
+    }
+
+    tableHtml += `
+      <tr>
+        ${baseCols}
+        <td style="${styleYellowTag}">Pre test</td>
+        ${preRowCols}
+      </tr>
+    `;
+
+    // ----------------- แถวที่ 2: Post test -----------------
+    let postRowCols = '';
+    if (isPractical) {
+      const pracPostAns = r.practicalAnswers || {};
+      for (let i = 0; i < maxItems; i++) {
+        const sample = c?.samples ? c.samples[i] : null;
+        if (sample) {
+          const ans = pracPostAns[i] || {};
+          const userVal = ans.judgement || (ans.average !== undefined ? `Avg: ${ans.average}` : '-');
+          const isMatch = (ans.judgement && ans.judgement === sample.expectedJudgement) || (ans.tier && ans.tier !== 'improve');
+          const cellStyle = (userVal === '-' || !ans.judgement) ? styleTd : (isMatch ? styleCorrect : styleIncorrect);
+          postRowCols += `<td style="${cellStyle}">${userVal}</td>`;
+        } else {
+          postRowCols += `<td style="${styleTd}">-</td>`;
+        }
+      }
+    } else {
+      const postQuestions = c?.postQuestions && c.postQuestions.length > 0 ? c.postQuestions : (c?.preQuestions || []);
+      const postAnswers = r.postAnswers || (r.examPhase !== 'pre' ? r.answers : null) || {};
+      for (let i = 0; i < maxItems; i++) {
+        const q = postQuestions[i];
+        if (q) {
+          const userAnsIdx = postAnswers[q.id];
+          let userAnsText = '-';
+          let isCorrect = false;
+
+          if (userAnsIdx !== undefined && userAnsIdx !== null) {
+            if (q.type === 'written') {
+              userAnsText = userAnsIdx;
+              isCorrect = (r.writtenGrading && r.writtenGrading[`post_${q.id}`]) ? r.writtenGrading[`post_${q.id}`].isPass : false;
+            } else {
+              userAnsText = q.choices ? (q.choices[userAnsIdx] || `ตัวเลือก ${Number(userAnsIdx) + 1}`) : `ข้อ ${userAnsIdx}`;
+              isCorrect = (Number(userAnsIdx) === Number(q.correctIndex));
+            }
+          }
+          const cellStyle = (userAnsText === '-') ? styleTd : (isCorrect ? styleCorrect : styleIncorrect);
+          postRowCols += `<td style="${cellStyle}">${userAnsText}</td>`;
+        } else {
+          postRowCols += `<td style="${styleTd}">-</td>`;
+        }
+      }
+    }
+
+    tableHtml += `
+      <tr>
+        ${baseCols}
+        <td style="${styleYellowTag}">Post test</td>
+        ${postRowCols}
+      </tr>
+    `;
+  });
+
+  tableHtml += `</tbody></table></body></html>`;
+
+  // 6. ดาวน์โหลดเป็นไฟล์ Excel (.xls) ที่เปิดแล้วมีสีทันที
+  const blob = new Blob(['\ufeff' + tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const timestamp = new Date().toISOString().slice(0, 10);
+  link.href = url;
+  link.download = `knt_qc_exam_detailed_results_${timestamp}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  if (typeof showToast === 'function') showToast('Export ไฟล์ Excel แบบละเอียดพร้อมลงสีเซลล์สำเร็จเรียบร้อย', 'success');
+}
 
     // ----------------------------------------------------
     // 12. COURSE BUILDER
