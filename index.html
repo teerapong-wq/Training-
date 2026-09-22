@@ -3405,9 +3405,9 @@
       renderAdminResultsTable();
     }
 
-    function toggleExamHistory(groupId) {
-const rows = document.querySelectorAll(.history-row-${groupId});
-const icon = document.getElementById(icon-history-${groupId});
+function toggleExamHistory(groupId) {
+const rows = document.querySelectorAll('.history-row-' + groupId);
+const icon = document.getElementById('icon-history-' + groupId);
 rows.forEach(r => r.classList.toggle('hidden'));
 if (icon) {
 icon.classList.toggle('rotate-180');
@@ -3432,14 +3432,14 @@ const resultsBody = document.getElementById('admin-results-table-body');
 if (!resultsBody) return;
 
 if (filteredResults.length === 0) {
-resultsBody.innerHTML = <tr> <td colspan="8" class="p-8 text-center text-slate-400 font-medium"> <i class="fa-solid fa-inbox text-3xl mb-1.5 block opacity-40"></i> ไม่พบประวัติการทดสอบตามเงื่อนไขที่เลือก </td> </tr>;
+resultsBody.innerHTML = ' ไม่พบประวัติการทดสอบตามเงื่อนไขที่เลือก';
 return;
 }
 
 // 1. จัดกลุ่มข้อมูลตาม User ID + Course ID
 const groupedMap = new Map();
 filteredResults.forEach(r => {
-const key = ${r.userId}_${r.courseId};
+const key = String(r.userId) + '_' + String(r.courseId);
 if (!groupedMap.has(key)) {
 groupedMap.set(key, []);
 }
@@ -3458,7 +3458,7 @@ attempts.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt ||
 // เลือกรอบที่จะนำมาแสดงที่แถวหน้าสุด (ถ้ามีรอบที่ Passed ให้แสดง Passed ถ้าไม่มีให้แสดงรอบล่าสุด)
 const passedAttempt = attempts.find(a => (a.status || '').toLowerCase() === 'pass' || (a.status || '').toLowerCase() === 'passed');
 const mainLog = passedAttempt || attempts[0];
-const relCourse = courses.find(c => c.id === mainLog.courseId);
+const relCourse = (typeof courses !== 'undefined') ? courses.find(c => c.id === mainLog.courseId) : null;
 
 // คำนวณสถานะของ mainLog
 let displayStatus = mainLog.status || 'Retrain';
@@ -3578,7 +3578,7 @@ if (hasMultiple) {
       </tr>
     `;
   });
-}
+}    
 
    function exportLogsCSV() {
   // 1. ดึงค่า Filter ตาม ID ที่หน้าเว็บใช้งานอยู่จริง
