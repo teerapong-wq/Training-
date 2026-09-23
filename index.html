@@ -1365,16 +1365,23 @@ async function fetchDataFromGoogleSheets() {
 // ==========================================
 async function saveDataToGoogleSheets(sheetName, data) {
   try {
-    console.log(`⏳ กำลังเซฟ ${sheetName}...`);
-    const response = await fetch(APP_SCRIPT_URL, {
+    console.log(`⏳ กำลังเซฟข้อมูลลง ${sheetName} (Online Sync)...`);
+    
+    // โค้ดส่งข้อมูลเจาะผ่านระบบ Google Apps Script (สำคัญมาก: mode: 'no-cors')
+    await fetch(APP_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      mode: 'no-cors', // ทะลวงกำแพง CORS ของ Google
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8' // บังคับส่งเป็น Text ให้ Google อ่านง่าย
+      },
       body: JSON.stringify({ action: 'save', sheetName: sheetName, data: data })
     });
-    console.log(`✅ เซฟ ${sheetName} สำเร็จ!`);
+    
+    console.log(`✅ ซิงค์ข้อมูล ${sheetName} ขึ้น Google Sheets สำเร็จ!`);
+    
   } catch (error) {
-    console.error(`❌ เกิดข้อผิดพลาดในการเซฟ ${sheetName}:`, error);
-    alert(`⚠️ บันทึกข้อมูล ${sheetName} ไม่สำเร็จ! กรุณาเช็คการเชื่อมต่อ`);
+    console.error(`❌ ซิงค์ข้อมูล ${sheetName} ไม่สำเร็จ:`, error);
+    alert(`⚠️ ข้อมูล ${sheetName} ยังไม่ได้ถูกบันทึกขึ้นระบบส่วนกลาง! โปรดตรวจสอบอินเทอร์เน็ต`);
   }
 }
 
