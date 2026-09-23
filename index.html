@@ -1601,49 +1601,32 @@ async function syncToGoogleSheets() {
       }
     }
 
-    // ----------------------------------------------------
-    // 3. FIREBASE REALTIME DATABASE STREAMING
-    // ----------------------------------------------------
-    let eventSource = null;
+// ----------------------------------------------------
+// 3. GOOGLE SHEETS CONNECTION & STATUS BADGE
+// ----------------------------------------------------
 
-    function initFirebaseStreaming() {
-      if (typeof EventSource === 'undefined') {
-        fetchSnapshotFromFirebase();
-        return;
-      }
+// ครอบฟังก์ชันเดิมไว้เพื่อไม่ให้ระบบ Error และปรับป้ายสถานะเป็น Google Sheets
+function initFirebaseStreaming() {
+  const badge = document.getElementById('cloud-status-badge');
+  if (badge) {
+    badge.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold';
+    badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Google Sheets Ready</span>';
+  }
+}
 
-      try {
-        if (eventSource) eventSource.close();
-        eventSource = new EventSource(FIREBASE_RTDB_URL);
+function fetchSnapshotFromFirebase() {
+  fetchDataFromGoogleSheets();
+}
 
-        eventSource.addEventListener('put', function(e) {
-          try {
-            const parsed = JSON.parse(e.data);
-            if (parsed && parsed.data) {
-              handleInboundCloudData(parsed.data);
-            }
-          } catch (err) {}
-        });
+function handleInboundCloudData(cloudData) {
+  if (!cloudData) return;
+  if (cloudData.users && Array.isArray(cloudData.users)) users = cloudData.users;
+  if (cloudData.courses && Array.isArray(cloudData.courses)) courses = cloudData.courses;
+  if (cloudData.testResults && Array.isArray(cloudData.testResults)) testResults = cloudData.testResults;
+  if (cloudData.learningProgress) learningProgress = cloudData.learningProgress;
 
-        eventSource.onerror = function() {
-          const badge = document.getElementById('cloud-status-badge');
-          if (badge) {
-            badge.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-500 text-xs font-semibold';
-            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-400"></span><span>Cloud Standby</span>';
-          }
-        };
-
-        eventSource.onopen = function() {
-          const badge = document.getElementById('cloud-status-badge');
-          if (badge) {
-            badge.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold';
-            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Cloud Realtime</span>';
-          }
-        };
-      } catch (e) {
-        fetchSnapshotFromFirebase();
-      }
-    }
+  if (typeof renderAllViews === 'function') renderAllViews();
+}
 
     async function fetchSnapshotFromFirebase() {
       try {
