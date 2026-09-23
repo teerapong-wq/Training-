@@ -1365,23 +1365,26 @@ async function fetchDataFromGoogleSheets() {
 // ==========================================
 async function saveDataToGoogleSheets(sheetName, data) {
   try {
-    console.log(`⏳ กำลังเซฟข้อมูลลง ${sheetName} (Online Sync)...`);
-    
-    // โค้ดส่งข้อมูลเจาะผ่านระบบ Google Apps Script (สำคัญมาก: mode: 'no-cors')
-    await fetch(APP_SCRIPT_URL, {
+    console.log(`⏳ กำลังส่งข้อมูล ${sheetName} ไปยัง Google Sheets...`);
+    const response = await fetch(APP_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors', // ทะลวงกำแพง CORS ของ Google
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8' // บังคับส่งเป็น Text ให้ Google อ่านง่าย
-      },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'save', sheetName: sheetName, data: data })
     });
     
-    console.log(`✅ ซิงค์ข้อมูล ${sheetName} ขึ้น Google Sheets สำเร็จ!`);
-    
+    const result = await response.json();
+    if (result.status === 'success') {
+      console.log(`✅ บันทึก ${sheetName} ลง Google Sheets สำเร็จแล้ว!`);
+      return true;
+    } else {
+      console.error(`❌ บันทึก ${sheetName} ไม่สำเร็จ:`, result.message);
+      alert(`⚠️ บันทึกไม่สำเร็จ: ${result.message}`);
+      return false;
+    }
   } catch (error) {
-    console.error(`❌ ซิงค์ข้อมูล ${sheetName} ไม่สำเร็จ:`, error);
-    alert(`⚠️ ข้อมูล ${sheetName} ยังไม่ได้ถูกบันทึกขึ้นระบบส่วนกลาง! โปรดตรวจสอบอินเทอร์เน็ต`);
+    console.error(`❌ เกิดข้อผิดพลาดในการเซฟ ${sheetName}:`, error);
+    alert(`⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets`);
+    return false;
   }
 }
 
