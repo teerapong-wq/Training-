@@ -1336,14 +1336,22 @@ async function fetchDataFromGoogleSheets() {
     const data = await response.json();
     
     if (data.status === 'success') {
-      users = data.data.users || [];
+      // 🟢 บังคับแปลง id, username, password ให้เป็น String ทั้งหมด ป้องกันชนิดข้อมูลไม่ตรง
+      users = (data.data.users || []).map(u => ({
+        ...u,
+        id: String(u.id || ''),
+        username: String(u.username || '').trim(),
+        password: String(u.password || '').trim()
+      }));
+
       courses = data.data.courses || [];
       testResults = data.data.testResults || [];
       learningProgress = data.data.learningProgress || {};
       
-      console.log("✅ โหลดข้อมูลจาก Google Sheets สำเร็จ!");
+      console.log(`✅ โหลดข้อมูลสำเร็จ! พบพนักงานทั้งหมด ${users.length} คน`);
       
-      // เรียกฟังก์ชันแสดงผลหน้าเว็บของคุณ (ถ้ามี)
+      // อัปเดตการแสดงผลหน้าเว็บ
+      if (typeof renderAllViews === 'function') renderAllViews();
       if (typeof renderApp === 'function') renderApp();
       if (typeof initApp === 'function') initApp();
     }
