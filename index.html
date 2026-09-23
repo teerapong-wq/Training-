@@ -1363,21 +1363,18 @@ async function fetchDataFromGoogleSheets() {
 // ==========================================
 // 3. ฟังก์ชันบันทึกข้อมูลกลับลง Google Sheets
 // ==========================================
-async function saveDataToGoogleSheets(sheetName, payload) {
+async function saveDataToGoogleSheets(sheetName, data) {
   try {
+    console.log(`⏳ กำลังเซฟ ${sheetName}...`);
     const response = await fetch(APP_SCRIPT_URL, {
       method: 'POST',
-      body: JSON.stringify({
-        action: 'save',
-        sheet: sheetName, // 'Users', 'Courses', 'TestResults', หรือ 'LearningProgress'
-        data: payload
-      })
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'save', sheetName: sheetName, data: data })
     });
-    const result = await response.json();
-    return result.status === 'success';
+    console.log(`✅ เซฟ ${sheetName} สำเร็จ!`);
   } catch (error) {
-    console.error(`❌ เซฟข้อมูลลง ${sheetName} ไม่สำเร็จ:`, error);
-    return false;
+    console.error(`❌ เกิดข้อผิดพลาดในการเซฟ ${sheetName}:`, error);
+    alert(`⚠️ บันทึกข้อมูล ${sheetName} ไม่สำเร็จ! กรุณาเช็คการเชื่อมต่อ`);
   }
 }
 
