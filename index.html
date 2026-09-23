@@ -1327,7 +1327,7 @@
 const defaultCourses = [];
     
 // ==========================================
-// 2. ฟังก์ชันดึงข้อมูลจาก Google Sheets (โหลดตอนเปิดเว็บ)
+// ฟังก์ชันดึงข้อมูลจาก Google Sheets (พร้อมแปลงชนิดข้อมูลรหัสผ่าน)
 // ==========================================
 async function fetchDataFromGoogleSheets() {
   try {
@@ -1336,7 +1336,7 @@ async function fetchDataFromGoogleSheets() {
     const data = await response.json();
     
     if (data.status === 'success') {
-      // 🟢 บังคับแปลง id, username, password ให้เป็น String ทั้งหมด ป้องกันชนิดข้อมูลไม่ตรง
+      // 🟢 แปลง id, username, password ให้เป็น String ทั้งหมดเพื่อป้องกันชนิดข้อมูลไม่ตรงกัน
       users = (data.data.users || []).map(u => ({
         ...u,
         id: String(u.id || ''),
@@ -1350,7 +1350,7 @@ async function fetchDataFromGoogleSheets() {
       
       console.log(`✅ โหลดข้อมูลสำเร็จ! พบพนักงานทั้งหมด ${users.length} คน`);
       
-      // อัปเดตการแสดงผลหน้าเว็บ
+      // วาดหน้าเว็บใหม่ทันทีที่ดึงข้อมูลเสร็จ
       if (typeof renderAllViews === 'function') renderAllViews();
       if (typeof renderApp === 'function') renderApp();
       if (typeof initApp === 'function') initApp();
