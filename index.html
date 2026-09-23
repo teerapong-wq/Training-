@@ -1496,10 +1496,7 @@ async function syncToGoogleSheets() {
   } catch (error) {
     console.error("❌ เกิดข้อผิดพลาดในการซิงค์:", error);
   }
-}
-
-// สร้าง Alias หลอกไว้ เผื่อมีโค้ดส่วนอื่นในไฟล์เรียกชื่อ syncToFirebase() จะได้ไม่ Error
-const syncToFirebase = syncToGoogleSheets;    
+}   
 
 // 🟢 ฟังก์ชันตรวจเช็คและซ่อมแซมผลสอบ Gauge Attribute ย้อนหลัง
     function auditAndFixPracticalStatuses() {
@@ -1695,22 +1692,20 @@ const syncToFirebase = syncToGoogleSheets;
       }
     }
 
-    async function syncToFirebase() {
-      try {
-        const payload = {
-          users,
-          courses,
-          testResults,
-          learningProgress,
-          lastUpdated: new Date().toISOString()
-        };
-        await fetch(FIREBASE_RTDB_URL, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } catch (e) {}
-    }
+async function syncToFirebase() {
+  try {
+    console.log("⏳ กำลังซิงค์ข้อมูลไปยัง Google Sheets...");
+    await Promise.all([
+      saveDataToGoogleSheets('Users', users),
+      saveDataToGoogleSheets('Courses', courses),
+      saveDataToGoogleSheets('TestResults', testResults),
+      saveDataToGoogleSheets('LearningProgress', learningProgress)
+    ]);
+    console.log("✅ ซิงค์ข้อมูลลง Google Sheets สำเร็จ!");
+  } catch (e) {
+    console.error("❌ เกิดข้อผิดพลาดในการซิงค์:", e);
+  }
+}
 
     function forceRealtimeSync() {
       fetchSnapshotFromFirebase();
