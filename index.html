@@ -1548,38 +1548,40 @@
     // 3. GOOGLE SHEETS API CONNECTOR
     // ==========================================
     async function fetchDataFromGoogleSheets() {
-      try {
-        console.log("⏳ กำลังดึงข้อมูลจาก Google Sheets...");
-        const response = await fetch(APP_SCRIPT_URL);
-        const data = await response.json();
+  try {
+    console.log("⏳ กำลังดึงข้อมูลจาก Google Sheets...");
+    const response = await fetch(APP_SCRIPT_URL);
+    const rawData = await response.json();
 
-        if (data) {
-          const fetchedUsers = data.users || data.Users;
-          if (fetchedUsers && fetchedUsers.length > 0) {
-            users = fetchedUsers;
-            console.log(`✅ โหลดข้อมูลผู้ใช้สำเร็จ ${users.length} คน`);
-          }
+    // ป้องกันปัญหาโครงสร้างข้อมูลซ้อน โดยตรวจเช็คชั้น data อัตโนมัติ
+    const data = rawData.data || rawData;
 
-          const fetchedCourses = data.courses || data.Courses;
-          if (fetchedCourses && fetchedCourses.length > 0) {
-            courses = fetchedCourses;
-            console.log(`✅ โหลดข้อมูลหลักสูตรสำเร็จ ${courses.length} หลักสูตร`);
-          }
-
-          if (data.testResults || data.TestResults) testResults = data.testResults || data.TestResults;
-          if (data.learningProgress || data.LearningProgress) learningProgress = data.learningProgress || data.LearningProgress;
-
-          // เคลียร์ความซ้ำซ้อนและบันทึกลง LocalStorage ทันทีที่ดึงสำเร็จ
-          sanitizeUsers();
-          saveState(false);
-
-          if (typeof updateUserNavbar === 'function') updateUserNavbar();
-          if (typeof renderAllViews === 'function') renderAllViews();
-        }
-      } catch (error) {
-        console.error("❌ ดึงข้อมูลจาก Sheets ไม่สำเร็จ:", error);
+    if (data) {
+      const fetchedUsers = data.users || data.Users;
+      if (fetchedUsers && fetchedUsers.length > 0) {
+        users = fetchedUsers;
+        console.log(`✅ โหลดข้อมูลผู้ใช้สำเร็จ ${users.length} คน`);
       }
+
+      const fetchedCourses = data.courses || data.Courses;
+      if (fetchedCourses && fetchedCourses.length > 0) {
+        courses = fetchedCourses;
+        console.log(`✅ โหลดข้อมูลหลักสูตรสำเร็จ ${courses.length} หลักสูตร`);
+      }
+
+      if (data.testResults || data.TestResults) testResults = data.testResults || data.TestResults;
+      if (data.learningProgress || data.LearningProgress) learningProgress = data.learningProgress || data.LearningProgress;
+
+      sanitizeUsers();
+      saveState(false);
+
+      if (typeof updateUserNavbar === 'function') updateUserNavbar();
+      if (typeof renderAllViews === 'function') renderAllViews();
     }
+  } catch (error) {
+    console.error("❌ ดึงข้อมูลจาก Sheets ไม่สำเร็จ:", error);
+  }
+}
 
     async function saveDataToGoogleSheets(sheetName, data) {
       try {
