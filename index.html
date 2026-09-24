@@ -1784,7 +1784,7 @@
       const uname = document.getElementById('login-input-username').value.trim();
       const pass = document.getElementById('login-input-password').value.trim();
 
-      const user = users.find(u => (u.username || '').toLowerCase() === uname.toLowerCase());
+      const user = users.find(u => String(u.username || '').toLowerCase() === uname.toLowerCase());
       if (!user) {
         showToast('ไม่พบบัญชีผู้ใช้งานนี้ในระบบ', 'error');
         return;
@@ -1836,7 +1836,7 @@
       const uname = document.getElementById('nu-username').value.trim();
       const pass = document.getElementById('nu-password').value.trim();
 
-      if (users.some(u => (u.username || '').toLowerCase() === uname.toLowerCase())) {
+      if (users.some(u => String(u.username || '').toLowerCase() === uname.toLowerCase())) {
         showToast('Username นี้มีผู้ใช้งานในระบบแล้ว กรุณาใช้ชื่ออื่น', 'error');
         return;
       }
@@ -1919,7 +1919,7 @@
 
       const newUname = document.getElementById('prof-username').value.trim();
       if (newUname.toLowerCase() !== (currentUser.username || '').toLowerCase()) {
-        if (users.some(u => u.id !== currentUser.id && (u.username || '').toLowerCase() === newUname.toLowerCase())) {
+        if (users.some(u => u.id !== currentUser.id && String(u.username || '').toLowerCase() === newUname.toLowerCase())) {
           showToast('Username นี้มีผู้อื่นใช้งานแล้ว', 'error');
           return;
         }
@@ -3245,7 +3245,7 @@
       if (userBody) {
         userBody.innerHTML = approvedUsers.map(u => {
           const isSelf = currentUser && u.id === currentUser.id;
-          const isPrimaryAdmin = (u.username || '').toLowerCase() === 'admin';
+          const isPrimaryAdmin = String(u.username || '').toLowerCase() === 'admin';
 
           return `
             <tr class="hover:bg-slate-50">
