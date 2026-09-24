@@ -1318,79 +1318,13 @@
 
   <!-- JavaScript Core Engine -->
   <script>
-    // ----------------------------------------------------
-    // 1. CONFIGURATION & STATE
-    // ----------------------------------------------------
+// ==========================================
+    // 1. CONFIG & STATE INITIALIZATION
+    // ==========================================
     const STORAGE_KEY = 'KNT_QC_TRAINING_APP_STATE_V4';
-   const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUR6jJsUnia3Ylug539kg9aAJ3KSp4JKe5LNskq713K-T09wPbGpswxYfZvyEYC_1DVA/exec';
+    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxUR6jJsUnia3Ylug539kg9aAJ3KSp4JKe5LNskq713K-T09wPbGpswxYfZvyEYC_1DVA/exec';
 
-const defaultCourses = [];
-    
-// ==========================================
-// ฟังก์ชันดึงข้อมูลจาก Google Sheets (พร้อมแปลงชนิดข้อมูลรหัสผ่าน)
-// ==========================================
-async function fetchDataFromGoogleSheets() {
-  try {
-    console.log("⏳ กำลังดึงข้อมูลจาก Google Sheets...");
-    const response = await fetch(APP_SCRIPT_URL);
-    const data = await response.json();
-
-    if (data) {
-      // ดึงข้อมูล users (รองรับทั้ง users ตัวเล็ก และ Users ตัวใหญ่)
-      const fetchedUsers = data.users || data.Users;
-      if (fetchedUsers && fetchedUsers.length > 0) {
-        users = fetchedUsers;
-        console.log(`✅ โหลดข้อมูลผู้ใช้สำเร็จ ${users.length} คน`);
-      }
-
-      // ดึงข้อมูล courses
-      const fetchedCourses = data.courses || data.Courses;
-      if (fetchedCourses && fetchedCourses.length > 0) {
-        courses = fetchedCourses;
-        console.log(`✅ โหลดข้อมูลหลักสูตรสำเร็จ ${courses.length} หลักสูตร`);
-      }
-
-      // ดึงข้อมูลอื่นๆ
-      if (data.testResults || data.TestResults) testResults = data.testResults || data.TestResults;
-      if (data.learningProgress || data.LearningProgress) learningProgress = data.learningProgress || data.LearningProgress;
-
-      // อัปเดต UI หน้าเว็บ
-      if (typeof updateUserNavbar === 'function') updateUserNavbar();
-      if (typeof renderAllViews === 'function') renderAllViews();
-    }
-  } catch (error) {
-    console.error("❌ ดึงข้อมูลจาก Sheets ไม่สำเร็จ:", error);
-  }
-}
-    
-// ==========================================
-// 3. ฟังก์ชันบันทึกข้อมูลกลับลง Google Sheets
-// ==========================================
-async function saveDataToGoogleSheets(sheetName, data) {
-  try {
-    console.log(`⏳ กำลังส่งข้อมูล ${sheetName} ไปยัง Google Sheets...`);
-    
-    // ใช้ fetch + mode: 'no-cors' แบบเดียวกับ Quiz App เดิมที่รันผ่านชัวร์
-    await fetch(APP_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'save', sheetName: sheetName, data: data })
-    });
-
-    console.log(`✅ ส่งข้อมูล ${sheetName} ไปยัง Google Sheets เรียบร้อยแล้ว`);
-    return true;
-  } catch (error) {
-    console.error(`❌ เกิดข้อผิดพลาดในการส่งข้อมูล ${sheetName}:`, error);
-    return false;
-  }
-}
-    
-// เรียกให้ทำงานทันทีเมื่อเปิดหน้าเว็บ
-fetchDataFromGoogleSheets();
-
-  
-    // Default Fallback Users
+    const defaultCourses = [];
     const defaultUsers = [
       {
         id: 'usr_admin',
@@ -1407,6 +1341,7 @@ fetchDataFromGoogleSheets();
       }
     ];
 
+    // ประกาศตัวแปรหลักไว้ด้านบนสุดก่อนเรียกใช้งานทุกฟังก์ชัน
     let users = [...defaultUsers];
     let courses = [...defaultCourses];
     let testResults = [];
@@ -1448,9 +1383,9 @@ fetchDataFromGoogleSheets();
       }
     }
 
-    // ----------------------------------------------------
+    // ==========================================
     // 2. DATA SANITIZATION & STATE PERSISTENCE
-    // ----------------------------------------------------
+    // ==========================================
     function sanitizeUsers() {
       const seen = new Set();
       users = users.filter(u => {
@@ -1475,45 +1410,40 @@ fetchDataFromGoogleSheets();
       }
     }
 
-function saveState(echoCloud = true) {
-  try {
-    const state = {
-      users,
-      courses,
-      testResults,
-      learningProgress,
-      currentUserId: typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch (e) {
-    console.error("LocalStorage Save Error:", e);
-  }
+    function saveState(echoCloud = true) {
+      try {
+        const state = {
+          users,
+          courses,
+          testResults,
+          learningProgress,
+          currentUserId: typeof currentUser !== 'undefined' && currentUser ? currentUser.id : null
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.error("LocalStorage Save Error:", e);
+      }
 
-  if (echoCloud) {
-    syncToGoogleSheets();
-  }
-}
+      if (echoCloud) {
+        syncToGoogleSheets();
+      }
+    }
 
-// ฟังก์ชันซิงค์ข้อมูลทั้งหมดไปยัง Google Sheets
-async function syncToGoogleSheets() {
-  try {
-    console.log("⏳ กำลังซิงค์ข้อมูลไปยัง Google Sheets...");
-    
-    // บันทึกข้อมูลลงชีตทั้ง 4 แผ่น
-    await Promise.all([
-      saveDataToGoogleSheets('Users', users),
-      saveDataToGoogleSheets('Courses', courses),
-      saveDataToGoogleSheets('TestResults', testResults),
-      saveDataToGoogleSheets('LearningProgress', learningProgress)
-    ]);
+    async function syncToGoogleSheets() {
+      try {
+        console.log("⏳ กำลังซิงค์ข้อมูลไปยัง Google Sheets...");
+        await Promise.all([
+          saveDataToGoogleSheets('Users', users),
+          saveDataToGoogleSheets('Courses', courses),
+          saveDataToGoogleSheets('TestResults', testResults),
+          saveDataToGoogleSheets('LearningProgress', learningProgress)
+        ]);
+        console.log("✅ ซิงค์ข้อมูลลง Google Sheets สำเร็จ!");
+      } catch (error) {
+        console.error("❌ เกิดข้อผิดพลาดในการซิงค์:", error);
+      }
+    }
 
-    console.log("✅ ซิงค์ข้อมูลลง Google Sheets สำเร็จ!");
-  } catch (error) {
-    console.error("❌ เกิดข้อผิดพลาดในการซิงค์:", error);
-  }
-}   
-
-// 🟢 ฟังก์ชันตรวจเช็คและซ่อมแซมผลสอบ Gauge Attribute ย้อนหลัง
     function auditAndFixPracticalStatuses() {
       if (!courses || !testResults) return;
       let changed = false;
@@ -1589,7 +1519,7 @@ async function syncToGoogleSheets() {
           });
 
           sanitizeUsers();
-          auditAndFixPracticalStatuses(); // 🟢 ตรวจและแก้ประวัติเก่าทันทีตอนโหลด
+          auditAndFixPracticalStatuses();
 
           if (parsed.currentUserId) {
             currentUser = users.find(u => u.id === parsed.currentUserId) || null;
@@ -1614,96 +1544,95 @@ async function syncToGoogleSheets() {
       }
     }
 
-// ----------------------------------------------------
-// 3. GOOGLE SHEETS CONNECTION & STATUS BADGE
-// ----------------------------------------------------
-
-// ครอบฟังก์ชันเดิมไว้เพื่อไม่ให้ระบบ Error และปรับป้ายสถานะเป็น Google Sheets
-function initFirebaseStreaming() {
-  const badge = document.getElementById('cloud-status-badge');
-  if (badge) {
-    badge.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold';
-    badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Google Sheets Ready</span>';
-  }
-}
-
-function fetchSnapshotFromFirebase() {
-  fetchDataFromGoogleSheets();
-}
-
-function handleInboundCloudData(cloudData) {
-  if (!cloudData) return;
-  if (cloudData.users && Array.isArray(cloudData.users)) users = cloudData.users;
-  if (cloudData.courses && Array.isArray(cloudData.courses)) courses = cloudData.courses;
-  if (cloudData.testResults && Array.isArray(cloudData.testResults)) testResults = cloudData.testResults;
-  if (cloudData.learningProgress) learningProgress = cloudData.learningProgress;
-
-  if (typeof renderAllViews === 'function') renderAllViews();
-}
-
-    async function fetchSnapshotFromFirebase() {
+    // ==========================================
+    // 3. GOOGLE SHEETS API CONNECTOR
+    // ==========================================
+    async function fetchDataFromGoogleSheets() {
       try {
-        const res = await fetch(FIREBASE_RTDB_URL);
-        if (res.ok) {
-          const cloudData = await res.json();
-          if (cloudData) {
-            handleInboundCloudData(cloudData);
+        console.log("⏳ กำลังดึงข้อมูลจาก Google Sheets...");
+        const response = await fetch(APP_SCRIPT_URL);
+        const data = await response.json();
+
+        if (data) {
+          const fetchedUsers = data.users || data.Users;
+          if (fetchedUsers && fetchedUsers.length > 0) {
+            users = fetchedUsers;
+            console.log(`✅ โหลดข้อมูลผู้ใช้สำเร็จ ${users.length} คน`);
           }
+
+          const fetchedCourses = data.courses || data.Courses;
+          if (fetchedCourses && fetchedCourses.length > 0) {
+            courses = fetchedCourses;
+            console.log(`✅ โหลดข้อมูลหลักสูตรสำเร็จ ${courses.length} หลักสูตร`);
+          }
+
+          if (data.testResults || data.TestResults) testResults = data.testResults || data.TestResults;
+          if (data.learningProgress || data.LearningProgress) learningProgress = data.learningProgress || data.LearningProgress;
+
+          // เคลียร์ความซ้ำซ้อนและบันทึกลง LocalStorage ทันทีที่ดึงสำเร็จ
+          sanitizeUsers();
+          saveState(false);
+
+          if (typeof updateUserNavbar === 'function') updateUserNavbar();
+          if (typeof renderAllViews === 'function') renderAllViews();
         }
-      } catch (err) {}
+      } catch (error) {
+        console.error("❌ ดึงข้อมูลจาก Sheets ไม่สำเร็จ:", error);
+      }
+    }
+
+    async function saveDataToGoogleSheets(sheetName, data) {
+      try {
+        console.log(`⏳ กำลังส่งข้อมูล ${sheetName} ไปยัง Google Sheets...`);
+        await fetch(APP_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'save', sheetName: sheetName, data: data })
+        });
+        console.log(`✅ ส่งข้อมูล ${sheetName} ไปยัง Google Sheets เรียบร้อยแล้ว`);
+        return true;
+      } catch (error) {
+        console.error(`❌ เกิดข้อผิดพลาดในการส่งข้อมูล ${sheetName}:`, error);
+        return false;
+      }
+    }
+
+    // ==========================================
+    // 4. LEGACY ALIASES (ป้องกันปุ่มเก่าค้าง Error)
+    // ==========================================
+    function initFirebaseStreaming() {
+      const badge = document.getElementById('cloud-status-badge');
+      if (badge) {
+        badge.className = 'hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold';
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>Google Sheets Ready</span>';
+      }
+    }
+
+    function fetchSnapshotFromFirebase() {
+      fetchDataFromGoogleSheets();
     }
 
     function handleInboundCloudData(cloudData) {
-      let changed = false;
-      if (cloudData.users && Array.isArray(cloudData.users)) {
-        users = cloudData.users;
-        changed = true;
-      }
-      if (cloudData.courses && Array.isArray(cloudData.courses)) {
-        courses = cloudData.courses;
-        courses.forEach(c => {
-          if (!c.materials) {
-            c.materials = [];
-            if (c.videoUrl) c.materials.push({ type: 'video', title: 'วิดีโอการเรียนรู้', url: c.videoUrl });
-            if (c.docUrl) c.materials.push({ type: 'pdf', title: 'เอกสารคู่มือ', url: c.docUrl });
-          }
-        });
-        changed = true;
-      }
-      if (cloudData.testResults && Array.isArray(cloudData.testResults)) {
-        testResults = cloudData.testResults;
-        changed = true;
-      }
-      if (cloudData.learningProgress && typeof cloudData.learningProgress === 'object') {
-        learningProgress = cloudData.learningProgress;
-        changed = true;
-      }
-
-      if (changed) {
-        sanitizeUsers();
-        saveState(false);
-        if (currentUser) {
-          const fresh = users.find(u => u.id === currentUser.id);
-          if (fresh) currentUser = fresh;
-        }
-        renderAllViews();
-      }
+      fetchDataFromGoogleSheets();
     }
 
-async function syncToFirebase() {
-  try {
-    console.log("⏳ กำลังซิงค์ข้อมูลไปยัง Google Sheets...");
-    await Promise.all([
-      saveDataToGoogleSheets('Users', users),
-      saveDataToGoogleSheets('Courses', courses),
-      saveDataToGoogleSheets('TestResults', testResults),
-      saveDataToGoogleSheets('LearningProgress', learningProgress)
-    ]);
-    console.log("✅ ซิงค์ข้อมูลลง Google Sheets สำเร็จ!");
-  } catch (e) {
-    console.error("❌ เกิดข้อผิดพลาดในการซิงค์:", e);
-  }
-}
+    function syncToFirebase() {
+      return syncToGoogleSheets();
+    }
+
+    function forceRealtimeSync() {
+      fetchDataFromGoogleSheets();
+      if (typeof showToast === 'function') showToast('กำลังซิงค์ข้อมูลกับ Google Sheets...', 'info');
+    }
+
+    // ==========================================
+    // 5. APP INITIALIZATION (เริ่มทำงาน)
+    // ==========================================
+    loadState();                  // 1. อ่านค่าแคชเดิมในเครื่องขึ้นมาก่อน
+    fetchDataFromGoogleSheets();  // 2. ดึงข้อมูลจริงล่าสุดจาก Google Sheets มาทับทันที
+    
+    
 
     function forceRealtimeSync() {
       fetchSnapshotFromFirebase();
