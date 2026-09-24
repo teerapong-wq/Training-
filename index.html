@@ -1331,35 +1331,19 @@ const defaultCourses = [];
 // ==========================================
 async function fetchDataFromGoogleSheets() {
   try {
-    console.log("⏳ กำลังดึงข้อมูลจาก Google Sheets...");
-    const response = await fetch(`${APP_SCRIPT_URL}?action=getAll`);
-    const data = await response.json();
+    // ❌ ถ้ายิงไปดึงข้อมูล แล้วมีคำว่า mode: 'no-cors' อยู่ ให้ลบทิ้งทันทีครับ!
+    // เพราะมันทำให้เครื่องมือถือ/เครื่องใหม่ มองไม่เห็น JSON ที่ดึงกลับมา
     
-    if (data.status === 'success') {
-      // 🟢 แปลง id, username, password ให้เป็น String ทั้งหมดเพื่อป้องกันชนิดข้อมูลไม่ตรงกัน
-      users = (data.data.users || []).map(u => ({
-        ...u,
-        id: String(u.id || ''),
-        username: String(u.username || '').trim(),
-        password: String(u.password || '').trim()
-      }));
-
-      courses = data.data.courses || [];
-      testResults = data.data.testResults || [];
-      learningProgress = data.data.learningProgress || {};
-      
-      console.log(`✅ โหลดข้อมูลสำเร็จ! พบพนักงานทั้งหมด ${users.length} คน`);
-      
-      // วาดหน้าเว็บใหม่ทันทีที่ดึงข้อมูลเสร็จ
-      if (typeof renderAllViews === 'function') renderAllViews();
-      if (typeof renderApp === 'function') renderApp();
-      if (typeof initApp === 'function') initApp();
-    }
+    // ✅ โค้ดสำหรับ "ดึงข้อมูล" ที่ถูกต้อง ต้องเรียบง่ายแบบนี้ครับ:
+    const response = await fetch(APP_SCRIPT_URL); 
+    const result = await response.json(); 
+    
+    // ... นำ result ไปอัปเดต state พนักงาน 22 คน ...
+    
   } catch (error) {
-    console.error("❌ ไม่สามารถเชื่อมต่อ Google Sheets ได้:", error);
+    console.error(error);
   }
 }
-
 // ==========================================
 // 3. ฟังก์ชันบันทึกข้อมูลกลับลง Google Sheets
 // ==========================================
