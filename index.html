@@ -1780,29 +1780,40 @@
     }
 
     function handleLoginSubmit(e) {
-      e.preventDefault();
-      const uname = document.getElementById('login-input-username').value.trim();
-      const pass = document.getElementById('login-input-password').value.trim();
+  e.preventDefault();
+  const uname = document.getElementById('login-input-username').value.trim();
+  const pass = document.getElementById('login-input-password').value.trim();
 
-      const user = users.find(u => String(u.username || '').toLowerCase() === uname.toLowerCase());
-      if (!user) {
-        showToast('ไม่พบบัญชีผู้ใช้งานนี้ในระบบ', 'error');
-        return;
-      }
-      if (user.password !== pass) {
-        showToast('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง', 'error');
-        return;
-      }
+  // 🟢 แปลง username เป็น String ป้องกันรหัสพนักงานที่เป็นตัวเลขล้วน
+  const user = users.find(u => String(u.username || '').toLowerCase().trim() === uname.toLowerCase());
+  
+  if (!user) {
+    showToast('ไม่พบบัญชีผู้ใช้งานนี้ในระบบ', 'error');
+    return;
+  }
 
-      if (user.status === 'pending') {
-        showToast('บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากผู้ดูแลระบบ', 'warning');
-        return;
-      }
-      if (user.status === 'rejected') {
-        showToast('คำขอใช้งานบัญชีนี้ไม่ผ่านการอนุมัติ', 'error');
-        return;
-      }
+  // 🟢 บังคับแปลง user.password เป็น String และ .trim() ก่อนเปรียบเทียบ
+  if (String(user.password || '').trim() !== pass) {
+    showToast('รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง', 'error');
+    return;
+  }
 
+  if (user.status === 'pending') {
+    showToast('บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากผู้ดูแลระบบ', 'warning');
+    return;
+  }
+  if (user.status === 'rejected') {
+    showToast('คำขอใช้งานบัญชีนี้ไม่ผ่านการอนุมัติ', 'error');
+    return;
+  }
+
+  currentUser = user;
+  saveState(false);
+  closeLoginModal();
+  updateUserNavbar();
+  renderAllViews();
+  showToast(`ยินดีต้อนรับคุณ ${user.firstName}`, 'success');
+}
       currentUser = user;
       saveState(false);
       closeLoginModal();
