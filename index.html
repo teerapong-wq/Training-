@@ -1329,21 +1329,31 @@ const defaultCourses = [];
 // ==========================================
 // ฟังก์ชันดึงข้อมูลจาก Google Sheets (พร้อมแปลงชนิดข้อมูลรหัสผ่าน)
 // ==========================================
-async function fetchDataFromGoogleSheets() {
+async function loadDataFromGoogleSheets() {
   try {
-    // ❌ ถ้ายิงไปดึงข้อมูล แล้วมีคำว่า mode: 'no-cors' อยู่ ให้ลบทิ้งทันทีครับ!
-    // เพราะมันทำให้เครื่องมือถือ/เครื่องใหม่ มองไม่เห็น JSON ที่ดึงกลับมา
-    
-    // ✅ โค้ดสำหรับ "ดึงข้อมูล" ที่ถูกต้อง ต้องเรียบง่ายแบบนี้ครับ:
-    const response = await fetch(APP_SCRIPT_URL); 
-    const result = await response.json(); 
-    
-    // ... นำ result ไปอัปเดต state พนักงาน 22 คน ...
-    
+    console.log("⏳ กำลังดึงข้อมูลจาก Google Sheets...");
+    const response = await fetch(APP_SCRIPT_URL);
+    const data = await response.json();
+
+    // 🟢 ตรวจสอบว่ามีบรรทัดนี้เพื่อนำข้อมูล Users จาก Sheet มาทับตัวแปรเดิมหรือไม่
+    if (data.Users && data.Users.length > 0) {
+      users = data.Users;
+      console.log(`✅ โหลดข้อมูลผู้ใช้สำเร็จ ${users.length} คน`);
+    }
+
+    if (data.Courses && data.Courses.length > 0) {
+      courses = data.Courses;
+    }
+
+    // อัปเดต UI หน้าเว็บหลังจากโหลดข้อมูลสำเร็จ
+    updateUserNavbar();
+    renderAllViews();
+
   } catch (error) {
-    console.error(error);
+    console.error("❌ ดึงข้อมูลจาก Sheets ไม่สำเร็จ:", error);
   }
 }
+    
 // ==========================================
 // 3. ฟังก์ชันบันทึกข้อมูลกลับลง Google Sheets
 // ==========================================
