@@ -1333,20 +1333,27 @@ async function fetchDataFromGoogleSheets() {
   try {
     console.log("⏳ กำลังดึงข้อมูลจาก Google Sheets...");
     
-    // ดึงข้อมูลแบบปกติ ห้ามใส่ mode: 'no-cors'
+    // ดึงข้อมูล ห้ามใช้ no-cors ในส่วนนี้
     const response = await fetch(APP_SCRIPT_URL);
     const data = await response.json();
 
-    if (data.Users && data.Users.length > 0) {
-      users = data.Users; // นำข้อมูลจาก Sheet มาทับตัวแปร users
+    // 1. ดึงข้อมูล Users มาอัปเดต (เพื่อให้ล็อกอินด้วยรหัสผ่านใน Sheet ได้)
+    if (data && data.Users && data.Users.length > 0) {
+      users = data.Users;
       console.log(`✅ โหลดข้อมูลผู้ใช้สำเร็จ ${users.length} คน`);
     }
 
-    if (data.Courses && data.Courses.length > 0) {
+    // 2. ดึงข้อมูล Courses มาอัปเดต (เพื่อให้หน้าหลักแสดงหลักสูตรทั้งหมด)
+    if (data && data.Courses && data.Courses.length > 0) {
       courses = data.Courses;
+      console.log(`✅ โหลดข้อมูลหลักสูตรสำเร็จ ${courses.length} หลักสูตร`);
     }
 
-    // อัปเดต UI หน้าเว็บหลังจากโหลดข้อมูลสำเร็จ
+    // 3. ดึงข้อมูลอื่นๆ
+    if (data && data.TestResults) testResults = data.TestResults;
+    if (data && data.LearningProgress) learningProgress = data.LearningProgress;
+
+    // อัปเดตหน้าจอหลังจากดึงข้อมูลเสร็จ
     if (typeof updateUserNavbar === 'function') updateUserNavbar();
     if (typeof renderAllViews === 'function') renderAllViews();
 
