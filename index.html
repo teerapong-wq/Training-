@@ -1387,28 +1387,29 @@
     // 2. DATA SANITIZATION & STATE PERSISTENCE
     // ==========================================
     function sanitizeUsers() {
-      const seen = new Set();
-      users = users.filter(u => {
-        const uname = (u.username || '').toLowerCase().trim();
-        if (!uname || seen.has(uname)) return false;
-        seen.add(uname);
-        return true;
-      });
+  const seen = new Set();
+  users = users.filter(u => {
+    // 🟢 แปลง username เป็น String ก่อนเสมอ ป้องกันกรณีข้อมูลใน Sheet เป็นตัวเลขล้วน
+    const uname = String(u.username || '').toLowerCase().trim();
+    if (!uname || seen.has(uname)) return false;
+    seen.add(uname);
+    return true;
+  });
 
-      let adminUser = users.find(u => (u.username || '').toLowerCase() === 'admin');
-      if (adminUser) {
-        adminUser.role = 'Master Admin';
-        adminUser.status = 'approved';
-      } else {
-        adminUser = { ...defaultUsers[0] };
-        users.unshift(adminUser);
-      }
+  let adminUser = users.find(u => String(u.username || '').toLowerCase().trim() === 'admin');
+  if (adminUser) {
+    adminUser.role = 'Master Admin';
+    adminUser.status = 'approved';
+  } else {
+    adminUser = { ...defaultUsers[0] };
+    users.unshift(adminUser);
+  }
 
-      if (currentUser && (currentUser.username || '').toLowerCase() === 'admin') {
-        currentUser.role = 'Master Admin';
-        currentUser.status = 'approved';
-      }
-    }
+  if (currentUser && String(currentUser.username || '').toLowerCase().trim() === 'admin') {
+    currentUser.role = 'Master Admin';
+    currentUser.status = 'approved';
+  }
+}
 
     function saveState(echoCloud = true) {
       try {
