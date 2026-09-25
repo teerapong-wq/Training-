@@ -2337,6 +2337,31 @@
       }).join('');
     }
 
+   // ฟังก์ชันส่งผลสอบแบบ Google Forms (ส่งแค่ 1 รายการไปต่อท้ายแถว)
+async function submitExamToGoogleFormsStyle(newTestResult) {
+  try {
+    console.log("📝 กำลังส่งผลสอบแบบ Google Forms...");
+    
+    // ส่งเฉพาะ Object ผลสอบใบนี้ใบเดียว (ขนาดเล็กมาก ไม่ถึง 1 KB)
+    await fetch(APP_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'appendRow',
+        sheetName: 'TestResults',
+        data: newTestResult
+      })
+    });
+
+    console.log("✅ บันทึกผลสอบเข้า Google Sheets เรียบร้อยแล้ว!");
+    return true;
+  } catch (error) {
+    console.error("❌ บันทึกผลสอบไม่สำเร็จ:", error);
+    return false;
+  }
+} 
+    
     function renderMaterialsList(course) {
       const container = document.getElementById('cr-materials-container');
       if (!container) return;
@@ -2401,45 +2426,50 @@
       }).join('');
     }
 
-    function submitPreTest() {
-      const course = courses.find(c => c.id === currentCourseId);
-      if (!course) return;
+    async function submitPreTest() {
+  const course = courses.find(c => c.id === currentCourseId);
+  if (!course) return;
 
-      const qList = course.preQuestions || [];
-      let earned = 0;
-      let total = 0;
-      const recordedAnswers = {};
+  const qList = course.preQuestions || [];
+  let earned = 0;
+  let total = 0;
+  const recordedAnswers = {};
 
-      qList.forEach((q, idx) => {
-        const pts = q.points || 10;
-        total += pts;
-        if (q.type === 'written') {
-          const val = document.getElementById(`ans_pre_${idx}`)?.value.trim() || '';
-          recordedAnswers[idx] = val;
-          if (val.length > 5) earned += pts;
-        } else {
-          const selected = document.querySelector(`input[name="ans_pre_${idx}"]:checked`);
-          const val = selected ? parseInt(selected.value) : -1;
-          recordedAnswers[idx] = val;
-          if (val === q.correctIndex) earned += pts;
-        }
-      });
-
-      const pct = total > 0 ? Math.round((earned / total) * 100) : 0;
-      const progressKey = `${currentUser.id}_${course.id}`;
-
-      learningProgress[progressKey] = {
-        step: 1,
-        preScore: pct,
-        status: 'InProgress',
-        preAnswers: recordedAnswers
-      };
-
-      saveState(true);
-      showToast(`ส่ง Pre-test เรียบร้อยแล้ว (คะแนน: ${pct}%) ความคืบหน้า 30%`, 'success');
-      showTheoryStep(2, course);
+  qList.forEach((q, idx) => {
+    const pts = q.points || 10;
+    total += pts;
+    if (q.type === 'written') {
+      const val = document.getElementById(`ans_pre_${idx}`)?.value.trim() || '';
+      recordedAnswers[idx] = val;
+      if (val.length > 5) earned += pts;
+    } else {
+      const selected = document.querySelector(`input[name="ans_pre_${idx}"]:checked`);
+      const val = selected ? parseInt(selected.value) : -1;
+      recordedAnswers[idx] = val;
+      if (val === q.correctIndex) earned += pts;
     }
+  });
 
+  const pct = total > 0 ? Math.round((earned / total) * 100) : 0;
+  const progressKey = `${currentUser.id}_${course.id}`;
+
+  learningProgress[progressKey] = {
+    step: 1,
+    preScore: pct,
+    status: 'InProgress',
+    preAnswers: recordedAnswers
+  };
+
+  // 🟢 เซฟลงเครื่องก่อน ไม่สั่งล้าง/เขียนทับ Sheets ทั้งก้อน
+  saveState(false);
+  
+  // 🟢 ซิงค์เฉพาะตารางความคืบหน้า LearningProgress
+  saveDataToGoogleSheets('LearningProgress', learningProgress);
+
+  showToast(`ส่ง Pre-test เรียบร้อยแล้ว (คะแนน: ${pct}%) ความคืบหน้า 30%`, 'success');
+  showTheoryStep(2, course);
+}
+    
     function completeLearningStep2() {
       const course = courses.find(c => c.id === currentCourseId);
       if (!course) return;
@@ -2456,77 +2486,85 @@
       showTheoryStep(3, course);
     }
 
-    function submitPostTest() {
-      const course = courses.find(c => c.id === currentCourseId);
-      if (!course || !currentUser) return;
+    async function submitPostTest() {
+  const course = courses.find(c => c.id === currentCourseId);
+  if (!course || !currentUser) return;
 
-      const qList = course.postQuestions || [];
-      let earned = 0;
-      let total = 0;
-      const recordedAnswers = {};
+  const qList = course.postQuestions || [];
+  let earned = 0;
+  let total = 0;
+  const recordedAnswers = {};
 
-      qList.forEach((q, idx) => {
-        const pts = q.points || 10;
-        total += pts;
-        if (q.type === 'written') {
-          const val = document.getElementById(`ans_post_${idx}`)?.value.trim() || '';
-          recordedAnswers[idx] = val;
-          if (val.length > 5) earned += pts;
-        } else {
-          const selected = document.querySelector(`input[name="ans_post_${idx}"]:checked`);
-          const val = selected ? parseInt(selected.value) : -1;
-          recordedAnswers[idx] = val;
-          if (val === q.correctIndex) earned += pts;
-        }
-      });
-
-      const newPct = total > 0 ? Math.round((earned / total) * 100) : 0;
-      const passPct = course.passingScore !== undefined ? course.passingScore : 80;
-
-      const progressKey = `${currentUser.id}_${course.id}`;
-      const existingProgress = learningProgress[progressKey] || {};
-      const oldPostScore = existingProgress.postScore !== undefined ? existingProgress.postScore : -1;
-
-      const isNewHighScore = newPct > oldPostScore;
-      const finalPostScore = isNewHighScore ? newPct : oldPostScore;
-      const status = finalPostScore >= passPct ? 'Passed' : 'Retrain';
-
-      learningProgress[progressKey] = {
-        ...existingProgress,
-        step: 3,
-        preScore: existingProgress.preScore || 0,
-        postScore: finalPostScore,
-        status: status,
-        postAnswers: isNewHighScore ? recordedAnswers : (existingProgress.postAnswers || recordedAnswers)
-      };
-
-      const resultLog = {
-        id: 'res_' + Date.now(),
-        userId: currentUser.id,
-        userName: `${currentUser.firstName} ${currentUser.lastName}`,
-        department: currentUser.department,
-        division: currentUser.division || '-',
-        courseId: course.id,
-        courseTitle: course.title,
-        skillTopic: course.skillTopic,
-        type: 'theory',
-        preScore: existingProgress.preScore || 0,
-        postScore: finalPostScore,
-        status: status,
-        completedAt: new Date().toISOString()
-      };
-
-      testResults.unshift(resultLog);
-      saveState(true);
-
-      if (isNewHighScore) {
-        showToast(status === 'Passed' ? `ยินดีด้วย! คุณสอบได้คะแนนใหม่สูงสุด (${finalPostScore}%)` : `คะแนนใหม่ของคุณคือ ${newPct}% (คะแนนสูงสุดที่บันทึก: ${finalPostScore}%)`, status === 'Passed' ? 'success' : 'warning');
-      } else {
-        showToast(`คะแนนครั้งนี้ (${newPct}%) ไม่สูงกว่าคะแนนสูงสุดเดิม (${oldPostScore}%) ระบบจึงคงคะแนนสูงสุดเดิมไว้`, 'info');
-      }
-
-      switchView('progress');
+  qList.forEach((q, idx) => {
+    const pts = q.points || 10;
+    total += pts;
+    if (q.type === 'written') {
+      const val = document.getElementById(`ans_post_${idx}`)?.value.trim() || '';
+      recordedAnswers[idx] = val;
+      if (val.length > 5) earned += pts;
+    } else {
+      const selected = document.querySelector(`input[name="ans_post_${idx}"]:checked`);
+      const val = selected ? parseInt(selected.value) : -1;
+      recordedAnswers[idx] = val;
+      if (val === q.correctIndex) earned += pts;
     }
+  });
+
+  const newPct = total > 0 ? Math.round((earned / total) * 100) : 0;
+  const passPct = course.passingScore !== undefined ? course.passingScore : 80;
+
+  const progressKey = `${currentUser.id}_${course.id}`;
+  const existingProgress = learningProgress[progressKey] || {};
+  const oldPostScore = existingProgress.postScore !== undefined ? existingProgress.postScore : -1;
+
+  const isNewHighScore = newPct > oldPostScore;
+  const finalPostScore = isNewHighScore ? newPct : oldPostScore;
+  const status = finalPostScore >= passPct ? 'Passed' : 'Retrain';
+
+  learningProgress[progressKey] = {
+    ...existingProgress,
+    step: 3,
+    preScore: existingProgress.preScore || 0,
+    postScore: finalPostScore,
+    status: status,
+    postAnswers: isNewHighScore ? recordedAnswers : (existingProgress.postAnswers || recordedAnswers)
+  };
+
+  const resultLog = {
+    id: 'res_' + Date.now(),
+    userId: currentUser.id,
+    userName: `${currentUser.firstName} ${currentUser.lastName}`,
+    department: currentUser.department || '-',
+    division: currentUser.division || '-',
+    courseId: course.id,
+    courseTitle: course.title,
+    skillTopic: course.skillTopic || '-',
+    type: 'theory',
+    preScore: existingProgress.preScore || 0,
+    postScore: finalPostScore,
+    status: status,
+    completedAt: new Date().toLocaleString('th-TH')
+  };
+
+  testResults.unshift(resultLog);
+
+  // 🟢 1. เซฟลงเครื่อง local (เปลี่ยนจาก saveState(true) ที่ไปสั่งทับ Sheets ทั้งหมด)
+  saveState(false);
+
+  // 🟢 2. ยิงเฉพาะผลสอบใบล่าสุด ต่อท้ายลง Google Sheets แบบ Google Forms (ไม่มีทางลบผลสอบเก่า)
+  submitExamToGoogleFormsStyle(resultLog);
+
+  // 🟢 3. อัปเดตเฉพาะความคืบหน้า LearningProgress
+  saveDataToGoogleSheets('LearningProgress', learningProgress);
+
+  if (isNewHighScore) {
+    showToast(status === 'Passed' ? `ยินดีด้วย! คุณสอบได้คะแนนใหม่สูงสุด (${finalPostScore}%)` : `คะแนนใหม่ของคุณคือ ${newPct}% (คะแนนสูงสุดที่บันทึก: ${finalPostScore}%)`, status === 'Passed' ? 'success' : 'warning');
+  } else {
+    showToast(`คะแนนครั้งนี้ (${newPct}%) ไม่สูงกว่าคะแนนสูงสุดเดิม (${oldPostScore}%) ระบบจึงคงคะแนนสูงสุดเดิมไว้`, 'info');
+  }
+
+  switchView('progress');
+}
 
     // Practical Handlers
     function renderPracticalWorkspace(course) {
