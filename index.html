@@ -4266,88 +4266,119 @@ function toggleGaugeAttributeSettings() {
       showToast('คัดลอกข้อสอบลง Post-test พร้อมสลับช้อยส์เรียบร้อยแล้ว', 'success');
     }
 
-    function saveCourseFromBuilder() {
-      const courseId = document.getElementById('cb-course-id').value;
-      const title = document.getElementById('cb-title').value.trim();
-      const topic = document.getElementById('cb-topic').value.trim();
-      const dept = document.getElementById('cb-department').value;
-      const type = document.getElementById('cb-type').value;
-      const bYear = parseInt(document.getElementById('cb-budget-year').value) || 2026;
-      const bMonth = parseInt(document.getElementById('cb-budget-month').value) || 9;
+    async function saveCourseFromBuilder() {
+  const courseId = document.getElementById('cb-course-id').value;
+  const title = document.getElementById('cb-title').value.trim();
+  const topic = document.getElementById('cb-topic').value.trim();
+  const dept = document.getElementById('cb-department').value;
+  const type = document.getElementById('cb-type').value;
+  const bYear = parseInt(document.getElementById('cb-budget-year').value) || 2026;
+  const bMonth = parseInt(document.getElementById('cb-budget-month').value) || 9;
 
-      if (!title || !topic) {
-        showToast('กรุณาระบุชื่อหลักสูตรและหัวข้อทักษะ', 'error');
-        return;
-      }
+  if (!title || !topic) {
+    showToast('กรุณาระบุชื่อหลักสูตรและหัวข้อทักษะ', 'error');
+    return;
+  }
 
-      const validMaterials = tempBuilderMaterials.filter(m => m.url && m.url.trim() !== '');
-      const practicalEvalMode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
-      const maxMissRate = parseFloat(document.getElementById('cb-max-miss-rate')?.value) || 0;
-      const maxFalseAlarm = parseFloat(document.getElementById('cb-max-false-alarm')?.value) || 5;
+  const validMaterials = tempBuilderMaterials.filter(m => m.url && m.url.trim() !== '');
+  const practicalEvalMode = document.getElementById('cb-practical-eval-mode')?.value || 'standard';
+  const maxMissRate = parseFloat(document.getElementById('cb-max-miss-rate')?.value) || 0;
+  const maxFalseAlarm = parseFloat(document.getElementById('cb-max-false-alarm')?.value) || 5;
 
-      if (courseId) {
-        const idx = courses.findIndex(c => c.id === courseId);
-        if (idx !== -1) {
-          courses[idx].title = title;
-          courses[idx].skillTopic = topic;
-          courses[idx].department = dept;
-          courses[idx].type = type;
-          courses[idx].budgetYear = bYear;
-          courses[idx].budgetMonth = bMonth;
-          courses[idx].materials = validMaterials;
-          courses[idx].passingScore = parseInt(document.getElementById('cb-passing-score').value) || 80;
+  let targetCourse = null;
+  let isEdit = false;
 
-          if (type === 'practical') {
-            courses[idx].timerEnabled = document.getElementById('cb-timer-enabled').checked;
-            courses[idx].timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 600;
-            courses[idx].evalCriteria = document.getElementById('cb-eval-criteria').value;
-            courses[idx].samples = tempBuilderSamples;
-            courses[idx].practicalEvalMode = practicalEvalMode;
-            courses[idx].maxMissRate = maxMissRate;
-            courses[idx].maxFalseAlarm = maxFalseAlarm;
-          } else {
-            courses[idx].preQuestions = tempBuilderPreQ;
-            courses[idx].postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
-          }
-          showToast('แก้ไขหลักสูตรเรียบร้อยแล้ว', 'success');
-        }
+  if (courseId) {
+    // 🟢 กรณีแก้ไขคอร์สเดิม
+    const idx = courses.findIndex(c => c.id === courseId);
+    if (idx !== -1) {
+      isEdit = true;
+      courses[idx].title = title;
+      courses[idx].skillTopic = topic;
+      courses[idx].department = dept;
+      courses[idx].type = type;
+      courses[idx].budgetYear = bYear;
+      courses[idx].budgetMonth = bMonth;
+      courses[idx].materials = validMaterials;
+      courses[idx].passingScore = parseInt(document.getElementById('cb-passing-score').value) || 80;
+
+      if (type === 'practical') {
+        courses[idx].timerEnabled = document.getElementById('cb-timer-enabled').checked;
+        courses[idx].timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 600;
+        courses[idx].evalCriteria = document.getElementById('cb-eval-criteria').value;
+        courses[idx].samples = tempBuilderSamples;
+        courses[idx].practicalEvalMode = practicalEvalMode;
+        courses[idx].maxMissRate = maxMissRate;
+        courses[idx].maxFalseAlarm = maxFalseAlarm;
       } else {
-        const now = new Date();
-        const newCourse = {
-          id: 'crs_' + Date.now(),
-          title,
-          skillTopic: topic,
-          department: dept,
-          type,
-          budgetYear: bYear,
-          budgetMonth: bMonth,
-          createdAt: now.toISOString(),
-          passingScore: parseInt(document.getElementById('cb-passing-score').value) || 80,
-          materials: validMaterials
-        };
-
-        if (type === 'practical') {
-          newCourse.timerEnabled = document.getElementById('cb-timer-enabled').checked;
-          newCourse.timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 600;
-          newCourse.evalCriteria = document.getElementById('cb-eval-criteria').value;
-          newCourse.samples = tempBuilderSamples;
-          newCourse.practicalEvalMode = practicalEvalMode;
-          newCourse.maxMissRate = maxMissRate;
-          newCourse.maxFalseAlarm = maxFalseAlarm;
-        } else {
-          newCourse.preQuestions = tempBuilderPreQ;
-          newCourse.postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
-        }
-
-        courses.unshift(newCourse);
-        showToast('สร้างหลักสูตรใหม่สำเร็จเรียบร้อยแล้ว', 'success');
+        courses[idx].preQuestions = tempBuilderPreQ;
+        courses[idx].postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
       }
 
-      saveState(true);
-      closeCourseBuilderModal();
-      renderCatalogView();
-      renderAdminHub();
+      targetCourse = courses[idx];
+      showToast('แก้ไขหลักสูตรเรียบร้อยแล้ว', 'success');
     }
+  } else {
+    // 🟢 กรณีสร้างคอร์สใหม่
+    const now = new Date();
+    const newCourse = {
+      id: 'crs_' + Date.now(),
+      title,
+      skillTopic: topic,
+      department: dept,
+      type,
+      budgetYear: bYear,
+      budgetMonth: bMonth,
+      createdAt: now.toISOString(),
+      passingScore: parseInt(document.getElementById('cb-passing-score').value) || 80,
+      materials: validMaterials
+    };
+
+    if (type === 'practical') {
+      newCourse.timerEnabled = document.getElementById('cb-timer-enabled').checked;
+      newCourse.timerSeconds = parseInt(document.getElementById('cb-timer-seconds').value) || 600;
+      newCourse.evalCriteria = document.getElementById('cb-eval-criteria').value;
+      newCourse.samples = tempBuilderSamples;
+      newCourse.practicalEvalMode = practicalEvalMode;
+      newCourse.maxMissRate = maxMissRate;
+      newCourse.maxFalseAlarm = maxFalseAlarm;
+    } else {
+      newCourse.preQuestions = tempBuilderPreQ;
+      newCourse.postQuestions = tempBuilderPostQ.length > 0 ? tempBuilderPostQ : tempBuilderPreQ;
+    }
+
+    courses.unshift(newCourse);
+    targetCourse = newCourse;
+    showToast('สร้างหลักสูตรใหม่สำเร็จเรียบร้อยแล้ว', 'success');
+  }
+
+  // 1. เซฟลง LocalStorage ในเครื่องทันที (เปลี่ยนเป็น false เพื่อไม่สั่งล้างแผ่นงานใน Sheets)
+  saveState(false);
+
+  // 2. ปิด Modal และอัปเดตหน้าจอทันที ผู้ใช้ไม่ต้องยืนรอ
+  closeCourseBuilderModal();
+  renderCatalogView();
+  renderAdminHub();
+
+  // 3. 🟢 ยิงไป Google Sheets เบื้องหลังเฉพาะแถวนั้นแถวเดียว
+  if (targetCourse) {
+    try {
+      await fetch(APP_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: isEdit ? 'updateRow' : 'appendRow', // ถ้าสร้างใหม่ส่ง appendRow / ถ้าแก้ไขส่ง updateRow
+          sheetName: 'Courses',
+          data: targetCourse
+        })
+      });
+      console.log(`✅ ${isEdit ? 'อัปเดต' : 'เพิ่ม'} หลักสูตรลง Google Sheets เรียบร้อยแล้ว`);
+    } catch (err) {
+      console.error('❌ บันทึกหลักสูตรลง Google Sheets ไม่สำเร็จ:', err);
+    }
+  }
+}
     
     // ----------------------------------------------------
     // 13. REVIEW & EDITING MODALS
